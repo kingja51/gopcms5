@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.menu.mapper.MenuMapper">
+
+    <!-- CONTENT 메뉴는 대상 slug 를 함께 — href(/{sc}/{slug}) 해석 재료.
+         link_target_id 는 접두어로 대상 판별(CNT_) — FK 없는 값 참조 (conventions §3) -->
+    <select id="findActiveBySiteId" resultType="com.gonet.primary.menu.dto.MenuNode">
+        SELECT m.menu_id,
+               m.parent_menu_id,
+               m.menu_name AS name,
+               m.menu_type,
+               m.link_url,
+               m.sort_order,
+               m.depth,
+               c.slug      AS content_slug
+        FROM tb_menu m
+        LEFT JOIN tb_content c
+               ON m.menu_type = 'CONTENT'
+              AND c.content_id = m.link_target_id
+              AND c.delete_yn = 'N'
+        WHERE m.site_id = #{siteId}
+          AND m.use_yn = 'Y'
+          AND m.delete_yn = 'N'
+        ORDER BY m.depth, m.sort_order, m.menu_id
+    </select>
+
+</mapper>

@@ -1,0 +1,153 @@
+### ============================================================================
+### gopcms5 — front 회귀 세트 (P5) · IntelliJ HTTP Client
+### 환경: http-client.env.json — local(8080, IntelliJ 인스턴스) / smoke(8081)
+### 사용: 파일 상단에서 환경 선택 후 개별/전체 실행. 기대값은 각 요청 주석 참조.
+### 전제: local 프로파일 시드(V900~V905). Security 는 P6 전 — 전 요청 무인증.
+### ============================================================================
+
+### 헬스 체크 — 200 {"status":"UP"}
+GET {{host}}/actuator/health
+
+### ─── 루트/기본 사이트 폴백 ─────────────────────────────────────────────────
+
+### 루트 → 기본 사이트(main) 랜딩으로 302 리다이렉트
+GET {{host}}/
+
+### ─── main (krds · _default 랜딩) ──────────────────────────────────────────
+
+### 200 — _default 랜딩 (커스텀 없음 → 3단 폴백 ③)
+GET {{host}}/main/index
+
+### 200 — 사이트맵 (메뉴 없음 → 빈 상태 안내)
+GET {{host}}/main/sitemap
+
+### ─── ai (blueprint-001 · layout-001 · 커스텀 랜딩) ────────────────────────
+
+### 200 — 커스텀 랜딩 (sites/ai/index — "KONYANG AI" 히어로 + 통계 밴드)
+GET {{host}}/ai/index
+
+### 200 — 사이트맵 (1~4뎁스 전개, ICT 학점연계 외부 URL 포함)
+GET {{host}}/ai/sitemap
+
+### 200 — 컨텐츠 10종 (V901)
+GET {{host}}/ai/greeting
+
+###
+GET {{host}}/ai/about
+
+###
+GET {{host}}/ai/history
+
+###
+GET {{host}}/ai/curriculum
+
+###
+GET {{host}}/ai/faculty
+
+### 200 — SW중심대학사업 (V905 실측 본문 — AX-MASTER)
+GET {{host}}/ai/sw-univ
+
+###
+GET {{host}}/ai/career-roadmap
+
+###
+GET {{host}}/ai/career-license
+
+###
+GET {{host}}/ai/employment
+
+###
+GET {{host}}/ai/admission
+
+### 200 — 3뎁스 컨텐츠 (중소기업계약학과 — breadcrumb 4단: 홈›정부지원과제›중소기업계약학과›학과소개)
+GET {{host}}/ai/contract-dept
+
+###
+GET {{host}}/ai/contract-curriculum
+
+### 200 — 바이오융복합 (추진체계·전략 이미지 2장)
+GET {{host}}/ai/bio-program
+
+### ─── nursingcollege (간호대학 · layout-002 전체펼침 GNB · 커스텀 랜딩) ────
+
+### 200 — 커스텀 랜딩 (스플릿 히어로 "KONYANG NURSING")
+GET {{host}}/nursingcollege/index
+
+###
+GET {{host}}/nursingcollege/sitemap
+
+### 200 — 학장인사말 (학장 사진 + 전문, V904)
+GET {{host}}/nursingcollege/greeting
+
+### 200 — 대학소개 (실측 이미지 3장)
+GET {{host}}/nursingcollege/about
+
+###
+GET {{host}}/nursingcollege/goal
+
+### 200 — 대학연혁 (1994~2026 전체)
+GET {{host}}/nursingcollege/history
+
+###
+GET {{host}}/nursingcollege/faculty
+
+###
+GET {{host}}/nursingcollege/location
+
+###
+GET {{host}}/nursingcollege/admission
+
+###
+GET {{host}}/nursingcollege/curriculum
+
+###
+GET {{host}}/nursingcollege/scholarship
+
+###
+GET {{host}}/nursingcollege/research-institute
+
+### ─── 정적 자산 (콘솔 404 금지 계약) ───────────────────────────────────────
+
+### 200 — 전역 KRDS
+GET {{host}}/css/output.css
+
+### 200 — 레이아웃 구조 CSS
+GET {{host}}/css/layouts/layout-001.css
+
+###
+GET {{host}}/css/layouts/layout-002.css
+
+### 200 — 템플릿 CSS (krds·blueprint-001·trust-002)
+GET {{host}}/tmpl/css/krds.css
+
+###
+GET {{host}}/tmpl/css/blueprint-001.css
+
+###
+GET {{host}}/tmpl/css/trust-002.css
+
+### 200 — 스크립트 (self-host)
+GET {{host}}/js/vendor/htmx.min.js
+
+###
+GET {{host}}/js/app.js
+
+### 200 — 실측 이미지
+GET {{host}}/images/sites/nursingcollege/dean.jpg
+
+###
+GET {{host}}/images/sites/ai/bio-plan.jpg
+
+### ─── 404 계약 (conventions §5) ────────────────────────────────────────────
+
+### 404 — 미존재 slug
+GET {{host}}/ai/no-such-page
+
+### 404 — 예약 slug (adm)
+GET {{host}}/ai/adm
+
+### 404 — 미등록 siteCode (기본 사이트로 위장 응답하지 않음 — canonical 원칙)
+GET {{host}}/nosite/index
+
+### 404 — slug 패턴 위반(대문자)은 매핑 자체가 거부
+GET {{host}}/ai/About

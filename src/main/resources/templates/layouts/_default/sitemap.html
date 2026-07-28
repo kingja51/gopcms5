@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- 사이트맵 — /{siteCode}/sitemap (conventions §5). 공용 1벌.
+     메뉴는 GNB 1~3뎁스 / 사이트맵만 1~4뎁스 전체 전개 — 동일 menuTree, 렌더 뎁스만 다름 -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="'사이트맵 — ' + (site != null ? site.siteName : '')">사이트맵</title>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <h1 class="text-heading-lg" style="margin-bottom:24px">사이트맵</h1>
+
+    <div th:if="${menuTree == null or menuTree.isEmpty()}"
+         class="krds-alert krds-alert-info" role="status">
+        <span aria-hidden="true">i</span><p>등록된 메뉴가 없습니다.</p>
+    </div>
+
+    <div class="grid grid-cols-12 gap-6" th:if="${menuTree != null}">
+        <!-- 1뎁스 그룹 카드 → 2~4뎁스 전개 -->
+        <section class="col-span-12 md:col-span-6 lg:col-span-4 krds-card" th:each="m1 : ${menuTree}">
+            <h2 class="text-heading-sm border-b-2 border-brand-50" style="padding-bottom:8px;margin-bottom:12px">
+                <a class="text-fg-strong" style="text-decoration:none"
+                   th:href="${m1.href != null ? m1.href : '#'}" th:text="${m1.name}">1뎁스</a>
+            </h2>
+            <ul th:if="${m1.children != null}">
+                <li th:each="m2 : ${m1.children}" style="margin-top:8px">
+                    <a class="krds-link text-body-md" th:href="${m2.href != null ? m2.href : '#'}"
+                       th:text="${m2.name}">2뎁스</a>
+                    <ul th:if="${m2.children != null and !m2.children.isEmpty()}"
+                        style="margin:4px 0 4px 16px">
+                        <li th:each="m3 : ${m2.children}" style="margin-top:4px">
+                            <a class="text-body-sm text-fg-subtle" th:href="${m3.href != null ? m3.href : '#'}"
+                               th:text="${m3.name}">3뎁스</a>
+                            <ul th:if="${m3.children != null and !m3.children.isEmpty()}"
+                                style="margin:2px 0 2px 16px">
+                                <li th:each="m4 : ${m3.children}">
+                                    <a class="text-body-xs text-fg-subtle" th:href="${m4.href != null ? m4.href : '#'}"
+                                       th:text="${m4.name}">4뎁스</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+    </div>
+
+</main>
+</body>
+</html>

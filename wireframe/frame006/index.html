@@ -86,14 +86,14 @@
     </table>
     <span class="wf-note">여섯 안 모두 KRDS 규약(시맨틱 토큰·htmx+순수JS·네이티브 요소 우선·CSP nonce·self-host) 안에서 구현 가능.
     F안의 하단 탭바는 CSS(position:fixed)만으로 구성 — JS 프레임워크 금지 규약 그대로. 탭 active 판정은 서버 렌더(현재 URL 매칭)라 JS 불필요.
-    <b>메뉴 뎁스 출력 규칙(전 안 공통)</b> — 메뉴("학과" 탭 전체메뉴·데스크톱 드롭 패널)는 <b>1~3뎁스까지만 노출</b>, 4뎁스는 3뎁스 페이지 내 탭/필터로 처리. <b>사이트맵만 1~4뎁스 전체 전개</b>. 데이터는 siteContext.menuTree 하나(depth 1~4 저장) — 렌더 뎁스만 달리함.</span>
+    <b>메뉴 뎁스 출력 규칙(전 안 공통)</b> — 메뉴("학과" 탭 사이트맵·데스크톱 드롭 패널)는 <b>1~3뎁스까지만 노출</b>, 4뎁스는 3뎁스 페이지 내 탭/필터로 처리. <b>사이트맵만 1~4뎁스 전체 전개</b>. 데이터는 siteContext.menuTree 하나(depth 1~4 저장) — 렌더 뎁스만 달리함.</span>
   </div>
 
   <div class="wf-section">
     <div class="wf-h2 mb-2">② 와이어프레임 목차</div>
     <table class="wf-table">
       <tr><th style="width:200px">파일</th><th>화면</th><th style="width:280px">대표 라우트</th></tr>
-      <tr><td><a href="layout.html" style="color:#0284c7">layout.html</a></td><td>공용 프레임 해부도 — 모바일(앱바+탭바 5개) / 데스크톱(상단 5탭+협폭 컬럼) · "학과" 탭 전체메뉴·드롭 패널(1~3뎁스)</td><td><span class="wf-code">전 페이지 공통 프레임</span></td></tr>
+      <tr><td><a href="layout.html" style="color:#0284c7">layout.html</a></td><td>공용 프레임 해부도 — 모바일(앱바+탭바 5개) / 데스크톱(상단 5탭+협폭 컬럼) · "학과" 탭 사이트맵·드롭 패널(1~3뎁스)</td><td><span class="wf-code">전 페이지 공통 프레임</span></td></tr>
       <tr><td><a href="home.html" style="color:#0284c7">home.html</a></td><td>홈 — 인사/검색 스트립·스와이프 히어로 카드·퀵메뉴 2행·공지 피드·포토앨범 스트립·일정 스트립</td><td><span class="wf-code">/{sc}/home</span></td></tr>
       <tr><td><a href="content.html" style="color:#0284c7">content.html</a></td><td>콘텐츠 — 아코디언 분절 학과소개·풀폭 지도 오시는길</td><td><span class="wf-code">/{sc}/about · /{sc}/location</span></td></tr>
       <tr><td><a href="program.html" style="color:#0284c7">program.html</a></td><td>프로그램 — 연락처 앱형 교수진 리스트·ㄱㄴㄷ 인덱스·바텀 시트 프로필</td><td><span class="wf-code">/prg/{program}/{sc}</span></td></tr>
@@ -111,7 +111,7 @@
     <table class="wf-table">
       <tr><th style="width:110px">탭</th><th style="width:280px">라우트</th><th>비고</th></tr>
       <tr><td>🏠 홈</td><td><span class="wf-code">/{sc}/home</span></td><td>스와이프 히어로 + 퀵메뉴 + 공지 피드</td></tr>
-      <tr><td>🎓 학과</td><td><span class="wf-code">/{sc}/sitemap</span></td><td>전체메뉴(메뉴 5그룹 아코디언, <b>1~3뎁스 노출</b>) — tb_menu 트리를 앱의 "둘러보기" 탭으로 렌더. 사이트맵 풀 뷰(<span class="wf-code">?view=full</span>)만 1~4뎁스 전체</td></tr>
+      <tr><td>🎓 학과</td><td><span class="wf-code">/{sc}/sitemap</span></td><td>사이트맵(메뉴 5그룹 아코디언, <b>1~3뎁스 노출</b>) — tb_menu 트리를 앱의 "둘러보기" 탭으로 렌더. 사이트맵 풀 뷰(<span class="wf-code">?view=full</span>)만 1~4뎁스 전체</td></tr>
       <tr><td>📋 게시판</td><td><span class="wf-code">/bbs/{sc}/notice</span></td><td>커뮤니티 그룹 첫 게시판으로 진입, 상단 칩으로 게시판 전환</td></tr>
       <tr><td>🔍 검색</td><td><span class="wf-code">/search?siteCode={sc}</span></td><td>검색 홈(최근/인기) → 자동완성 → 결과</td></tr>
       <tr><td>👤 MY</td><td><span class="wf-code">/member/mypage</span></td><td>비로그인 시 <span class="wf-code">/member/login</span> 으로 — 무매칭 DENY 아닌 인증 리다이렉트</td></tr>

@@ -9,8 +9,8 @@
 
 <div class="wf-doc-header">
   <a class="wf-back" href="index.html">← 목차로</a>
-  <h1>통합검색(검색 탭) · 사이트맵("학과" 탭 전체메뉴) <span class="wf-badge-f">F안</span></h1>
-  <p><span class="route">GET /search?siteCode={sc}&keyword=</span><span class="route">GET /{sc}/sitemap?view=full</span> — 검색은 탭바의 상시 탭(검색 홈 → 자동완성 → 결과 무한스크롤), 사이트맵은 "학과" 탭 전체메뉴(1~3뎁스, layout.html)의 <b>풀 뷰 — 1~4뎁스 전체 전개</b>.</p>
+  <h1>통합검색(검색 탭) · 사이트맵("학과" 탭 사이트맵) <span class="wf-badge-f">F안</span></h1>
+  <p><span class="route">GET /search?siteCode={sc}&keyword=</span><span class="route">GET /{sc}/sitemap?view=full</span> — 검색은 탭바의 상시 탭(검색 홈 → 자동완성 → 결과 무한스크롤), 사이트맵은 "학과" 탭 사이트맵(1~3뎁스, layout.html)의 <b>풀 뷰 — 1~4뎁스 전체 전개</b>.</p>
 </div>
 
 <div class="wf-duo">
@@ -116,7 +116,7 @@
     </div>
   </div>
 
-  <!-- ══════════ 모바일: 사이트맵 풀 뷰("학과" 탭 전체메뉴의 4뎁스 전개) ══════════ -->
+  <!-- ══════════ 모바일: 사이트맵 풀 뷰("학과" 탭 사이트맵의 4뎁스 전개) ══════════ -->
   <div class="wf-col">
     <div class="wf-caption">📱 사이트맵 풀 뷰 /ai/sitemap?view=full — 1~4뎁스 전체 (정본)</div>
     <div class="wf-phone">
@@ -124,7 +124,7 @@
       <div class="wf-phone-url">http://127.0.0.1:8080/ai/sitemap?view=full</div>
 
       <div class="wf-appbar">
-        <b>학과 전체메뉴 — 사이트맵</b><span class="wf-grow"></span><span class="wf-chip on">전체 펼침</span>
+        <b>학과 사이트맵 — 사이트맵</b><span class="wf-grow"></span><span class="wf-chip on">전체 펼침</span>
       </div>
 
       <div class="wf-p" style="padding:12px 14px">
@@ -175,7 +175,7 @@
           </div>
         </div>
         <span class="wf-note"><b>메뉴는 3뎁스까지, 사이트맵만 4뎁스 — 동일 menuTree 재사용</b>(전 안 공통 출력 규칙).
-        "학과" 탭 기본 = 전체메뉴 1~3뎁스 아코디언(layout.html), 앱바 "전체 펼치기" = 이 풀 뷰(?view=full, 서버 렌더 분기 — 같은 siteContext.menuTree 를 depth 4 까지 전개).
+        "학과" 탭 기본 = 사이트맵 1~3뎁스 아코디언(layout.html), 앱바 "전체 펼치기" = 이 풀 뷰(?view=full, 서버 렌더 분기 — 같은 siteContext.menuTree 를 depth 4 까지 전개).
         4뎁스는 메뉴에서 3뎁스 페이지 내 탭/필터로 진입(전공필수·전공선택 = 교과과정&gt;학부 탭, 휴·복학/졸업 서식 = 자료실&gt;학사서식 필터).
         데이터 = tb_menu(site_code 스코프) — 별도 시드·쿼리 없음, 링크 = link_url 직결. 다른 안의 GNB/메가메뉴가 하던 역할을 이 탭이 전담.</span>
 
@@ -249,7 +249,7 @@
           <div style="color:#64748b;padding-left:10px">강의자료</div>
         </div>
       </div>
-      <span class="wf-note">사이트맵 데스크톱 = 진한 글자 2뎁스 · 회색 3뎁스 · 옅은 회색 4뎁스 — <b>메뉴(전체메뉴·드롭 패널)는 3뎁스까지, 사이트맵만 4뎁스, 동일 menuTree 재사용</b>.
+      <span class="wf-note">사이트맵 데스크톱 = 진한 글자 2뎁스 · 회색 3뎁스 · 옅은 회색 4뎁스 — <b>메뉴(사이트맵·드롭 패널)는 3뎁스까지, 사이트맵만 4뎁스, 동일 menuTree 재사용</b>.
       /search·/{sc}/sitemap·/api/v1/search/suggest 모두 기존 tb_role_url_access 규칙 커버(무매칭 DENY — F안 신규 URL 없음, ?view=full 은 쿼리 파라미터라 규칙 추가 불필요). 검색 로그는 logging DB(log_search) 적재.</span>
     </div>
   </div>

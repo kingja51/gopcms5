@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     사이트 전용 랜딩 — ai (인공지능학과) · Resolver ① 층 (sites/{sc}/index)
+     기준: wireframe frame001 home(풀폭 히어로 + 바로가기 타일 + 소식 2컬럼) + 테크 무드.
+     색은 KRDS 토큰·브랜드 램프 변수만 사용 — 템플릿(blueprint-001)·테마 전환 자동 반영.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<body>
+<main layout:fragment="content">
+
+    <!-- 히어로 — 다크 캔버스 + 브랜드 그라디언트 액센트 -->
+    <section class="rounded-xlarge shadow-e2" style="overflow:hidden">
+        <div style="background:linear-gradient(135deg, var(--brand-90), var(--brand-70) 55%, var(--brand-50));padding:64px 40px">
+            <p class="text-label-md font-bold" style="color:var(--brand-20)">KONYANG AI</p>
+            <h1 class="text-display-md" style="color:#fff;margin-top:8px">
+                인공지능의 미래를<br/>여기서 만듭니다
+            </h1>
+            <p class="text-body-lg" style="color:var(--brand-10);margin-top:16px;max-width:560px">
+                기계학습·컴퓨터비전·자연어처리 — 이론과 프로젝트가 함께 가는
+                실전형 AI 교육.
+            </p>
+            <div class="flex gap-3 flex-wrap" style="margin-top:32px">
+                <a class="krds-btn krds-btn-lg" style="background:#fff;color:var(--brand-70)"
+                   th:href="${'/' + site.siteCode + '/admission'}">입학안내</a>
+                <a class="krds-btn krds-btn-lg" style="border:1px solid var(--brand-20);color:#fff"
+                   th:href="${'/' + site.siteCode + '/about'}">학과소개</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 통계 밴드 -->
+    <section class="grid grid-cols-12 gap-4" style="margin-top:24px">
+        <div class="col-span-6 lg:col-span-3 krds-card text-center">
+            <p class="text-display-sm text-brand-50">98<span class="text-heading-sm">%</span></p>
+            <p class="text-body-sm text-fg-subtle">졸업생 취업·진학률</p>
+        </div>
+        <div class="col-span-6 lg:col-span-3 krds-card text-center">
+            <p class="text-display-sm text-brand-50">24<span class="text-heading-sm">+</span></p>
+            <p class="text-body-sm text-fg-subtle">산학 프로젝트 / 년</p>
+        </div>
+        <div class="col-span-6 lg:col-span-3 krds-card text-center">
+            <p class="text-display-sm text-brand-50">12</p>
+            <p class="text-body-sm text-fg-subtle">전임 교원</p>
+        </div>
+        <div class="col-span-6 lg:col-span-3 krds-card text-center">
+            <p class="text-display-sm text-brand-50">6</p>
+            <p class="text-body-sm text-fg-subtle">AI 전문 연구실</p>
+        </div>
+    </section>
+
+    <!-- 바로가기 타일 + 새소식 2컬럼 (frame001 홈 구성) -->
+    <section class="grid grid-cols-12 gap-6" style="margin-top:32px">
+        <div class="col-span-12 lg:col-span-7">
+            <h2 class="text-heading-md" style="margin-bottom:16px">바로가기</h2>
+            <div class="grid grid-cols-12 gap-4" th:if="${menuTree != null}">
+                <a th:each="m1 : ${menuTree}" class="col-span-6 md:col-span-4 krds-card text-center"
+                   style="text-decoration:none"
+                   th:href="${m1.href != null ? m1.href
+                              : (m1.children != null and !m1.children.isEmpty() and m1.children[0].href != null
+                                 ? m1.children[0].href : '#')}">
+                    <span class="text-label-md font-bold text-fg" th:text="${m1.name}">메뉴</span>
+                </a>
+            </div>
+        </div>
+        <div class="col-span-12 lg:col-span-5">
+            <div class="flex items-center" style="margin-bottom:16px">
+                <h2 class="text-heading-md grow">새 소식</h2>
+                <a class="krds-link text-body-sm" th:href="${'/' + site.siteCode + '/sitemap'}">전체보기</a>
+            </div>
+            <div th:if="${recentContents == null or recentContents.isEmpty()}"
+                 class="krds-card text-center text-fg-subtle text-body-sm">등록된 소식이 없습니다.</div>
+            <ul th:if="${recentContents != null and !recentContents.isEmpty()}" class="krds-card" style="padding:0">
+                <li th:each="c : ${recentContents}" class="border-b border-divider">
+                    <a class="flex items-center gap-3 p-4" style="text-decoration:none"
+                       th:href="${'/' + site.siteCode + '/' + c.slug}">
+                        <span class="text-body-md text-fg grow" th:text="${c.title}">제목</span>
+                        <span class="text-body-xs text-fg-subtle"
+                              th:text="${c.publishedAt != null ? #temporals.format(c.publishedAt, 'MM-dd') : ''}">날짜</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+</main>
+</body>
+</html>

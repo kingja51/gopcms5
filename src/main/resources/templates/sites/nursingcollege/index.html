@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     사이트 전용 랜딩 — nursingcollege (간호대학) · Resolver ① 층 (sites/{sc}/index)
+     기준: wireframe frame002 home(스플릿 히어로 + 퀵링크 스트립 + 소식 위젯 + 통계 밴드).
+     색은 KRDS 토큰·브랜드 램프 변수만 — trust-002 + teal 테마가 자동 반영.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<body>
+<main layout:fragment="content">
+
+    <!-- 스플릿 히어로 — 좌 텍스트 / 우 브랜드 그래픽 -->
+    <section class="grid grid-cols-12 gap-0 rounded-xlarge shadow-e1 border border-line" style="overflow:hidden">
+        <div class="col-span-12 md:col-span-7 bg-surface" style="padding:48px 40px">
+            <p class="text-label-md font-bold text-brand-50">KONYANG NURSING</p>
+            <h1 class="text-display-sm text-fg-strong" style="margin-top:8px">
+                사람을 향한 간호,<br/>현장이 기르는 전문성
+            </h1>
+            <p class="text-body-lg text-fg-subtle" style="margin-top:16px">
+                생명 존중의 가치 위에서 — 이론·실습·인성이 균형 잡힌
+                간호 교육으로 임상 현장의 전문가를 양성합니다.
+            </p>
+            <div class="flex gap-3 flex-wrap" style="margin-top:28px">
+                <a class="krds-btn krds-btn-primary krds-btn-lg"
+                   th:href="${'/' + site.siteCode + '/admission'}">입학안내</a>
+                <a class="krds-btn krds-btn-secondary krds-btn-lg"
+                   th:href="${'/' + site.siteCode + '/about'}">대학소개</a>
+            </div>
+        </div>
+        <div class="col-span-12 md:col-span-5 flex items-center justify-center"
+             style="background:linear-gradient(160deg, var(--brand-5), var(--brand-20));min-height:220px">
+            <span class="text-display-lg" aria-hidden="true" style="color:var(--brand-50)">✚</span>
+        </div>
+    </section>
+
+    <!-- 퀵링크 스트립 — 2뎁스 주요 페이지 가로 칩 -->
+    <nav aria-label="주요 바로가기" style="margin-top:16px" th:if="${menuTree != null}">
+        <div class="flex gap-2 flex-wrap">
+            <th:block th:each="m1 : ${menuTree}">
+                <a th:each="m2 : ${m1.children}" th:if="${m2.href != null}"
+                   class="krds-btn krds-btn-secondary krds-btn-sm rounded-max"
+                   th:href="${m2.href}" th:text="${m2.name}">메뉴</a>
+            </th:block>
+        </div>
+    </nav>
+
+    <!-- 소식 위젯 + 통계 밴드 -->
+    <section class="grid grid-cols-12 gap-6" style="margin-top:32px">
+        <div class="col-span-12 lg:col-span-7">
+            <div class="flex items-center" style="margin-bottom:16px">
+                <h2 class="text-heading-md grow">간호대학 소식</h2>
+                <a class="krds-link text-body-sm" th:href="${'/' + site.siteCode + '/sitemap'}">전체보기</a>
+            </div>
+            <div th:if="${recentContents == null or recentContents.isEmpty()}"
+                 class="krds-card text-center text-fg-subtle text-body-sm">등록된 소식이 없습니다.</div>
+            <ul th:if="${recentContents != null and !recentContents.isEmpty()}" class="krds-card" style="padding:0">
+                <li th:each="c : ${recentContents}" class="border-b border-divider">
+                    <a class="flex items-center gap-3 p-4" style="text-decoration:none"
+                       th:href="${'/' + site.siteCode + '/' + c.slug}">
+                        <span class="krds-badge bg-brand-5 text-brand-60">안내</span>
+                        <span class="text-body-md text-fg grow" th:text="${c.title}">제목</span>
+                        <span class="text-body-xs text-fg-subtle"
+                              th:text="${c.publishedAt != null ? #temporals.format(c.publishedAt, 'MM-dd') : ''}">날짜</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-span-12 lg:col-span-5">
+            <h2 class="text-heading-md" style="margin-bottom:16px">한눈에 보는 간호대학</h2>
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-6 krds-card text-center" style="background:var(--brand-5);border-color:var(--brand-20)">
+                    <p class="text-heading-xl text-brand-60">96<span class="text-heading-sm">%</span></p>
+                    <p class="text-body-xs text-fg-subtle">간호사 국가고시 합격률</p>
+                </div>
+                <div class="col-span-6 krds-card text-center">
+                    <p class="text-heading-xl text-brand-60">100<span class="text-heading-sm">+</span></p>
+                    <p class="text-body-xs text-fg-subtle">임상실습 협력기관 병상</p>
+                </div>
+                <div class="col-span-6 krds-card text-center">
+                    <p class="text-heading-xl text-brand-60">15</p>
+                    <p class="text-body-xs text-fg-subtle">전임 교원</p>
+                </div>
+                <div class="col-span-6 krds-card text-center" style="background:var(--brand-5);border-color:var(--brand-20)">
+                    <p class="text-heading-xl text-brand-60">1:8</p>
+                    <p class="text-body-xs text-fg-subtle">실습 지도 비율</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+</body>
+</html>

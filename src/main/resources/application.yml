@@ -1,0 +1,76 @@
+# =============================================================================
+# gopcms5 — 기본 설정
+# 이 파일의 주석은 운영 정책 문서다 — 설정 변경 전 해당 키 주석 확인, 변경 시 주석 갱신 (CLAUDE.md).
+# 비밀값 키 목록: .env.example — password 류는 기본값 없음 = 미주입 시 부팅 실패(fail-fast, 의도된 동작).
+# =============================================================================
+spring:
+  application:
+    name: gopcms5
+  profiles:
+    # 프로파일 미지정 실행 = local (1인 개발 편의). 운영은 --spring.profiles.active=prod 명시.
+    default: local
+  threads:
+    virtual:
+      # Java 21 Loom 가상 스레드 — 요청당 1스레드. DevTools 금지 사유(HikariCP race)와 연관.
+      enabled: true
+  flyway:
+    # 3-DB 분리라 Boot 단일 Flyway 자동구성 사용 불가 — FlywayConfig 가 DB 별 3개 빈 직접 구성.
+    enabled: false
+  thymeleaf:
+    # 운영 기본 캐시 on — local 프로파일에서 false 오버라이드.
+    cache: true
+    servlet:
+      # 전체 버퍼링 후 응답 — 부분 출력 중 지연 CSRF 토큰의 세션 생성이
+      # "response committed" 로 실패하는 문제 차단 (P6-1 실측: 사이트 레이아웃을
+      # decorate 한 큰 로그인 페이지에서 발생. 페이지 규모상 버퍼링 비용 미미)
+      produce-partial-output-while-processing: false
+  mvc:
+    problemdetails:
+      enabled: true
+
+# ── 3-DB 접속 (conventions.md §3) ────────────────────────────────────────────
+# primary=GOPCMS 기본(tb_*) / secondary=클라이언트(tn_*) / logging=로그·통계(log_*/stat_*).
+# URL·계정은 환경변수 주입(.env.example 키와 1:1). driver 만 MariaDB 기본값 허용.
+gopcms:
+  datasource:
+    primary:
+      url: ${GOPCMS_DB_PRIMARY_URL}
+      username: ${GOPCMS_DB_PRIMARY_USER}
+      password: ${GOPCMS_DB_PRIMARY_PASSWORD}
+      driver-class-name: ${GOPCMS_DB_PRIMARY_DRIVER:org.mariadb.jdbc.Driver}
+      hikari:
+        pool-name: gopcms-primary
+        maximum-pool-size: 10
+    secondary:
+      url: ${GOPCMS_DB_SECONDARY_URL}
+      username: ${GOPCMS_DB_SECONDARY_USER}
+      password: ${GOPCMS_DB_SECONDARY_PASSWORD}
+      driver-class-name: ${GOPCMS_DB_SECONDARY_DRIVER:org.mariadb.jdbc.Driver}
+      hikari:
+        pool-name: gopcms-secondary
+        maximum-pool-size: 5
+    logging:
+      url: ${GOPCMS_DB_LOGGING_URL}
+      username: ${GOPCMS_DB_LOGGING_USER}
+      password: ${GOPCMS_DB_LOGGING_PASSWORD}
+      driver-class-name: ${GOPCMS_DB_LOGGING_DRIVER:org.mariadb.jdbc.Driver}
+      hikari:
+        pool-name: gopcms-logging
+        maximum-pool-size: 5
+  flyway:
+    # dev 시드(db/devdata/*, V900+ 대역) 포함 여부 — local/dev 프로파일만 true.
+    devdata: false
+
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # P6(Security) 전 최소 노출 — prometheus 등 확장은 P6 이후 보호 하에 개방.
+        include: health,info

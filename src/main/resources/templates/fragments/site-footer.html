@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<!-- 공용 푸터 조각 — 전 레이아웃 공유 (템플릿 무관). th:replace="~{fragments/site-footer :: footer}" -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<footer th:fragment="footer" class="bg-surface-subtle border-t border-line mt-12">
+    <div class="max-w-content mx-auto px-4 py-6 flex flex-wrap items-center gap-4">
+        <p class="text-body-xs text-fg-subtle grow"
+           th:utext="${site != null and site.copyright != null ? site.copyright : '© 2026 gopcms5. All rights reserved.'}">©</p>
+        <nav aria-label="정책 링크" class="flex gap-4 text-body-xs">
+            <a class="krds-link" href="#">개인정보처리방침</a>
+            <a class="text-fg-subtle" href="#">이메일무단수집거부</a>
+        </nav>
+    </div>
+</footer>
+
+</body>
+</html>

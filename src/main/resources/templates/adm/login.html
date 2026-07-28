@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!-- 관리자 로그인 — standalone (사이트 템플릿 무관, KRDS 전역만).
+     노출 자체가 IP 게이트 통과를 의미(LoginAdmController). CSRF 는 th:action 이 자동 주입. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>관리자 로그인 — gopcms5</title>
+    <link rel="icon" href="data:,"/>
+    <link rel="stylesheet" href="/css/output.css"/>
+</head>
+<body class="bg-gray-95 text-fg" style="min-height:100vh;display:flex;align-items:center;justify-content:center">
+
+<main class="krds-card shadow-e4" style="width:min(400px,92vw);padding:32px">
+    <p class="text-label-md font-bold text-brand-40">GOPCMS ADMIN</p>
+    <h1 class="text-heading-md text-fg-strong" style="margin-top:4px">관리자 로그인</h1>
+
+    <div th:if="${param.error}" role="alert" class="krds-alert krds-alert-danger" style="margin-top:16px">
+        <span aria-hidden="true">✕</span><p>로그인에 실패했습니다. 입력 정보를 확인해 주세요.</p>
+    </div>
+    <div th:if="${param.logout}" role="status" class="krds-alert krds-alert-success" style="margin-top:16px">
+        <span aria-hidden="true">✓</span><p>로그아웃되었습니다.</p>
+    </div>
+
+    <form th:action="@{/adm/login}" method="post" style="margin-top:24px;display:grid;gap:16px">
+        <div>
+            <label for="username" class="text-label-sm font-bold">아이디</label>
+            <input id="username" name="username" class="krds-input" autocomplete="username" required autofocus/>
+        </div>
+        <div>
+            <label for="password" class="text-label-sm font-bold">비밀번호</label>
+            <input id="password" name="password" type="password" class="krds-input"
+                   autocomplete="current-password" required/>
+        </div>
+        <button type="submit" class="krds-btn krds-btn-primary krds-btn-lg" style="width:100%">로그인</button>
+    </form>
+
+    <p class="text-body-xs text-fg-subtle" style="margin-top:16px">
+        허용된 IP 에서만 접속 가능합니다. 2단계 인증(OTP)은 도입 예정입니다.</p>
+</main>
+
+</body>
+</html>

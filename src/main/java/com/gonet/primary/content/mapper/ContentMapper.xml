@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.content.mapper.ContentMapper">
+
+    <sql id="publishedWhere">
+          AND c.delete_yn = 'N'
+          AND c.status = 'PUBLISHED'
+          AND (c.published_at IS NULL OR c.published_at &lt;= NOW())
+          AND (c.unpublish_at IS NULL OR c.unpublish_at &gt; NOW())
+    </sql>
+
+    <select id="findPublishedBySlug" resultType="com.gonet.primary.content.dto.ContentDto">
+        SELECT c.content_id, c.menu_id, c.title, c.slug, c.body, c.summary,
+               c.published_at, c.view_count
+        FROM tb_content c
+        WHERE c.site_id = #{siteId}
+          AND c.slug = #{slug}
+        <include refid="publishedWhere"/>
+    </select>
+
+    <select id="findRecentPublished" resultType="com.gonet.primary.content.dto.ContentDto">
+        SELECT c.content_id, c.menu_id, c.title, c.slug, c.summary,
+               c.published_at, c.view_count
+        FROM tb_content c
+        WHERE c.site_id = #{siteId}
+        <include refid="publishedWhere"/>
+        ORDER BY c.published_at DESC, c.content_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <update id="increaseViewCount">
+        UPDATE tb_content
+        SET view_count = view_count + 1
+        WHERE content_id = #{contentId}
+    </update>
+
+</mapper>

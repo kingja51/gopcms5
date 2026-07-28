@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<!-- 공용 breadcrumb 조각 — 모델 'breadcrumb'(List<MenuNode>, P4 적재) 존재 시에만 출력.
+     th:replace="~{fragments/breadcrumb :: breadcrumb}" -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="breadcrumb" th:if="${breadcrumb != null and !breadcrumb.isEmpty()}"
+     class="bg-surface-subtle border-b border-divider">
+    <nav aria-label="현재 위치" class="max-w-content mx-auto px-4 py-2">
+        <ol class="krds-breadcrumb">
+            <li><a th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}">홈</a></li>
+            <li th:each="crumb, stat : ${breadcrumb}">
+                <a th:if="${!stat.last and crumb.href != null}" th:href="${crumb.href}"
+                   th:text="${crumb.name}">메뉴</a>
+                <span th:if="${!stat.last and crumb.href == null}" th:text="${crumb.name}">메뉴</span>
+                <span th:if="${stat.last}" aria-current="page" th:text="${crumb.name}">현재</span>
+            </li>
+        </ol>
+    </nav>
+</div>
+
+</body>
+</html>

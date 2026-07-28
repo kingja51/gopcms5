@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!-- 관리자 대시보드 — layouts/layout-adm 셸에 content 슬롯만 공급.
+     adm/** 뷰는 SiteTemplateViewResolver 재작성 제외(사이트 3축 무관).
+     관리 모듈(P7: 사이트/템플릿/메뉴/컨텐츠 CRUD)에서 카드가 실제 링크로 바뀐다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>대시보드</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg">대시보드</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        로그인 성공 — 관리 모듈은 순차 구축됩니다.</p>
+
+    <div class="grid grid-cols-12 gap-4" style="margin-top:24px">
+        <div class="col-span-6 md:col-span-3 krds-card text-center text-fg-subtle">사이트관리 (예정)</div>
+        <div class="col-span-6 md:col-span-3 krds-card text-center text-fg-subtle">템플릿관리 (예정)</div>
+        <div class="col-span-6 md:col-span-3 krds-card text-center text-fg-subtle">메뉴관리 (예정)</div>
+        <div class="col-span-6 md:col-span-3 krds-card text-center text-fg-subtle">컨텐츠관리 (예정)</div>
+    </div>
+</div>
+</body>
+</html>

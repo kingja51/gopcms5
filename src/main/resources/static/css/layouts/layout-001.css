@@ -1,0 +1,43 @@
+/* ============================================================================
+ * layout-001 (A안 표준 GNB 밴드형) — 레이아웃 "구조" 전용 CSS
+ * ----------------------------------------------------------------------------
+ * 3층 분리 규약: 전역 KRDS(output.css) → 템플릿 색(/tmpl/css/{code}.css) →
+ * 레이아웃 구조(/css/layouts/{layoutCode}.css — 이 파일, 해당 레이아웃만 로드).
+ * 색은 반드시 토큰 변수(var(--brand-*, --c-*))만 참조 — 테마·hc 자동 반영.
+ * ==========================================================================*/
+
+/* 스킵 링크 — sr-only, 포커스 시에만 노출 (KWCAG) */
+.l1-skip {
+  position: absolute; left: -9999px; top: 0; z-index: 100;
+  background: var(--brand-50); color: #fff; padding: 8px 16px;
+  border-radius: 0 0 6px 0; font-weight: 700;
+}
+.l1-skip:focus { left: 0; }
+
+/* GNB — 호버/포커스 드롭다운 (1뎁스 밴드 + 2·3뎁스 패널) */
+.l1-gnb-item { position: relative; }
+.l1-gnb-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 48px; padding: 0 20px; font-weight: 700;
+  border-bottom: 3px solid transparent;
+}
+.l1-gnb-link:hover { background: var(--c-surface-subtle); }
+.l1-gnb-link:focus-visible { outline: 2px solid var(--brand-50); outline-offset: -2px; }
+.l1-gnb-link.l1-active { color: var(--brand-60); border-bottom-color: var(--brand-50); }
+
+.l1-dropdown {
+  display: none; position: absolute; top: 100%; left: 0; z-index: 40;
+  min-width: 220px; padding: 6px 0;
+  background: var(--c-surface); border: 1px solid var(--c-line);
+  border-radius: 0 0 6px 6px; box-shadow: var(--shadow-e2);
+}
+.l1-gnb-item:hover > .l1-dropdown,
+.l1-gnb-item:focus-within > .l1-dropdown { display: block; }
+
+.l1-dropdown a {
+  display: block; padding: 8px 16px; font-size: 15px;
+}
+.l1-dropdown a:hover { background: var(--c-surface-subtle); color: var(--brand-60); }
+
+/* 3뎁스 — 2뎁스 항목 아래 들여쓰기 목록 (메뉴는 3뎁스까지 — 사이트맵만 4뎁스) */
+.l1-dropdown .l1-sub a { padding-left: 32px; font-size: 14px; color: var(--c-fg-subtle); }

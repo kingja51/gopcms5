@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     layout-001 — A안 표준 GNB 밴드형 (원전: wireframe/frame001/layout.html 해부도)
+     ----------------------------------------------------------------------------
+     슬롯 계약(전 레이아웃 공통 의무): ①스킵링크 ②마스트헤드 ③GNB(menuTree 1~3뎁스)
+     ④SUB_HERO 슬롯 ⑤breadcrumb ⑥content ⑦좋아요/신고 밴드 ⑧푸터 ⑨scripts 슬롯
+     로드 3층: 전역 output.css → 템플릿 /tmpl/css/{code}.css → 레이아웃 구조 CSS
+     ※ 링크식은 @{${…}} 형태 필수 — @{'a'+(식)+'b'} 는 미평가 (P2 실측)
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:classappend="${themeClass}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${site != null ? site.siteName : 'gopcms5'}">gopcms5</title>
+    <!-- favicon: 사이트별 favicon_path 는 P7 사이트관리 — 그 전까지 요청 자체를 억제(콘솔 404 방지) -->
+    <link rel="icon" href="data:,"/>
+    <!-- ① 전역 KRDS (토큰+유틸+krds-* 프리셋) -->
+    <link rel="stylesheet" href="/css/output.css"/>
+    <!-- ② 템플릿 시각 언어 (사이트 선택 — 브랜드 램프·tpl-*) -->
+    <link rel="stylesheet" th:href="@{${'/tmpl/css/' + (site != null ? site.templateCode : 'krds') + '.css'}}"/>
+    <!-- ③ 레이아웃 구조 CSS (이 레이아웃 전용) -->
+    <link rel="stylesheet" href="/css/layouts/layout-001.css"/>
+    <!-- ④ 사이트별 head 조각 (tb_site.head_meta — 관리자 편집) -->
+    <th:block th:if="${site != null and site.headMeta != null}" th:utext="${site.headMeta}"/>
+</head>
+<body class="bg-bg text-fg">
+
+<!-- ① 스킵 링크 — 포커스 시에만 노출 -->
+<a class="l1-skip" href="#content">본문으로 건너뛰기</a>
+
+<!-- ② 마스트헤드 — 사이트명·유틸 (날씨 위젯 슬롯=P4+, 로그인/알림=P6) -->
+<header class="bg-surface border-b border-line">
+    <div class="max-w-content mx-auto px-4 py-3 flex items-center gap-4 flex-wrap">
+        <a class="text-heading-sm text-fg-strong" style="text-decoration:none"
+           th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}"
+           th:text="${site != null ? site.siteName : 'gopcms5'}">사이트명</a>
+        <span class="grow"></span>
+        <!-- 날씨 위젯 슬롯 (htmx — P4+ 연결) -->
+        <span id="weather-slot" class="text-body-xs text-fg-subtle"></span>
+        <!-- 로그인·알림 유틸 (P6 Security 에서 활성) -->
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm"
+                data-action="toggle-hc" aria-pressed="false">◐ 선명한 화면</button>
+        <a class="krds-btn krds-btn-text krds-btn-sm"
+           th:href="${site != null ? '/' + site.siteCode + '/sitemap' : '/main/sitemap'}">☰ 사이트맵</a>
+    </div>
+</header>
+
+<!-- ③ GNB — menuTree(depth 1~3) 렌더. 활성 = 색+보더 병행(currentUri prefix) -->
+<nav class="bg-surface border-b-2 border-line-strong" aria-label="주 메뉴">
+    <div class="max-w-content mx-auto px-4 flex items-center gap-2 flex-wrap">
+        <ul class="flex flex-wrap" th:if="${menuTree != null}">
+            <li class="l1-gnb-item" th:each="m1 : ${menuTree}">
+                <a class="l1-gnb-link text-label-md"
+                   th:href="${m1.href != null ? m1.href : '#'}"
+                   th:classappend="${currentUri != null and m1.href != null and currentUri.startsWith(m1.href)} ? 'l1-active'"
+                   th:text="${m1.name}">대메뉴</a>
+                <div class="l1-dropdown" th:if="${m1.children != null and !m1.children.isEmpty()}">
+                    <ul>
+                        <li th:each="m2 : ${m1.children}">
+                            <a th:href="${m2.href != null ? m2.href : '#'}" th:text="${m2.name}">2뎁스</a>
+                            <ul class="l1-sub" th:if="${m2.children != null and !m2.children.isEmpty()}">
+                                <li th:each="m3 : ${m2.children}">
+                                    <a th:href="${m3.href != null ? m3.href : '#'}" th:text="${m3.name}">3뎁스</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        </ul>
+        <span class="grow"></span>
+        <!-- 통합검색 (검색 도메인은 후속 페이즈 — form 계약만 유지) -->
+        <form th:action="@{/search}" method="get" class="py-2">
+            <input type="hidden" name="siteCode" th:value="${site != null ? site.siteCode : ''}"/>
+            <label for="gnb-search" class="sr-only">통합검색</label>
+            <input id="gnb-search" name="keyword" class="krds-input" style="width:220px"
+                   placeholder="🔍 검색어 입력"/>
+        </form>
+    </div>
+</nav>
+
+<!-- ④ SUB_HERO 슬롯 — 배너(P7 배너관리) 클라이언트 렌더 자리. 홈은 자체 히어로 담당 -->
+<div id="sub-hero-slot"></div>
+
+<!-- ⑤ breadcrumb — menuId 해석 성공(P4) 시에만 출력 -->
+<div th:replace="~{fragments/breadcrumb :: breadcrumb}"></div>
+
+<!-- ⑥ 본문 슬롯 -->
+<main id="content" class="max-w-content mx-auto px-4 py-8" layout:fragment="content">본문</main>
+
+<!-- ⑦ 좋아요/신고 밴드 — contentId 있는 컨텐츠 페이지에서만(P4 데이터 연결) -->
+<div th:if="${content != null}" class="border-t border-divider">
+    <div class="max-w-content mx-auto px-4 py-4 text-center">
+        <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm" disabled>👍 좋아요</button>
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm" disabled>🚩 신고</button>
+        <span class="text-body-xs text-fg-disabled">(게시판 페이즈에서 활성)</span>
+    </div>
+</div>
+
+<!-- ⑧ 푸터 (공용 조각) -->
+<footer th:replace="~{fragments/site-footer :: footer}"></footer>
+
+<!-- ⑨ 스크립트 — self-host(CDN 금지)·인라인 금지. CSP nonce 는 P6 -->
+<script src="/js/vendor/htmx.min.js"></script>
+<script src="/js/app.js"></script>
+<th:block layout:fragment="scripts"/>
+
+</body>
+</html>

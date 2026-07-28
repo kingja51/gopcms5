@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     layout-adm — 관리자 전용 셸 (사이트 3축 무관: template/theme CSS 미로드)
+     ----------------------------------------------------------------------------
+     · 위치 규약(2026-07-28): 레이아웃은 종류 불문 templates/layouts/ 아래 집결.
+       관리자 "프로그램 뷰"는 templates/adm/**, 사용자 프로그램 뷰는 templates/front/**
+       (front/** 만 SiteTemplateViewResolver 가 사이트별 재작성 — adm/** 는 통과).
+     · 구조: 상단바(브랜드·계정·로그아웃) + 좌측 LNB + 본문. 슬롯 = content / scripts.
+     · CSS 2층만: 전역 output.css → /css/layouts/layout-adm.css (템플릿 램프 없음)
+     · P7 관리 모듈이 LNB 항목을 실제 링크로 채운다 — 그 전까지 '예정' 비활성 표기.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title layout:title-pattern="$CONTENT_TITLE — $LAYOUT_TITLE">GOPCMS 관리자</title>
+    <link rel="icon" href="data:,"/>
+    <link rel="stylesheet" href="/css/output.css"/>
+    <link rel="stylesheet" href="/css/layouts/layout-adm.css"/>
+</head>
+<body class="bg-bg text-fg">
+
+<a class="ladm-skip" href="#content">본문으로 건너뛰기</a>
+
+<!-- 상단바 -->
+<header class="ladm-topbar">
+    <a class="ladm-brand" th:href="@{/adm/index}">GOPCMS <span>관리자</span></a>
+    <span class="grow"></span>
+    <span class="text-body-sm ladm-account" sec:authentication="name">admin</span>
+    <form th:action="@{/adm/logout}" method="post" style="margin:0">
+        <button type="submit" class="krds-btn krds-btn-tertiary krds-btn-sm ladm-logout">로그아웃</button>
+    </form>
+</header>
+
+<div class="ladm-shell">
+    <!-- 좌측 LNB — P7 관리 모듈 순차 활성. aria-current 는 각 페이지가 지정 -->
+    <nav class="ladm-lnb" aria-label="관리 메뉴">
+        <p class="ladm-lnb-group">일반</p>
+        <a class="ladm-lnb-link" th:href="@{/adm/index}"
+           th:classappend="${currentUri == '/adm/index'} ? 'ladm-active'">대시보드</a>
+
+        <p class="ladm-lnb-group">사이트 구성</p>
+        <span class="ladm-lnb-link ladm-disabled">사이트 관리 <em>예정</em></span>
+        <span class="ladm-lnb-link ladm-disabled">템플릿·테마 <em>예정</em></span>
+        <span class="ladm-lnb-link ladm-disabled">메뉴 관리 <em>예정</em></span>
+        <span class="ladm-lnb-link ladm-disabled">컨텐츠 관리 <em>예정</em></span>
+
+        <p class="ladm-lnb-group">회원·권한</p>
+        <span class="ladm-lnb-link ladm-disabled">회원 관리 <em>예정</em></span>
+        <span class="ladm-lnb-link ladm-disabled">역할·권한 <em>예정</em></span>
+
+        <p class="ladm-lnb-group">운영</p>
+        <span class="ladm-lnb-link ladm-disabled">접속 로그 <em>예정</em></span>
+        <span class="ladm-lnb-link ladm-disabled">공통 코드 <em>예정</em></span>
+    </nav>
+
+    <!-- 본문 -->
+    <main id="content" class="ladm-main">
+        <div layout:fragment="content">
+            <p class="text-body-md text-fg-subtle">본문 슬롯 — 각 관리 페이지가 채웁니다.</p>
+        </div>
+    </main>
+</div>
+
+<footer class="ladm-footer text-body-xs text-fg-subtle">
+    (주)지오넷 GOPCMS 5.0 — 관리자 콘솔
+</footer>
+
+<script src="/js/vendor/htmx.min.js" defer></script>
+<script src="/js/app.js" defer></script>
+<th:block layout:fragment="scripts"/>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<!-- 공통 오류 (404 외 전 상태) — standalone. 상세 메시지는 노출하지 않는다(정보 노출 방지). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>오류가 발생했습니다</title>
+    <link rel="icon" href="data:,"/>
+    <link rel="stylesheet" href="/css/output.css"/>
+</head>
+<body class="bg-bg text-fg">
+<main class="max-w-content mx-auto px-4" style="padding-top:96px;text-align:center">
+    <p class="text-display-sm text-danger-icon" th:text="${status != null ? status : '오류'}">500</p>
+    <h1 class="text-heading-md" style="margin-top:8px">요청을 처리하지 못했습니다</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        잠시 후 다시 시도해 주세요. 문제가 계속되면 관리자에게 문의해 주세요.</p>
+    <p style="margin-top:24px">
+        <a class="krds-btn krds-btn-primary" href="/">홈으로</a>
+    </p>
+</main>
+</body>
+</html>

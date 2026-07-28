@@ -1,0 +1,90 @@
+/* ============================================================================
+ * layout-002 (B안 콤팩트 헤더 + 메가메뉴 + LNB 2단) — 구조 전용 CSS
+ * 색은 토큰 변수만 참조(테마·hc 자동 반영). 원전: wireframe/frame002/layout.html
+ * ==========================================================================*/
+
+/* 스킵 링크 (A안 동일) */
+.l2-skip {
+  position: absolute; left: -9999px; top: 0; z-index: 100;
+  background: var(--brand-50); color: #fff; padding: 8px 16px;
+  border-radius: 0 0 6px 0; font-weight: 700;
+}
+.l2-skip:focus { left: 0; }
+
+/* ② GNB 전체 펼침형 (2026-07-28 — 원본 대학 사이트 방식)
+   hover/focus-within 시 전 그룹의 2~3뎁스가 풀폭 패널로 동시 펼침.
+   1뎁스·패널 컬럼은 동일 grid(repeat(N,1fr) — 템플릿 th:style 주입)로 정렬. */
+.l2-gnb2-wrap { position: relative; }
+.l2-gnb2-top { display: grid; }
+.l2-gnb2-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 48px; padding: 0 8px; font-weight: 700;
+  border-bottom: 3px solid transparent; text-align: center;
+}
+.l2-gnb2-link:hover { color: var(--brand-60); background: var(--c-surface-subtle); }
+.l2-gnb2-link:focus-visible { outline: 2px solid var(--brand-50); outline-offset: -2px; }
+.l2-gnb2-link.l2-active { color: var(--brand-60); border-bottom-color: var(--brand-50); }
+
+.l2-gnb2-panel {
+  display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 40;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line); border-top: 2px solid var(--brand-50);
+  box-shadow: var(--shadow-e3); padding: 16px 0 24px;
+}
+.l2-gnb2-wrap:hover .l2-gnb2-panel,
+.l2-gnb2-wrap:focus-within .l2-gnb2-panel { display: grid; }
+.l2-gnb2-panel > ul { padding: 0 8px; border-left: 1px solid var(--c-divider); }
+.l2-gnb2-panel > ul:first-child { border-left: none; }
+.l2-gnb2-panel a {
+  display: block; padding: 6px 8px; font-size: 15px; text-align: center;
+}
+.l2-gnb2-panel a:hover { color: var(--brand-60); text-decoration: underline; background: var(--c-surface-subtle); }
+.l2-gnb2-sub a { font-size: 13px; color: var(--c-fg-subtle); }
+
+/* 모바일 — hover 패널 부적합: 패널 미출력(전체 메뉴는 ☰ 사이트맵), 1뎁스는 가로 스크롤 */
+@media (max-width: 767px) {
+  .l2-gnb2-wrap:hover .l2-gnb2-panel,
+  .l2-gnb2-wrap:focus-within .l2-gnb2-panel { display: none; }
+  .l2-gnb2-top { display: flex; overflow-x: auto; }
+  .l2-gnb2-link { flex: none; white-space: nowrap; padding: 0 12px; }
+}
+
+/* ③ 전체메뉴 = /{sc}/sitemap 링크 — 메가메뉴 모달 폐기(2026-07-28), 관련 스타일 제거 */
+
+/* ④ 페이지 타이틀 밴드 — 제목 + breadcrumb + SUB_HERO 우측 슬롯 통합 (다크) */
+.l2-title-band { background: var(--c-fg-strong); color: var(--c-fg-on); }
+.hc .l2-title-band { background: var(--c-surface-subtle); }
+.l2-title-band .krds-breadcrumb,
+.l2-title-band .krds-breadcrumb a { color: var(--c-line); }
+.l2-title-band .krds-breadcrumb [aria-current="page"] { color: var(--c-fg-on); }
+
+/* ⑤ 본문 — LNB 있는 서브페이지만 2단 그리드, 그 외 1단 풀폭 */
+.l2-body.l2-with-lnb {
+  display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px;
+}
+@media (max-width: 767px) {
+  .l2-body.l2-with-lnb { grid-template-columns: 1fr; }
+}
+
+/* LNB — 현재 그룹의 2~3뎁스 아코디언(<details>), 현재 위치 강조 */
+.l2-lnb { border: 1px solid var(--c-line); border-radius: var(--radius-medium); overflow: hidden; align-self: start; }
+.l2-lnb-head {
+  display: block; padding: 12px 16px; font-weight: 700;
+  background: var(--c-surface-subtle); border-bottom: 2px solid var(--c-line-strong);
+}
+.l2-lnb a { display: block; padding: 10px 16px; border-bottom: 1px solid var(--c-divider); }
+.l2-lnb a:hover { background: var(--c-surface-subtle); }
+.l2-lnb a.l2-active { color: var(--brand-60); font-weight: 700; background: var(--brand-5); }
+.l2-lnb details > summary {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; cursor: pointer; list-style: none; font-weight: 700;
+  border-bottom: 1px solid var(--c-divider);
+}
+.l2-lnb details > summary::-webkit-details-marker { display: none; }
+.l2-lnb details > summary::after {
+  content: ""; width: 7px; height: 7px; flex: none;
+  border-right: 2px solid var(--c-fg-subtle); border-bottom: 2px solid var(--c-fg-subtle);
+  transform: rotate(-45deg); transition: transform .2s;
+}
+.l2-lnb details[open] > summary::after { transform: rotate(45deg); }
+.l2-lnb details a { padding-left: 32px; font-size: 15px; }

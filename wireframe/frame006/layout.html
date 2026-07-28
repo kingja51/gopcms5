@@ -69,15 +69,15 @@
     아이콘은 self-host SVG 스프라이트(이모지는 자리표시). 데스크톱(≥1024px)에서는 display:none → 상단 가로 내비로 전환.</span>
   </div>
 
-  <!-- ══════════ 모바일: "학과" 탭 전체메뉴 (1~3뎁스) ══════════ -->
+  <!-- ══════════ 모바일: "학과" 탭 사이트맵 (1~3뎁스) ══════════ -->
   <div class="wf-col">
-    <div class="wf-caption">📱 "학과" 탭 전체메뉴 — 1~3뎁스 메뉴 뷰 (정본)</div>
+    <div class="wf-caption">📱 "학과" 탭 사이트맵 — 1~3뎁스 메뉴 뷰 (정본)</div>
     <div class="wf-phone">
       <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
       <div class="wf-phone-url">http://127.0.0.1:8080/ai/sitemap</div>
 
       <div class="wf-appbar">
-        <b>학과 전체메뉴</b><span class="wf-grow"></span><span class="wf-chip">사이트맵 전체 펼치기</span><span class="wf-chip">🔍</span>
+        <b>학과 사이트맵</b><span class="wf-grow"></span><span class="wf-chip">사이트맵 전체 펼치기</span><span class="wf-chip">🔍</span>
       </div>
 
       <div class="wf-p" style="padding:12px 14px">
@@ -97,9 +97,9 @@
           <div class="wf-band" style="padding:10px 12px"><b style="font-size:12.5px">▸ 연구</b> <span style="font-size:10px;color:#94a3b8">연구실 · 연구성과</span></div>
           <div class="wf-band" style="border-bottom:none;padding:10px 12px"><b style="font-size:12.5px">▸ 커뮤니티</b> <span style="font-size:10px;color:#94a3b8">공지 · 소식 · 세미나 · 자료실</span></div>
         </div>
-        <span class="wf-note"><b>출력 규칙(전 안 공통)</b> — 메뉴("학과" 탭 전체메뉴·데스크톱 드롭 패널)는 <b>1~3뎁스까지만 노출</b>.
+        <span class="wf-note"><b>출력 규칙(전 안 공통)</b> — 메뉴("학과" 탭 사이트맵·데스크톱 드롭 패널)는 <b>1~3뎁스까지만 노출</b>.
         4뎁스(전공필수·전공선택, 석사·박사과정, 휴·복학/졸업 서식)는 메뉴에 노출하지 않고 <b>3뎁스 페이지 내 탭/필터</b>로 처리.
-        사이트맵 풀 뷰(search-sitemap.html, ?view=full)만 1~4뎁스 전체 전개. 데이터는 <b>siteContext.menuTree 하나</b>(tb_menu depth 1~4 저장) — 전체메뉴·사이트맵이 렌더 뎁스만 달리함.
+        사이트맵 풀 뷰(search-sitemap.html, ?view=full)만 1~4뎁스 전체 전개. 데이터는 <b>siteContext.menuTree 하나</b>(tb_menu depth 1~4 저장) — 사이트맵·사이트맵이 렌더 뎁스만 달리함.
         1뎁스 그룹 = 네이티브 &lt;details&gt;/&lt;summary&gt; 아코디언, 3뎁스 = 앵커/탭/카테고리 직링크.</span>
       </div>
 
@@ -219,7 +219,7 @@
           <tr><td>fragments/tabbar (신설)</td><td>하단 탭바 5개 — 현재 URL prefix 로 active 서버 판정, position:fixed 는 모바일 브레이크포인트에서만</td></tr>
           <tr><td>본문 컨테이너</td><td>와이드 컨테이너 → max-width 860px 센터 컬럼. LNB/2단 그리드 조각 미사용</td></tr>
           <tr><td>breadcrumb·SUB_HERO</td><td>데스크톱 전용(모바일 display:none) — 모바일은 앱바 타이틀+뒤로가기가 대체</td></tr>
-          <tr><td>메뉴 노출 뎁스</td><td><b>전체메뉴("학과" 탭)·드롭 패널 = 1~3뎁스, 사이트맵 풀 뷰 = 1~4뎁스 전체</b>(전 안 공통 원칙). siteContext.menuTree 하나로 렌더 뎁스만 달리함 — 4뎁스는 3뎁스 페이지 내 탭/필터</td></tr>
+          <tr><td>메뉴 노출 뎁스</td><td><b>사이트맵("학과" 탭)·드롭 패널 = 1~3뎁스, 사이트맵 풀 뷰 = 1~4뎁스 전체</b>(전 안 공통 원칙). siteContext.menuTree 하나로 렌더 뎁스만 달리함 — 4뎁스는 3뎁스 페이지 내 탭/필터</td></tr>
           <tr><td>변경 없음</td><td>라우트·컨트롤러·tb_menu·<b>tb_role_url_access(무매칭 DENY — 새 URL 없어 추가 등록 불필요)</b>·팝업/좋아요/푸터 조각·CSP nonce·htmx 규약</td></tr>
         </table>
         <span class="wf-note">스크립트 계층은 A안과 동일 규약 — 외부 .js + CSP nonce, 이벤트 위임(document 1회 + closest('[data-action]')), htmx:load 멱등 초기화(data-initialized 가드), 인라인 스크립트/핸들러 금지, self-host(CDN 금지). 뒤로가기 민감 화면(검색 결과·무한스크롤 피드)은 hx-history="false".</span>

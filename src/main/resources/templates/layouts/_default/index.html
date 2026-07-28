@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!-- 랜딩(홈) — /{siteCode}/index (conventions §5). 공용 1벌 — 레이아웃별 오버라이드 가능.
+     모델(P4 ContentUsrController): menuTree(공통), recentContents(선택) — 전부 null-safe -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<body>
+<main layout:fragment="content">
+
+    <!-- 히어로 밴드 (MAIN_HERO 배너 캐러셀은 P7 배너관리 — 그 전까지 사이트명 히어로) -->
+    <section class="bg-surface-subtle rounded-large p-10 text-center">
+        <h1 class="text-display-sm" th:text="${site != null ? site.siteName : '환영합니다'}">사이트명</h1>
+        <p class="text-body-lg text-fg-subtle" style="margin-top:8px"
+           th:if="${site != null and site.description != null}" th:text="${site.description}">소개</p>
+    </section>
+
+    <!-- 바로가기 타일 — 1뎁스 메뉴 -->
+    <section th:if="${menuTree != null and !menuTree.isEmpty()}" style="margin-top:32px">
+        <h2 class="text-heading-md" style="margin-bottom:16px">바로가기</h2>
+        <div class="grid grid-cols-12 gap-4">
+            <a th:each="m1 : ${menuTree}" th:href="${m1.href != null ? m1.href : '#'}"
+               class="col-span-6 md:col-span-4 lg:col-span-2 krds-card text-center"
+               style="text-decoration:none">
+                <span class="text-label-md font-bold text-fg" th:text="${m1.name}">메뉴</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- 최신 컨텐츠 (P4 모델 — 없으면 빈 상태) -->
+    <section style="margin-top:32px">
+        <h2 class="text-heading-md" style="margin-bottom:16px">새 소식</h2>
+        <div th:if="${recentContents == null or recentContents.isEmpty()}"
+             class="krds-card text-center text-fg-subtle text-body-sm">등록된 소식이 없습니다.</div>
+        <ul th:if="${recentContents != null and !recentContents.isEmpty()}" class="krds-card" style="padding:0">
+            <li th:each="c : ${recentContents}" class="border-b border-divider">
+                <a class="flex items-center gap-3 p-4" style="text-decoration:none"
+                   th:href="${'/' + site.siteCode + '/' + c.slug}">
+                    <span class="text-body-md text-fg grow" th:text="${c.title}">제목</span>
+                    <span class="text-body-xs text-fg-subtle"
+                          th:text="${c.publishedAt != null ? #temporals.format(c.publishedAt, 'yyyy-MM-dd') : ''}">날짜</span>
+                </a>
+            </li>
+        </ul>
+    </section>
+
+</main>
+</body>
+</html>

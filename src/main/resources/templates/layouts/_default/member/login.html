@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<!-- 사용자 로그인 — /login?siteCode={sc}. SiteResolveFilter 가 siteCode 파라미터로
+     사이트를 해석하므로 해당 사이트의 레이아웃·테마 안에서 렌더된다.
+     hidden siteCode 가 인증(MemberAuthenticationProvider)의 사이트 스코프를 전달. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="${'로그인 — ' + (site != null ? site.siteName : 'gopcms5')}">로그인</title>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <div class="krds-card shadow-e2" style="max-width:420px;margin:32px auto;padding:32px">
+        <h1 class="text-heading-md text-fg-strong">로그인</h1>
+        <p class="text-body-sm text-fg-subtle" style="margin-top:4px"
+           th:text="${site != null ? site.siteName + ' 회원 로그인' : '회원 로그인'}">회원 로그인</p>
+
+        <div th:if="${param.error}" role="alert" class="krds-alert krds-alert-danger" style="margin-top:16px">
+            <span aria-hidden="true">✕</span><p>로그인에 실패했습니다. 입력 정보를 확인해 주세요.</p>
+        </div>
+
+        <form th:action="@{/login}" method="post" style="margin-top:24px;display:grid;gap:16px">
+            <input type="hidden" name="siteCode"
+                   th:value="${site != null ? site.siteCode : ''}"/>
+            <div>
+                <label for="username" class="text-label-sm font-bold">아이디</label>
+                <input id="username" name="username" class="krds-input" autocomplete="username" required autofocus/>
+            </div>
+            <div>
+                <label for="password" class="text-label-sm font-bold">비밀번호</label>
+                <input id="password" name="password" type="password" class="krds-input"
+                       autocomplete="current-password" required/>
+            </div>
+            <button type="submit" class="krds-btn krds-btn-primary krds-btn-lg" style="width:100%">로그인</button>
+        </form>
+
+        <p class="text-body-xs text-fg-subtle" style="margin-top:16px">
+            회원가입·아이디/비밀번호 찾기는 회원 도메인 페이즈에서 제공됩니다.</p>
+    </div>
+
+</main>
+</body>
+</html>

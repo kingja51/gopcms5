@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.site.mapper.SiteMapper">
+
+    <!-- 3축 해석 조인 — template-resolver-design.md §2 확정 쿼리.
+         폴백(krds·''·layout-001)은 SQL 이 아닌 SiteServiceImpl 단일 지점에서 적용. -->
+    <sql id="selectContext">
+        SELECT s.site_id,
+               s.site_code,
+               s.site_name,
+               s.default_lang,
+               s.description,
+               s.head_meta,
+               s.copyright,
+               t.template_code,
+               th.css_class AS theme_class,
+               l.layout_code
+        FROM tb_site s
+        LEFT JOIN tb_template t  ON t.template_id = s.template_id
+        LEFT JOIN tb_theme    th ON th.theme_id   = s.theme_id
+        LEFT JOIN tb_layout   l  ON l.layout_id   = COALESCE(s.layout_id, t.default_layout_id)
+    </sql>
+
+    <select id="findBySiteCode" resultType="com.gonet.primary.site.dto.SiteContext">
+        <include refid="selectContext"/>
+        WHERE s.site_code = #{siteCode}
+          AND s.use_yn = 'Y'
+          AND s.delete_yn = 'N'
+    </select>
+
+    <select id="findDefaultSite" resultType="com.gonet.primary.site.dto.SiteContext">
+        <include refid="selectContext"/>
+        WHERE s.default_yn = 'Y'
+          AND s.use_yn = 'Y'
+          AND s.delete_yn = 'N'
+        ORDER BY s.sort_order
+        LIMIT 1
+    </select>
+
+    <select id="findAllActive" resultType="com.gonet.primary.site.dto.SiteContext">
+        <include refid="selectContext"/>
+        WHERE s.use_yn = 'Y'
+          AND s.delete_yn = 'N'
+        ORDER BY s.sort_order
+    </select>
+
+</mapper>

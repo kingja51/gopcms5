@@ -23,17 +23,28 @@
   KRDS `theme-*`/`hc` 클래스)를 병행 선택한다. **템플릿=구조, 테마=색** 으로 축을 분리.
 - 템플릿 전환은 데이터 변경 없이 `template_code` 값 변경만으로 즉시 이루어져야 한다(§6).
 
-### 1.1 와이어프레임 → 템플릿 코드 매핑
+### 1.1 와이어프레임 → 레이아웃 코드 매핑
 
-| 템플릿 코드 | 원전 | 구조 요약 |
+> 3축 확정(2026-07-28) 후 와이어프레임 7종은 **레이아웃**(구조) 축이다 — 아래 코드는
+> tb_layout.layout_code (V2 시드). 시각 언어 템플릿 8종(krds·blueprint-001~midnight-007)은
+> README §3 및 V3 시드 참조.
+>
+> **[개정 — 뷰 해석 최신 규칙]** 본 문서 §2·§3 의 `tpl/{templateCode}` 뷰 재작성 서술은
+> 3축 확정으로 대체되었다. 구현 정본은 `SiteTemplateViewResolver` — **3단 폴백**:
+> `front/x` → ① `sites/{siteCode}/x`(사이트 전용 — "각 사이트 랜딩은 다르게" 커스텀 HTML)
+> → ② `layouts/{layoutCode}/x`(레이아웃 오버라이드) → ③ `layouts/_default/x`(공용).
+> layout.html 은 ②에만 존재(폴백 금지·기동 스모크). CSS 는 템플릿 축(/tmpl/css/{code}.css),
+> 클래스는 테마 축 — §2 흐름의 원칙(캐시 안전 재작성·decorate 동적 지정)은 유효.
+
+| 레이아웃 코드 | 원전 | 구조 요약 |
 |---|---|---|
-| `TPL-A-BAND` | frame001 | 표준 GNB 밴드형(기준안) — 호버 드롭다운, 본문 1단 와이드 |
-| `TPL-B-MEGA` | frame002 | 콤팩트 헤더 + 메가메뉴 오버레이 + 좌 LNB 2단 |
-| `TPL-C-SIDE` | frame003 | 좌측 고정 다크 사이드바 GNB(LNB 겸용), 본문 풀폭 |
-| `TPL-D-MAGAZINE` | frame004 | 원페이지 풀블리드 매거진 — 오버레이 헤더 + 풀스크린 메뉴 |
-| `TPL-E-BENTO` | frame005 | 포털형 벤토 대시보드 — 위젯 카드, htmx 개별 로드 |
-| `TPL-F-APP` | frame006 | 모바일 퍼스트 앱형 — 하단 탭바 5개, 데스크톱 협폭 |
-| `TPL-G-GOV` | frame007 | 공공기관 정석 3단 헤더 + 좌 LNB 3뎁스(접근성 보수 기준) |
+| `layout-001` | frame001 | 표준 GNB 밴드형(기준안) — 호버 드롭다운, 본문 1단 와이드 |
+| `layout-002` | frame002 | 콤팩트 헤더 + 전체메뉴(사이트맵 링크 — 모달 폐기 2026-07-28) + 좌 LNB 2단 |
+| `layout-003` | frame003 | 좌측 고정 다크 사이드바 GNB(LNB 겸용), 본문 풀폭 |
+| `layout-004` | frame004 | 원페이지 풀블리드 매거진 — 오버레이 헤더 + 풀스크린 메뉴 |
+| `layout-005` | frame005 | 포털형 벤토 대시보드 — 위젯 카드, htmx 개별 로드 |
+| `layout-006` | frame006 | 모바일 퍼스트 앱형 — 하단 탭바 5개, 데스크톱 협폭 |
+| `layout-007` | frame007 | 공공기관 정석 3단 헤더 + 좌 LNB 3뎁스(접근성 보수 기준) |
 
 ### 1.2 화면 유형 계약 (전 템플릿 공통 — 와이어프레임 8종 그대로)
 
@@ -169,10 +180,14 @@ _default 페이지가 어느 레이아웃에 끼워져도 동작한다.
 
 ## 4. DB 설계 (템플릿 축 핵심)
 
+PK 는 전 테이블 공통 규칙 `VARCHAR(40)` = `접두어(3)+"_"+UUID v7`
+([conventions.md](conventions.md) §1~2 — tb_template=`tpl`, tb_site=`sit`).
+
 ```sql
 -- 템플릿관리
 CREATE TABLE tb_template (
-  template_code  VARCHAR(30) PRIMARY KEY,     -- TPL-A-BAND …
+  template_id    VARCHAR(40) PRIMARY KEY,     -- 'tpl_0189…' (Uid.next(UidPrefix.TPL))
+  template_code  VARCHAR(30) UNIQUE NOT NULL, -- TPL-A-BAND … (자연키 — 뷰 경로·CSS 파일명)
   template_name  VARCHAR(100) NOT NULL,       -- "표준 GNB 밴드형"
   wireframe_ref  VARCHAR(30),                 -- frame001 (원전 추적)
   thumbnail_path VARCHAR(255),                -- 관리자 선택 UI 미리보기 이미지
@@ -185,15 +200,17 @@ CREATE TABLE tb_template (
 
 -- 사이트관리 (템플릿 선택 지점)
 CREATE TABLE tb_site (
-  site_id        BIGINT PRIMARY KEY,          -- fdl.idgnr 채번
+  site_id        VARCHAR(40) PRIMARY KEY,     -- 'sit_0189…' (Uid.next(UidPrefix.SIT))
   site_code      VARCHAR(20) UNIQUE NOT NULL, -- ai · med · me … (서브도메인/path 겸용)
   site_name      VARCHAR(100) NOT NULL,
   domain         VARCHAR(100),                -- ai.example.ac.kr (Host 매칭용, null 허용)
-  template_code  VARCHAR(30) NOT NULL REFERENCES tb_template,  -- ★ 선택된 템플릿
+  template_id    VARCHAR(40) NOT NULL REFERENCES tb_template,  -- ★ 선택된 템플릿(FK)
   theme          VARCHAR(50) DEFAULT '',      -- '' | theme-indigo | theme-teal … [+ hc]
   use_yn         CHAR(1) DEFAULT 'Y',
   reg_dt, reg_id, mod_dt, mod_id
 );
+-- Resolver 는 SiteContext 적재 시 template_id 조인으로 template_code 를 확보해 사용
+-- (뷰 경로 tpl/{template_code}/** 는 자연키 기준 — UUID 가 경로에 노출되지 않음)
 ```
 
 나머지 7개 기능 테이블(tb_menu · tb_content · tb_bbs_master/article · tb_admin ·

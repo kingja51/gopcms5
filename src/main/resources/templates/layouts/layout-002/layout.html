@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     layout-002 — B안 콤팩트 헤더 + 메가메뉴 + LNB 2단 (원전: wireframe/frame002)
+     ----------------------------------------------------------------------------
+     A안과의 차이(와이어프레임 "바뀌는 것" 표 그대로):
+       · 마스트헤드+GNB 밴드 → ①유틸바 + ②콤팩트 헤더(1뎁스만) + ☰사이트맵
+         (※ 2026-07-28 결정: 메가메뉴 모달 폐기 — ☰ 는 /{sc}/sitemap 링크, 명칭 "사이트맵")
+       · SUB_HERO 풀폭 + breadcrumb 별도 밴드 → ④페이지 타이틀 밴드로 통합
+       · 서브페이지 본문 → ⑤LNB(현재 그룹 2~3뎁스 아코디언) + 본문 2단.
+         LNB 유무 판단 = breadcrumb 모델 존재(홈·사이트맵은 1단 풀폭)
+     슬롯 계약·데이터(menuTree·breadcrumb·content)·라우트는 A안과 동일 — 교체 자유 근거.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:classappend="${themeClass}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${site != null ? site.siteName : 'gopcms5'}">gopcms5</title>
+    <link rel="icon" href="data:,"/>
+    <link rel="stylesheet" href="/css/output.css"/>
+    <link rel="stylesheet" th:href="@{${'/tmpl/css/' + (site != null ? site.templateCode : 'krds') + '.css'}}"/>
+    <link rel="stylesheet" href="/css/layouts/layout-002.css"/>
+    <th:block th:if="${site != null and site.headMeta != null}" th:utext="${site.headMeta}"/>
+</head>
+<body class="bg-bg text-fg">
+
+<a class="l2-skip" href="#content">본문으로 건너뛰기</a>
+
+<!-- ① 유틸바 — 관련 사이트·고대비 (날씨·로그인·알림은 P4+/P6 자리) -->
+<div class="bg-surface-subtle border-b border-divider">
+    <div class="max-w-content mx-auto px-4 py-1 flex items-center gap-3 text-body-xs text-fg-subtle">
+        <a href="https://www.konyang.ac.kr" target="_blank" rel="noopener">건양대학교</a>
+        <span class="grow"></span>
+        <span id="weather-slot"></span>
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm"
+                data-action="toggle-hc" aria-pressed="false">◐ 선명한 화면</button>
+    </div>
+</div>
+
+<!-- ② 콤팩트 헤더 + GNB 전체 펼침형 (2026-07-28 결정: 원본 대학 사이트 방식 —
+     메뉴 hover/focus 시 전 그룹의 2~3뎁스가 풀폭 패널로 한꺼번에 펼쳐진다.
+     1뎁스와 패널 컬럼을 동일 grid(repeat(N,1fr))로 정렬 — 모바일은 패널 미출력, ☰ 사이트맵 사용) -->
+<header class="bg-surface border-b-2 border-line-strong">
+    <div class="max-w-content mx-auto px-4 py-2 flex items-center gap-2 flex-wrap">
+        <a class="text-heading-sm text-fg-strong" style="text-decoration:none"
+           th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}"
+           th:text="${site != null ? site.siteName : 'gopcms5'}">사이트명</a>
+        <span class="grow"></span>
+        <!-- ③ 사이트맵 — 사이트맵 페이지 연결 (메가메뉴 모달 폐기·명칭 통일 2026-07-28) -->
+        <a class="krds-btn krds-btn-secondary krds-btn-sm"
+           th:href="${site != null ? '/' + site.siteCode + '/sitemap' : '/main/sitemap'}">☰ 사이트맵</a>
+    </div>
+
+    <div class="l2-gnb2-wrap max-w-content mx-auto px-4" th:if="${menuTree != null}">
+        <nav class="l2-gnb2-top" aria-label="주 메뉴"
+             th:style="'grid-template-columns:repeat(' + ${menuTree.size()} + ',1fr)'">
+            <a th:each="m1 : ${menuTree}" class="l2-gnb2-link text-label-md"
+               th:href="${m1.href != null ? m1.href
+                          : (m1.children != null and !m1.children.isEmpty() and m1.children[0].href != null
+                             ? m1.children[0].href : '#')}"
+               th:classappend="${currentUri != null and m1.href != null and currentUri.startsWith(m1.href)} ? 'l2-active'"
+               th:text="${m1.name}">대메뉴</a>
+        </nav>
+        <!-- 전체 펼침 패널 — hover/focus-within 시 표시, 컬럼은 1뎁스와 동일 그리드 -->
+        <div class="l2-gnb2-panel"
+             th:style="'grid-template-columns:repeat(' + ${menuTree.size()} + ',1fr)'">
+            <ul th:each="m1 : ${menuTree}">
+                <li th:each="m2 : ${m1.children}">
+                    <a th:href="${m2.href != null ? m2.href : '#'}" th:text="${m2.name}">2뎁스</a>
+                    <ul class="l2-gnb2-sub" th:if="${m2.children != null and !m2.children.isEmpty()}">
+                        <li th:each="m3 : ${m2.children}">
+                            <a th:href="${m3.href != null ? m3.href : '#'}"
+                               th:text="'└ ' + ${m3.name}">3뎁스</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>
+
+<!-- ④ 페이지 타이틀 밴드 — 제목+breadcrumb+SUB_HERO 통합. breadcrumb 없는 페이지(홈 등)는 미출력 -->
+<div class="l2-title-band" th:if="${breadcrumb != null and !breadcrumb.isEmpty()}">
+    <div class="max-w-content mx-auto px-4 py-4 flex items-center gap-4 flex-wrap">
+        <div class="grow">
+            <h1 class="text-heading-md" th:text="${breadcrumb[breadcrumb.size() - 1].name}">페이지 제목</h1>
+            <nav aria-label="현재 위치" style="margin-top:4px">
+                <ol class="krds-breadcrumb">
+                    <li><a th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}">홈</a></li>
+                    <li th:each="crumb, stat : ${breadcrumb}">
+                        <a th:if="${!stat.last and crumb.href != null}" th:href="${crumb.href}" th:text="${crumb.name}">메뉴</a>
+                        <span th:if="${!stat.last and crumb.href == null}" th:text="${crumb.name}">메뉴</span>
+                        <span th:if="${stat.last}" aria-current="page" th:text="${crumb.name}">현재</span>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+        <!-- SUB_HERO 축소 슬롯 (배너 P7 — 없으면 단색 밴드 폴백) -->
+        <div id="sub-hero-slot" style="min-width:200px"></div>
+    </div>
+</div>
+
+<!-- ⑤ 본문 — breadcrumb 있으면 LNB 2단, 없으면(홈·사이트맵) 1단 풀폭 -->
+<div class="l2-body max-w-content mx-auto px-4 py-8"
+     th:classappend="${breadcrumb != null and !breadcrumb.isEmpty()} ? 'l2-with-lnb'">
+
+    <aside class="l2-lnb" th:if="${breadcrumb != null and !breadcrumb.isEmpty() and menuTree != null}"
+           aria-label="섹션 메뉴">
+        <th:block th:each="group : ${menuTree}" th:if="${group.menuId == breadcrumb[0].menuId}">
+            <strong class="l2-lnb-head" th:text="${group.name}">그룹</strong>
+            <th:block th:each="m2 : ${group.children}">
+                <!-- 3뎁스 있는 2뎁스 = 아코디언(현재 경로만 펼침), 없는 2뎁스 = 링크 -->
+                <details th:if="${m2.children != null and !m2.children.isEmpty()}"
+                         th:attr="open=${breadcrumb.contains(m2)} ? open : null">
+                    <summary th:text="${m2.name}">2뎁스</summary>
+                    <a th:each="m3 : ${m2.children}" th:href="${m3.href != null ? m3.href : '#'}"
+                       th:classappend="${breadcrumb.contains(m3)} ? 'l2-active'"
+                       th:text="${m3.name}">3뎁스</a>
+                </details>
+                <a th:if="${m2.children == null or m2.children.isEmpty()}"
+                   th:href="${m2.href != null ? m2.href : '#'}"
+                   th:classappend="${breadcrumb.contains(m2)} ? 'l2-active'"
+                   th:text="${m2.name}">2뎁스</a>
+            </th:block>
+        </th:block>
+    </aside>
+
+    <main id="content" style="min-width:0" layout:fragment="content">본문</main>
+</div>
+
+<!-- ⑥ 좋아요/신고 밴드 — A안 동일 -->
+<div th:if="${content != null}" class="border-t border-divider">
+    <div class="max-w-content mx-auto px-4 py-4 text-center">
+        <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm" disabled>👍 좋아요</button>
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm" disabled>🚩 신고</button>
+        <span class="text-body-xs text-fg-disabled">(게시판 페이즈에서 활성)</span>
+    </div>
+</div>
+
+<!-- ⑦ 푸터 (공용 조각) + TOP -->
+<footer th:replace="~{fragments/site-footer :: footer}"></footer>
+<div class="max-w-content mx-auto px-4 py-2" style="text-align:right">
+    <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm" data-action="scroll-top">TOP ↑</button>
+</div>
+
+<script src="/js/vendor/htmx.min.js"></script>
+<script src="/js/app.js"></script>
+<th:block layout:fragment="scripts"/>
+
+</body>
+</html>

@@ -3,8 +3,9 @@
   ============================================================================
   GoPCMS - eGovFramework 5.0 호환 멀티사이트 CMS
   ============================================================================
+  · 2026-07-28 doc/pom.xml → 루트 승격 (PLAN.md P0)
   · Java 21 LTS (2026-05-12 Java 17 → 21 마이그레이션)
-  · Spring Boot 3.5.6 (Spring Framework 6.2.x 전이)
+  · Spring Boot 3.5.9 (Spring Framework 6.2.x 전이)
   · eGovFramework RTE 5.0.0 (호환성 필수 4종: fdl.cmmn / psl.dataaccess / ptl.mvc / fdl.logging
     + 선택: fdl.idgnr) — 호환성확인 가이드라인 2026-06-22 p.3 기준
       ※ eGov RTE 5.0.0 은 공식 Java 21 지원 명시는 없으나 실측 호환 확인.
@@ -92,7 +93,7 @@
         <caffeine.version>3.1.8</caffeine.version>
         <!--
           Springdoc 호환성 매트릭스:
-            · 2.x → Spring Boot 3.x (이 프로젝트 = 3.5.6 → 2.8.5 사용)
+            · 2.x → Spring Boot 3.x (이 프로젝트 = 3.5.x → 2.8.5 사용)
             · 3.x → Spring Boot 4.x (호환 안 됨 — 4.x 모듈을 transitively 끌어와
                                      ApplicationServletEnvironment NoClassDefFoundError)
           Spring Boot 메이저 버전 업그레이드 시 함께 변경.
@@ -163,6 +164,8 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
+        <!-- Spring Security — P6 활성화 (2026-07-28). 다중 FilterChain:
+             adm(/adm/**, /adm/login) / default(사용자 /login?siteCode=) — SecurityConfig -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
@@ -204,7 +207,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Thymeleaf: Layout Dialect + Security extras -->
+        <!-- Thymeleaf: Layout Dialect (+ Security extras 는 P6 에서 활성화) -->
         <dependency>
             <groupId>nz.net.ultraq.thymeleaf</groupId>
             <artifactId>thymeleaf-layout-dialect</artifactId>
@@ -242,6 +245,7 @@
                  log4j-to-slf4j" 로 부팅 실패.
                  본 프로젝트의 로깅 백엔드는 Logback. egov fdl-logging 모듈
                  자체를 제외해서 Spring Boot 의 Logback 으로 일원화.
+                 (fdl-logging 은 아래에서 직접 의존성으로 재선언 — 호환성 필수 4종)
                  ============================================================ -->
             <exclusions>
                 <exclusion>
@@ -333,7 +337,7 @@
         </dependency>
 
         <!-- ================================================================
-             3. Persistence (MyBatis + MariaDB)
+             3. Persistence (MyBatis + Flyway + JDBC 드라이버)
              ================================================================ -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
@@ -342,19 +346,37 @@
         </dependency>
 
         <!-- ================================================================
-             JDBC 드라이버 — 멀티 벤더 지원 (CLAUDE.md §1.1)
+             Flyway — SQL 스키마 버전 관리 (doc/flyway-migration.md 규약)
              ================================================================
-             3종 모두 war 에 포함하여, application-{profile}.yml 의 driver-class-name
-             설정만으로 운영 벤더를 전환할 수 있도록 한다. PostgreSQL 은 아래
-             별도 블록에 이미 정의됨.
+             · 마이그레이션 위치: db/migration/{primary|secondary|logging}/{vendor}
+               — 3-DB 라 Boot 자동구성 off, FlywayConfig 에서 DB 별 빈 3개 직접 구성
+             · 버전은 Spring Boot parent BOM 관리 (Flyway 11.x)
+             · Flyway 10+ 는 DB 별 모듈 분리 — MariaDB 는 flyway-mysql 이 담당.
+             ================================================================ -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- ================================================================
+             JDBC 드라이버 — 멀티 벤더 지원
+             ================================================================
+             모두 war 에 포함하여, application-{profile}.yml 의 driver-class-name
+             설정만으로 운영 벤더를 전환할 수 있도록 한다. 기본: MariaDB 11.8.
              ================================================================ -->
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <scope>runtime</scope>
         </dependency>
-
-
 
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -401,7 +423,7 @@
         <!-- JODConverter (LibreOffice headless wrapper, PPTX → PDF 변환).
              Spring Boot starter 가 jodconverter.local.* 프로퍼티 기반 자동 구성.
              LibreOffice 별도 설치 필요 — application-local.yml 의 office-home 으로 경로 지정.
-             gopcms2026.file.converter.enabled=false 면 자동 구성 비활성, PPTX 는 preview-unsupported 로 폴백. -->
+             gopcms.file.converter.enabled=false 면 자동 구성 비활성, PPTX 는 preview-unsupported 로 폴백. -->
         <dependency>
             <groupId>org.jodconverter</groupId>
             <artifactId>jodconverter-local</artifactId>
@@ -441,7 +463,7 @@
             <version>${hwpxlib.version}</version>
         </dependency>
 
-        <!-- CSV/DAT 파일 파싱 (선거인명부 대량 업로드) -->
+        <!-- CSV/DAT 파일 파싱 (대량 업로드) -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
@@ -488,7 +510,7 @@
             <version>${bucket4j.version}</version>
         </dependency>
 
-        <!-- ShedLock — 분산 cron 락 (C-3 회귀 가드).
+        <!-- ShedLock — 분산 cron 락.
              다중 인스턴스 배포 시 동일 시각 스케줄러 중복 실행 방지. logging DB 의
              shedlock 테이블에 lock row 를 두어 인스턴스 간 단일 진입 보장. -->
         <dependency>
@@ -527,7 +549,7 @@
         </dependency>
 
         <!-- ================================================================
-             7. Caffeine L1 캐시 (SiteContext 등)
+             7. Caffeine L1 캐시 (SiteContext · viewExists 등)
              ================================================================ -->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
@@ -536,7 +558,7 @@
         </dependency>
 
         <!-- ================================================================
-             8. 일정(RRULE) — S4
+             8. 일정(RRULE)
              ================================================================ -->
         <dependency>
             <groupId>org.mnode.ical4j</groupId>
@@ -547,13 +569,13 @@
         <!-- ================================================================
              9. API 문서 — SpringDoc OpenAPI 3 (Swagger UI)
              ────────────────────────────────────────────────────────────
-             Spring Boot 3.5.4 호환: 2.8.x 라인. (3.x 라인은 Spring Boot 4 전용 —
+             Spring Boot 3.5.x 호환: 2.8.x 라인. (3.x 라인은 Spring Boot 4 전용 —
              3.0.3 도입 시 spring-boot-validation/4.0.5 등 4.x 모듈이 transitively
              끌려와 ApplicationServletEnvironment NoClassDefFoundError 발생.)
              기본 엔드포인트:
                · /swagger-ui.html → /swagger-ui/index.html
                · /v3/api-docs (JSON) / /v3/api-docs.yaml
-             URL access 는 별도 DDL 로 관리자 전용 노출.
+             URL access 는 P6(Security) 에서 관리자 전용 노출.
              ================================================================ -->
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -564,7 +586,7 @@
         <!-- ================================================================
              10. Dev Tools
              ────────────────────────────────────────────────────────────
-             spring-boot-devtools 제거 (2026-05-12).
+             spring-boot-devtools 금지 (2026-05-12).
              Java 21 가상 스레드 + DevTools restartedMain 클래스 재로딩 +
              HikariCP active connection race 로 Windows JVM native crash
              (STATUS_ACCESS_VIOLATION 0xC0000005) 발생. 자동 재시작 가치 < 안정성.
@@ -609,8 +631,6 @@
             <scope>test</scope>
         </dependency>
 
-
-
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
@@ -624,9 +644,6 @@
             <scope>test</scope>
         </dependency>
 
-
-
-
         <!-- ================================================================
              11. NICE CheckPlus 안심본인인증
              ================================================================ -->
@@ -637,9 +654,6 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/NiceID_v1.1.jar</systemPath>
         </dependency>
-
-
-
 
     </dependencies>
 
@@ -749,7 +763,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Spotless (코드 포맷터) - S0 Week 3 에 활성화 -->
+            <!-- Spotless (코드 포맷터) -->
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
@@ -852,6 +866,8 @@
                     <include>**/*.yaml</include>
                     <include>**/*.properties</include>
                     <include>**/*.xml</include>
+                    <include>**/*.sql</include>
+                    <include>**/*.md</include>
                     <include>**/*.html</include>
                     <include>**/*.css</include>
                     <include>**/*.js</include>

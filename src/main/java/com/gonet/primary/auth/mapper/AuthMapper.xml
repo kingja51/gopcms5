@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.auth.mapper.AuthMapper">
+
+    <!-- 통합 로그인 조회 — user_type 필수 + MEMBER 는 site 스코프 (동일 login_id 양측 공존 가능) -->
+    <select id="findLoginUser" resultType="com.gonet.primary.auth.dto.LoginUser">
+        SELECT *
+        FROM vw_user_login
+        WHERE user_type = #{userType}
+          AND login_id = #{loginId}
+        <if test="siteId != null">
+          AND site_id = #{siteId}
+        </if>
+        <if test="siteId == null">
+          AND site_id IS NULL
+        </if>
+    </select>
+
+    <sql id="activeAllowIp">
+          AND use_yn = 'Y'
+          AND delete_yn = 'N'
+          AND (expires_at IS NULL OR expires_at &gt; NOW())
+    </sql>
+
+    <!-- /adm/login 폼 노출 게이트 — 등록된 IP 가 아니면 "/" 리다이렉트 (정책 2026-07-28) -->
+    <select id="countAllowIp" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_admin_allow_ip
+        WHERE ip_address = #{clientIp}
+        <include refid="activeAllowIp"/>
+    </select>
+
+    <!-- 인증 조건 — (admin_id, ip_address) 쌍이 참이어야 로그인 가능 -->
+    <select id="countAdminAllowIp" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_admin_allow_ip
+        WHERE admin_id = #{adminId}
+          AND ip_address = #{clientIp}
+        <include refid="activeAllowIp"/>
+    </select>
+
+    <update id="touchAllowIp">
+        UPDATE tb_admin_allow_ip
+        SET access_count = access_count + 1,
+            last_access_at = NOW()
+        WHERE admin_id = #{adminId}
+          AND ip_address = #{clientIp}
+    </update>
+
+    <!-- 실패: 5회 도달 시 30분 잠금 — 파생 컬럼을 먼저 계산(+1 기준) 후 카운트 증가 -->
+    <update id="memberLoginFail">
+        UPDATE tb_member
+        SET locked_until = IF(login_fail_count + 1 &gt;= 5, DATE_ADD(NOW(), INTERVAL 30 MINUTE), locked_until),
+            status = IF(login_fail_count + 1 &gt;= 5, 'LOCKED', status),
+            captcha_required_yn = IF(login_fail_count + 1 &gt;= 5, 'Y', captcha_required_yn),
+            login_fail_count = login_fail_count + 1
+        WHERE member_id = #{userId}
+    </update>
+
+    <update id="adminLoginFail">
+        UPDATE tb_admin
+        SET locked_until = IF(login_fail_count + 1 &gt;= 5, DATE_ADD(NOW(), INTERVAL 30 MINUTE), locked_until),
+            status = IF(login_fail_count + 1 &gt;= 5, 'LOCKED', status),
+            captcha_required_yn = IF(login_fail_count + 1 &gt;= 5, 'Y', captcha_required_yn),
+            login_fail_count = login_fail_count + 1
+        WHERE admin_id = #{userId}
+    </update>
+
+    <!-- 성공: 실패 카운트·잠금 해제 + 최종 로그인 기록 (잠금 기간 경과 후 성공 시 ACTIVE 복귀) -->
+    <update id="memberLoginSuccess">
+        UPDATE tb_member
+        SET login_fail_count = 0,
+            locked_until = NULL,
+            captcha_required_yn = 'N',
+            status = IF(status = 'LOCKED', 'ACTIVE', status),
+            last_login_at = NOW(),
+            last_login_ip = #{clientIp},
+            last_access_at = NOW()
+        WHERE member_id = #{userId}
+    </update>
+
+    <update id="adminLoginSuccess">
+        UPDATE tb_admin
+        SET login_fail_count = 0,
+            locked_until = NULL,
+            captcha_required_yn = 'N',
+            status = IF(status = 'LOCKED', 'ACTIVE', status),
+            last_login_at = NOW(),
+            last_login_ip = #{clientIp},
+            last_access_at = NOW()
+        WHERE admin_id = #{userId}
+    </update>
+
+</mapper>

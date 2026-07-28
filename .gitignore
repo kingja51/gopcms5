@@ -8,6 +8,8 @@ replay_pid*
 # ── Node / Tailwind 빌드 ─────────────────────
 node_modules/
 dist/
+# Tailwind 빌드 산출물 (npm run css — Maven generate-resources 가 재생성)
+src/main/resources/static/css/output.css
 
 # ── IDE ──────────────────────────────────────
 .idea/
@@ -26,6 +28,8 @@ Desktop.ini
 *.local
 .env
 .env.*
+# example 은 키 목록 문서 — 실비밀 금지 원칙 하에 커밋 허용
+!.env.example
 application-local.yml
 
 # ── 기타 ─────────────────────────────────────

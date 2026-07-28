@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!-- 컨텐츠 페이지 — /{siteCode}/{slug} (conventions §5). 공용 1벌.
+     모델(P4): content(title·body·publishedAt·viewCount·summary), breadcrumb.
+     body 는 저장측 sanitize 완료 HTML — th:utext 출력 (표시측 재이스케이프 금지) -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="${(content != null ? content.title + ' — ' : '') + (site != null ? site.siteName : '')}">제목</title>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <article th:if="${content != null}" style="max-width:800px;margin:0 auto">
+        <header class="border-b-2 border-line-strong" style="padding-bottom:16px;margin-bottom:24px">
+            <h1 class="text-heading-lg" th:text="${content.title}">제목</h1>
+            <p class="text-body-xs text-fg-subtle" style="margin-top:8px">
+                <span th:if="${content.publishedAt != null}"
+                      th:text="'게시 ' + ${#temporals.format(content.publishedAt, 'yyyy-MM-dd')}">게시일</span>
+                <span th:if="${content.viewCount != null}" th:text="'· 조회 ' + ${content.viewCount}">조회</span>
+            </p>
+        </header>
+        <div class="text-body-md" th:utext="${content.body}">본문</div>
+    </article>
+
+    <div th:if="${content == null}" class="krds-alert krds-alert-info" role="status" style="max-width:640px;margin:0 auto">
+        <span aria-hidden="true">i</span><p>준비 중인 페이지입니다.</p>
+    </div>
+
+</main>
+</body>
+</html>

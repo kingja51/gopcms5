@@ -1,0 +1,78 @@
+/* ============================================================================
+   layout-adm — 관리자 셸 구조 CSS (전역 output.css 위에 얹는 2층)
+   템플릿(/tmpl/css/*.css) 미로드 — 관리자는 사이트 3축 무관 (layout.html 주석 참조)
+   ============================================================================ */
+
+/* 스킵 링크 — 포커스 시에만 노출 */
+.ladm-skip {
+    position: absolute; left: -9999px; top: 0;
+    background: var(--color-gray-90); color: #fff;
+    padding: 8px 16px; z-index: 100;
+}
+.ladm-skip:focus { left: 0; }
+
+/* 상단바 — 어두운 밴드로 front 와 시각 구분 (관리자임을 즉시 인지) */
+.ladm-topbar {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--color-gray-95); color: #fff;
+    padding: 10px 20px;
+    position: sticky; top: 0; z-index: 50;
+}
+.ladm-brand { color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; }
+.ladm-brand span { font-weight: 400; color: var(--color-gray-30); margin-left: 4px; }
+.ladm-account { color: var(--color-gray-30); }
+.ladm-logout { color: #fff; border-color: var(--color-gray-60); }
+
+/* 셸 — 좌 LNB(고정폭) + 본문 */
+.ladm-shell {
+    display: grid; grid-template-columns: 232px minmax(0, 1fr);
+    min-height: calc(100vh - 96px);
+}
+.ladm-lnb {
+    border-right: 1px solid var(--color-line, #e5e7eb);
+    background: var(--color-surface, #fff);
+    padding: 16px 0 32px;
+}
+.ladm-lnb-group {
+    margin: 20px 20px 6px; font-size: 12px; font-weight: 700;
+    color: var(--color-gray-50, #6b7280); letter-spacing: .04em;
+}
+.ladm-lnb-group:first-child { margin-top: 4px; }
+.ladm-lnb-link {
+    display: block; padding: 8px 20px; font-size: 14px;
+    color: var(--color-gray-80, #1f2937); text-decoration: none;
+}
+a.ladm-lnb-link:hover { background: var(--color-gray-5, #f3f4f6); }
+.ladm-active {
+    background: var(--color-primary-5, #eef2ff);
+    color: var(--color-primary-60, #3730a3); font-weight: 700;
+    border-right: 3px solid var(--color-primary-60, #3730a3);
+}
+.ladm-disabled { color: var(--color-gray-40, #9ca3af); cursor: default; }
+.ladm-disabled em {
+    font-style: normal; font-size: 11px; margin-left: 6px;
+    padding: 1px 6px; border-radius: 8px;
+    background: var(--color-gray-5, #f3f4f6); color: var(--color-gray-50, #6b7280);
+}
+
+/* 본문 */
+.ladm-main { padding: 28px 32px 48px; }
+
+/* 푸터 */
+.ladm-footer {
+    border-top: 1px solid var(--color-line, #e5e7eb);
+    padding: 14px 20px;
+}
+
+/* 모바일 — LNB 를 상단 가로 스크롤 바로 강등 */
+@media (max-width: 768px) {
+    .ladm-shell { grid-template-columns: 1fr; }
+    .ladm-lnb {
+        display: flex; overflow-x: auto; white-space: nowrap;
+        border-right: 0; border-bottom: 1px solid var(--color-line, #e5e7eb);
+        padding: 8px 12px;
+    }
+    .ladm-lnb-group { display: none; }
+    .ladm-lnb-link { padding: 6px 10px; }
+    .ladm-active { border-right: 0; border-bottom: 2px solid var(--color-primary-60, #3730a3); }
+}
