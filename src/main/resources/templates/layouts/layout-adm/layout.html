@@ -31,9 +31,15 @@
 
 <!-- 상단바 -->
 <header class="ladm-topbar">
-    <a class="ladm-brand" th:href="@{/adm/index}">GOPCMS <span>관리자</span></a>
+    <a class="ladm-brand" th:href="@{/adm/index}">
+        <b class="text-heading-2xs">GOPCMS</b><span class="text-body-sm">관리자</span>
+    </a>
     <span class="grow"></span>
-    <span class="text-body-sm ladm-account" sec:authentication="name">admin</span>
+    <span class="ladm-account text-body-sm">
+        <span class="ladm-avatar text-label-sm" aria-hidden="true"
+              th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 1))}">A</span>
+        <span sec:authentication="name">admin</span>
+    </span>
     <form th:action="@{/adm/logout}" method="post" style="margin:0">
         <button type="submit" class="krds-btn krds-btn-tertiary krds-btn-sm ladm-logout">로그아웃</button>
     </form>
@@ -42,31 +48,31 @@
 <div class="ladm-shell">
     <!-- 좌측 LNB — P7 관리 모듈 순차 활성. aria-current 는 각 페이지가 지정 -->
     <nav class="ladm-lnb" aria-label="관리 메뉴">
-        <p class="ladm-lnb-group">일반</p>
-        <a class="ladm-lnb-link" th:href="@{/adm/index}"
+        <p class="ladm-lnb-group text-label-xs">일반</p>
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/index}"
            th:classappend="${currentUri == '/adm/index'} ? 'ladm-active'">대시보드</a>
 
-        <p class="ladm-lnb-group">사이트 구성</p>
-        <a class="ladm-lnb-link" th:href="@{/adm/site}"
+        <p class="ladm-lnb-group text-label-xs">사이트 구성</p>
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/site}"
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/site')} ? 'ladm-active'">사이트 관리</a>
-        <a class="ladm-lnb-link" th:href="@{/adm/template}"
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/template}"
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/template')} ? 'ladm-active'">템플릿 관리</a>
-        <a class="ladm-lnb-link" th:href="@{/adm/theme}"
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/theme}"
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/theme')} ? 'ladm-active'">테마 관리</a>
-        <a class="ladm-lnb-link" th:href="@{/adm/layout}"
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/layout}"
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/layout')} ? 'ladm-active'">레이아웃 관리</a>
-        <a class="ladm-lnb-link" th:href="@{/adm/menu}"
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/menu}"
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/menu')} ? 'ladm-active'">메뉴 관리</a>
-        <a class="ladm-lnb-link" th:href="@{/adm/content}"
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/content}"
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/content')} ? 'ladm-active'">컨텐츠 관리</a>
 
-        <p class="ladm-lnb-group">회원·권한</p>
-        <span class="ladm-lnb-link ladm-disabled">회원 관리 <em>예정</em></span>
-        <span class="ladm-lnb-link ladm-disabled">역할·권한 <em>예정</em></span>
+        <p class="ladm-lnb-group text-label-xs">회원·권한</p>
+        <span class="ladm-lnb-link text-body-sm ladm-disabled">회원 관리 <em class="text-label-xs">예정</em></span>
+        <span class="ladm-lnb-link text-body-sm ladm-disabled">역할·권한 <em class="text-label-xs">예정</em></span>
 
-        <p class="ladm-lnb-group">운영</p>
-        <span class="ladm-lnb-link ladm-disabled">접속 로그 <em>예정</em></span>
-        <span class="ladm-lnb-link ladm-disabled">공통 코드 <em>예정</em></span>
+        <p class="ladm-lnb-group text-label-xs">운영</p>
+        <span class="ladm-lnb-link text-body-sm ladm-disabled">접속 로그 <em class="text-label-xs">예정</em></span>
+        <span class="ladm-lnb-link text-body-sm ladm-disabled">공통 코드 <em class="text-label-xs">예정</em></span>
     </nav>
 
     <!-- 본문 -->

@@ -7,15 +7,18 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <h1 class="text-heading-lg" th:text="${theme.themeId} ? '테마 수정' : '테마 등록'">테마 등록</h1>
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('테마 등록·수정',
+            '소속 템플릿의 색 변형입니다.')}"></header>
 
     <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
 
-    <form th:action="@{/adm/theme/save}" method="post" class="ladm-form">
+    <section class="ladm-panel">
+        <div class="ladm-panel-body">
+        <form th:action="@{/adm/theme/save}" method="post" class="ladm-form">
         <input type="hidden" name="themeId" th:value="${theme.themeId}"/>
 
         <div class="ladm-field">
-            <label for="templateId">소속 템플릿 *</label>
+            <label for="templateId">소속 템플릿<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
             <select id="templateId" name="templateId" class="krds-select" required>
                 <option value="">선택하세요</option>
                 <option th:each="t : ${templates}" th:value="${t.templateId}"
@@ -27,12 +30,12 @@
 
         <div class="ladm-form-row">
             <div class="ladm-field">
-                <label for="themeCode">테마 코드 *</label>
+                <label for="themeCode">테마 코드<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="themeCode" name="themeCode" class="krds-input" required
                        th:value="${theme.themeCode}" pattern="[a-z0-9-]{1,30}"/>
             </div>
             <div class="ladm-field">
-                <label for="themeName">이름 *</label>
+                <label for="themeName">이름<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="themeName" name="themeName" class="krds-input" required
                        th:value="${theme.themeName}"/>
             </div>
@@ -63,12 +66,15 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/theme}" class="krds-btn krds-btn-secondary">목록</a>
+            <span class="grow"></span>
             <button type="submit" th:if="${theme.themeId}"
                     th:formaction="@{/adm/theme/delete}" formnovalidate
-                    class="krds-btn krds-btn-tertiary"
+                    class="krds-btn krds-btn-point"
                     data-confirm="이 테마를 삭제할까요?">삭제</button>
         </div>
-    </form>
+        </form>
+        </div>
+    </section>
 </div>
 </body>
 </html>

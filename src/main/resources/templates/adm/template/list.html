@@ -8,20 +8,21 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <h1 class="text-heading-lg">템플릿 관리</h1>
-    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
-        시각 언어(3축 중 색·타이포·간격) — 코드는 CSS 1장 <code>/tmpl/css/{코드}.css</code> 와 1:1 입니다.</p>
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('템플릿 관리',
+            '시각 언어(3축 중 색·타이포·간격) — 코드는 CSS 1장 <code>/tmpl/css/{코드}.css</code> 와 1:1 입니다.')}"></header>
 
     <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+    <section class="ladm-panel">
     <div th:replace="~{adm/fragments/adm-ui :: listbar('/adm/template')}"></div>
 
     <div class="ladm-tablewrap">
 
-      <table class="krds-table">
+      <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">템플릿 목록</caption>
         <thead>
         <tr>
-            <th>코드</th><th>이름</th><th>기본 레이아웃</th><th>설명</th>
-            <th class="num">테마</th><th class="num">사용 사이트</th><th class="center">사용</th>
+            <th scope="col">코드</th><th scope="col">이름</th><th scope="col">기본 레이아웃</th><th scope="col">설명</th>
+            <th scope="col" class="num">테마</th><th scope="col" class="num">사용 사이트</th><th scope="col" class="center">사용</th>
         </tr>
         </thead>
         <tbody>
@@ -40,10 +41,11 @@
             </td>
         </tr>
         <tr
-            th:replace="~{adm/fragments/adm-ui :: empty(7, ${page.content().isEmpty()})}"></tr>
+            th:replace="~{adm/fragments/adm-ui :: empty(7, ${page.content().isEmpty()}, '/adm/template/form')}"></tr>
         </tbody>
       </table>
     </div>
+    </section>
 
     <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/template')}"></nav>
 </div>

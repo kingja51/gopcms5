@@ -8,16 +8,19 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <h1 class="text-heading-lg" th:text="${menu.menuId} ? '메뉴 수정' : '메뉴 등록'">메뉴 등록</h1>
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('메뉴 등록·수정',
+            '상위 메뉴를 고르면 깊이는 자동으로 정해집니다.')}"></header>
 
     <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
 
-    <form th:action="@{/adm/menu/save}" method="post" class="ladm-form">
+    <section class="ladm-panel">
+        <div class="ladm-panel-body">
+        <form th:action="@{/adm/menu/save}" method="post" class="ladm-form">
         <input type="hidden" name="menuId" th:value="${menu.menuId}"/>
 
         <div class="ladm-form-row">
             <div class="ladm-field">
-                <label for="siteId">사이트 *</label>
+                <label for="siteId">사이트<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <select id="siteId" name="siteId" class="krds-select" required>
                     <option th:each="s : ${sites}" th:value="${s.siteId}"
                             th:selected="${s.siteId == menu.siteId}"
@@ -25,7 +28,7 @@
                 </select>
             </div>
             <div class="ladm-field">
-                <label for="menuName">메뉴명 *</label>
+                <label for="menuName">메뉴명<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="menuName" name="menuName" class="krds-input" required
                        th:value="${menu.menuName}"/>
             </div>
@@ -44,7 +47,7 @@
                 <p class="ladm-hint">깊이는 상위 메뉴에 따라 자동 결정됩니다(최대 4단계).</p>
             </div>
             <div class="ladm-field">
-                <label for="menuType">메뉴 유형 *</label>
+                <label for="menuType">메뉴 유형<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <select id="menuType" name="menuType" class="krds-select" required>
                     <option value="FOLDER" th:selected="${menu.menuType == 'FOLDER'}">폴더 (링크 없음)</option>
                     <option value="CONTENT" th:selected="${menu.menuType == 'CONTENT'}">컨텐츠 연결</option>
@@ -96,12 +99,15 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/menu(siteId=${menu.siteId})}" class="krds-btn krds-btn-secondary">목록</a>
+            <span class="grow"></span>
             <button type="submit" th:if="${menu.menuId}"
                     th:formaction="@{/adm/menu/delete}" formnovalidate
-                    class="krds-btn krds-btn-tertiary"
+                    class="krds-btn krds-btn-point"
                     data-confirm="이 메뉴를 삭제할까요?">삭제</button>
         </div>
-    </form>
+        </form>
+        </div>
+    </section>
 </div>
 </body>
 </html>

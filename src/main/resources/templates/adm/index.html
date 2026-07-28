@@ -1,29 +1,104 @@
 <!DOCTYPE html>
-<!-- 관리자 대시보드 — layouts/layout-adm 셸에 content 슬롯만 공급.
-     adm/** 뷰는 SiteTemplateViewResolver 재작성 제외(사이트 3축 무관).
-     관리 모듈(P7: 사이트/템플릿/메뉴/컨텐츠 CRUD)에서 카드가 실제 링크로 바뀐다. -->
+<!-- 관리자 대시보드 — 규모 요약(지표 카드) + 사이트 현황 표.
+     지표 카드는 각 관리 화면으로 가는 입구를 겸한다(클릭 가능). -->
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layouts/layout-adm/layout}">
 <head>
     <title>대시보드</title>
 </head>
 <body>
 <div layout:fragment="content">
-    <h1 class="text-heading-lg">대시보드</h1>
-    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
-        로그인 성공 — 관리 모듈은 순차 구축됩니다.</p>
 
-    <p class="text-body-sm" style="margin-top:16px">
-        <a th:href="@{/adm/password}" class="krds-link">비밀번호 변경</a>
-    </p>
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('대시보드',
+            '사이트 구성과 규모를 한눈에 봅니다. 숫자를 누르면 해당 관리 화면으로 이동합니다.')}"></header>
 
-    <div class="grid grid-cols-12 gap-4" style="margin-top:24px">
-        <div class="col-span-6 md:col-span-3 krds-card text-center text-fg-subtle">사이트관리 (예정)</div>
-        <div class="col-span-6 md:col-span-3 krds-card text-center text-fg-subtle">템플릿관리 (예정)</div>
-        <div class="col-span-6 md:col-span-3 krds-card text-center text-fg-subtle">메뉴관리 (예정)</div>
-        <div class="col-span-6 md:col-span-3 krds-card text-center text-fg-subtle">컨텐츠관리 (예정)</div>
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <!-- 규모 요약 — 숫자는 클릭해서 해당 관리 화면으로 -->
+    <div class="ladm-stats">
+        <a class="ladm-stat" th:href="@{/adm/site}">
+            <span class="ladm-stat-label text-label-md">사이트</span>
+            <span class="ladm-stat-value text-display-sm"
+                  th:text="${siteCount}">0</span>
+        </a>
+        <a class="ladm-stat" th:href="@{/adm/menu}">
+            <span class="ladm-stat-label text-label-md">메뉴</span>
+            <span class="ladm-stat-value text-display-sm" th:text="${menuCount}">0</span>
+        </a>
+        <a class="ladm-stat" th:href="@{/adm/content}">
+            <span class="ladm-stat-label text-label-md">컨텐츠</span>
+            <span class="ladm-stat-value text-display-sm" th:text="${contentCount}">0</span>
+        </a>
+        <a class="ladm-stat" th:href="@{/adm/template}">
+            <span class="ladm-stat-label text-label-md">템플릿 · 테마 · 레이아웃</span>
+            <span class="ladm-stat-value text-display-sm">
+                <span th:text="${templateCount}">0</span><span class="ladm-stat-unit text-body-md"> / </span
+                ><span th:text="${themeCount}">0</span><span class="ladm-stat-unit text-body-md"> / </span
+                ><span th:text="${layoutCount}">0</span>
+            </span>
+        </a>
     </div>
+
+    <!-- 사이트 현황 — 3축 배정과 규모를 한 줄에 -->
+    <section class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">사이트 현황</h2>
+            <span class="grow"></span>
+            <a th:href="@{/adm/site}" class="krds-btn krds-btn-tertiary krds-btn-sm">사이트 관리</a>
+        </div>
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">사이트별 3축 배정과 메뉴·컨텐츠 수</caption>
+                <thead>
+                <tr>
+                    <th scope="col">코드</th>
+                    <th scope="col">사이트명</th>
+                    <th scope="col">템플릿</th>
+                    <th scope="col">테마</th>
+                    <th scope="col">레이아웃</th>
+                    <th scope="col" class="num">메뉴</th>
+                    <th scope="col" class="num">컨텐츠</th>
+                    <th scope="col" class="center nowrap">바로가기</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${sites}">
+                    <td>
+                        <a th:href="@{/adm/site/form(siteId=${s.siteId})}" class="krds-link"
+                           th:text="${s.siteCode}">main</a>
+                        <span th:if="${s.defaultYn == 'Y'}"
+                              class="krds-badge ladm-badge-on" style="margin-left:6px">기본</span>
+                    </td>
+                    <td th:text="${s.siteName}">사이트</td>
+                    <td class="text-fg-subtle" th:text="${s.templateCode} ?: '기본(krds)'">krds</td>
+                    <td class="text-fg-subtle" th:text="${s.themeCode} ?: '기본'">-</td>
+                    <td class="text-fg-subtle" th:text="${s.layoutCode} ?: '템플릿 기본'">layout-001</td>
+                    <td class="num" th:text="${s.menuCount}">0</td>
+                    <td class="num" th:text="${s.contentCount}">0</td>
+                    <td class="center nowrap">
+                        <a th:href="@{'/' + ${s.siteCode} + '/index'}" target="_blank"
+                           class="krds-btn krds-btn-tertiary krds-btn-sm">사이트 보기</a>
+                    </td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(8, ${sites.isEmpty()}, '/adm/site/form')}"></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 계정 -->
+    <section class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">내 계정</h2>
+        </div>
+        <div class="ladm-panel-body">
+            <p class="text-body-sm text-fg-subtle" style="margin:0 0 12px">
+                비밀번호는 90일마다 만료되며, 만료되면 로그인이 거부됩니다.</p>
+            <a th:href="@{/adm/password}" class="krds-btn krds-btn-secondary">비밀번호 변경</a>
+        </div>
+    </section>
 </div>
 </body>
 </html>

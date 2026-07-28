@@ -7,30 +7,32 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <h1 class="text-heading-lg"
-        th:text="${template.templateId} ? '템플릿 수정' : '템플릿 등록'">템플릿 등록</h1>
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('템플릿 등록·수정',
+            '시각 언어 1벌 — 코드는 CSS 파일명이 됩니다.')}"></header>
 
     <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
 
-    <form th:action="@{/adm/template/save}" method="post" class="ladm-form">
+    <section class="ladm-panel">
+        <div class="ladm-panel-body">
+        <form th:action="@{/adm/template/save}" method="post" class="ladm-form">
         <input type="hidden" name="templateId" th:value="${template.templateId}"/>
 
         <div class="ladm-form-row">
             <div class="ladm-field">
-                <label for="templateCode">템플릿 코드 *</label>
+                <label for="templateCode">템플릿 코드<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="templateCode" name="templateCode" class="krds-input" required
                        th:value="${template.templateCode}" pattern="[a-z0-9-]{1,50}"/>
                 <p class="ladm-hint">CSS 파일명입니다 — <code>/tmpl/css/{코드}.css</code> 가 있어야 적용됩니다.</p>
             </div>
             <div class="ladm-field">
-                <label for="templateName">이름 *</label>
+                <label for="templateName">이름<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="templateName" name="templateName" class="krds-input" required
                        th:value="${template.templateName}"/>
             </div>
         </div>
 
         <div class="ladm-field">
-            <label for="defaultLayoutId">기본 레이아웃 *</label>
+            <label for="defaultLayoutId">기본 레이아웃<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
             <select id="defaultLayoutId" name="defaultLayoutId" class="krds-select" required>
                 <option value="">선택하세요</option>
                 <option th:each="l : ${layouts}" th:value="${l.layoutId}"
@@ -48,7 +50,7 @@
 
         <div class="ladm-field">
             <label for="designMd">디자인 지침(design-md)</label>
-            <textarea id="designMd" name="designMd" th:text="${template.designMd}"></textarea>
+            <textarea class="krds-textarea" id="designMd" name="designMd" th:text="${template.designMd}"></textarea>
         </div>
 
         <div class="ladm-field">
@@ -62,12 +64,15 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/template}" class="krds-btn krds-btn-secondary">목록</a>
+            <span class="grow"></span>
             <button type="submit" th:if="${template.templateId}"
                     th:formaction="@{/adm/template/delete}" formnovalidate
-                    class="krds-btn krds-btn-tertiary"
+                    class="krds-btn krds-btn-point"
                     data-confirm="이 템플릿을 삭제할까요?">삭제</button>
         </div>
-    </form>
+        </form>
+        </div>
+    </section>
 </div>
 </body>
 </html>

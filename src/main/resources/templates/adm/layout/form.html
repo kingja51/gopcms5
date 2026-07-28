@@ -7,24 +7,26 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <h1 class="text-heading-lg"
-        th:text="${layout.layoutId} ? '레이아웃 수정' : '레이아웃 등록'">레이아웃 등록</h1>
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('레이아웃 등록·수정',
+            '화면 구조 — 코드는 뷰 폴더명이 됩니다.')}"></header>
 
     <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
 
-    <form th:action="@{/adm/layout/save}" method="post" class="ladm-form">
+    <section class="ladm-panel">
+        <div class="ladm-panel-body">
+        <form th:action="@{/adm/layout/save}" method="post" class="ladm-form">
         <input type="hidden" name="layoutId" th:value="${layout.layoutId}"/>
 
         <div class="ladm-form-row">
             <div class="ladm-field">
-                <label for="layoutCode">레이아웃 코드 *</label>
+                <label for="layoutCode">레이아웃 코드<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="layoutCode" name="layoutCode" class="krds-input" required
                        th:value="${layout.layoutCode}" pattern="[a-z0-9-]{1,50}"/>
                 <p class="ladm-hint">뷰 폴더명입니다 —
                     <code>templates/layouts/{코드}/layout.html</code> 이 없으면 다음 기동이 중단됩니다.</p>
             </div>
             <div class="ladm-field">
-                <label for="layoutName">이름 *</label>
+                <label for="layoutName">이름<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="layoutName" name="layoutName" class="krds-input" required
                        th:value="${layout.layoutName}"/>
             </div>
@@ -60,12 +62,15 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/layout}" class="krds-btn krds-btn-secondary">목록</a>
+            <span class="grow"></span>
             <button type="submit" th:if="${layout.layoutId}"
                     th:formaction="@{/adm/layout/delete}" formnovalidate
-                    class="krds-btn krds-btn-tertiary"
+                    class="krds-btn krds-btn-point"
                     data-confirm="이 레이아웃을 삭제할까요?">삭제</button>
         </div>
-    </form>
+        </form>
+        </div>
+    </section>
 </div>
 </body>
 </html>

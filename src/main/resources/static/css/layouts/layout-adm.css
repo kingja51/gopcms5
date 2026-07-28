@@ -1,12 +1,21 @@
 /* ============================================================================
    layout-adm — 관리자 셸 구조 CSS (전역 output.css 위에 얹는 2층)
-   템플릿(/tmpl/css/*.css) 미로드 — 관리자는 사이트 3축 무관 (layout.html 주석 참조)
+   ----------------------------------------------------------------------------
+   · 템플릿(/tmpl/css/*.css) 미로드 — 관리자는 사이트 3축 무관 (layout.html 주석)
+   · 색은 <b>토큰만</b> 쓴다 (SG-krds §5 Don't: raw HEX 금지). 그레이 램프는
+     숫자가 클수록 어둡다(gray-5 #f4f5f6 … gray-95 #131416) — 반대로 알고
+     thead 에 gray-95 를 깔아 검은 글씨가 묻힌 사고가 있었다(P7 실측).
+   · 표·버튼·배지·페이저·입력은 전역 프리셋(.krds-*)이 담당하고 여기서는
+     <b>배치와 셸</b>만 정의한다. 프리셋을 덮어쓰지 않는다.
+   · radius 최대 12px · 8px 그리드 · 그림자는 떠 있는 요소에만(평면은 보더).
    ============================================================================ */
+
+/* ── 셸 골격 ─────────────────────────────────────────────────────────────── */
 
 /* 스킵 링크 — 포커스 시에만 노출 */
 .ladm-skip {
     position: absolute; left: -9999px; top: 0;
-    background: var(--color-gray-90); color: #fff;
+    background-color: var(--color-gray-90); color: var(--c-fg-on);
     padding: 8px 16px; z-index: 100;
 }
 .ladm-skip:focus { left: 0; }
@@ -14,104 +23,177 @@
 /* 상단바 — 어두운 밴드로 front 와 시각 구분 (관리자임을 즉시 인지) */
 .ladm-topbar {
     display: flex; align-items: center; gap: 16px;
-    background: var(--color-gray-95); color: #fff;
-    padding: 10px 20px;
+    background-color: var(--color-gray-95); color: var(--c-fg-on);
+    padding: 0 24px; height: 56px;
     position: sticky; top: 0; z-index: 50;
 }
-.ladm-brand { color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; }
-.ladm-brand span { font-weight: 400; color: var(--color-gray-30); margin-left: 4px; }
-.ladm-account { color: var(--color-gray-30); }
-.ladm-logout { color: #fff; border-color: var(--color-gray-60); }
+.ladm-brand {
+    color: var(--c-fg-on); text-decoration: none;
+    display: inline-flex; align-items: baseline; gap: 6px;
+}
+.ladm-brand b { letter-spacing: -0.01em; }
+.ladm-brand span { color: var(--color-gray-30); }
+.ladm-account {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--color-gray-20);
+}
+/* 계정 이니셜 원형 — 아바타 대신 최소한의 개인화 */
+.ladm-avatar {
+    width: 28px; height: 28px; border-radius: 9999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background-color: var(--brand-50); color: var(--c-fg-on);
+}
+.ladm-logout { color: var(--c-fg-on); border-color: var(--color-gray-60); }
+.ladm-logout:hover { background-color: var(--color-gray-80); }
 
 /* 셸 — 좌 LNB(고정폭) + 본문 */
 .ladm-shell {
-    display: grid; grid-template-columns: 232px minmax(0, 1fr);
-    min-height: calc(100vh - 96px);
+    display: grid; grid-template-columns: 236px minmax(0, 1fr);
+    min-height: calc(100vh - 112px);
 }
 .ladm-lnb {
-    border-right: 1px solid var(--color-line, #e5e7eb);
-    background: var(--color-surface, #fff);
+    border-right: 1px solid var(--c-line);
+    background-color: var(--c-surface);
     padding: 16px 0 32px;
+    position: sticky; top: 56px; align-self: start;
+    max-height: calc(100vh - 56px); overflow-y: auto;
 }
 .ladm-lnb-group {
-    margin: 20px 20px 6px; font-size: 12px; font-weight: 700;
-    color: var(--color-gray-50, #6b7280); letter-spacing: .04em;
+    margin: 20px 20px 6px;
+    color: var(--c-fg-subtle); letter-spacing: .04em; text-transform: uppercase;
 }
 .ladm-lnb-group:first-child { margin-top: 4px; }
 .ladm-lnb-link {
-    display: block; padding: 8px 20px; font-size: 14px;
-    color: var(--color-gray-80, #1f2937); text-decoration: none;
+    display: block; padding: 9px 20px;
+    color: var(--c-fg); text-decoration: none;
+    border-left: 3px solid transparent;
 }
-a.ladm-lnb-link:hover { background: var(--color-gray-5, #f3f4f6); }
+a.ladm-lnb-link:hover { background-color: var(--c-surface-subtle); }
 .ladm-active {
-    background: var(--color-primary-5, #eef2ff);
-    color: var(--color-primary-60, #3730a3); font-weight: 700;
-    border-right: 3px solid var(--color-primary-60, #3730a3);
+    background-color: var(--brand-5);
+    color: var(--brand-60); font-weight: 700;
+    border-left-color: var(--brand-50);
 }
-.ladm-disabled { color: var(--color-gray-40, #9ca3af); cursor: default; }
+.ladm-disabled { color: var(--c-fg-disabled); cursor: default; }
 .ladm-disabled em {
-    font-style: normal; font-size: 11px; margin-left: 6px;
-    padding: 1px 6px; border-radius: 8px;
-    background: var(--color-gray-5, #f3f4f6); color: var(--color-gray-50, #6b7280);
+    font-style: normal; margin-left: 6px;
+    padding: 1px 6px; border-radius: 4px;
+    background-color: var(--c-surface-subtle); color: var(--c-fg-subtle);
 }
 
-/* 본문 */
-.ladm-main { padding: 28px 32px 48px; }
+/* 본문 — 넓은 화면에서 줄 길이가 늘어지지 않게 상한을 둔다 */
+.ladm-main { padding: 24px 32px 56px; }
+.ladm-main > * { max-width: 1200px; }
 
 /* 푸터 */
 .ladm-footer {
-    border-top: 1px solid var(--color-line, #e5e7eb);
-    padding: 14px 20px;
+    border-top: 1px solid var(--c-line);
+    padding: 16px 24px;
+    background-color: var(--c-surface);
 }
 
-/* ── 관리 목록·폼 (P7 CRUD 공통) ─────────────────────────────────────────── */
+/* ── 페이지 머리 ─────────────────────────────────────────────────────────── */
+/* 제목·설명 왼쪽, 액션 오른쪽. 아래 얇은 구분선으로 본문과 분리 */
+.ladm-page-head {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding-bottom: 16px; margin-bottom: 24px;
+    border-bottom: 1px solid var(--c-line);
+}
+.ladm-page-head .ladm-page-title { margin: 0; }
+.ladm-page-head p { margin: 6px 0 0; max-width: 72ch; }
+.ladm-page-head .ladm-head-actions { margin-left: auto; display: flex; gap: 8px; flex: none; }
 
-/* 목록 상단 — 좌측 검색, 우측 등록 */
+/* ── 패널(카드) — 표·폼을 바닥에서 띄우지 않고 보더로 감싼다 ─────────────── */
+.ladm-panel {
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.ladm-panel + .ladm-panel { margin-top: 16px; }
+.ladm-panel-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--c-line);
+    background-color: var(--c-surface-subtle);
+}
+.ladm-panel-head .grow { flex: 1; }
+.ladm-panel-body { padding: 20px; }
+
+/* 패널 안의 표는 좌우 여백 없이 꽉 채운다(모서리는 패널이 자른다) */
+.ladm-panel .krds-table thead th:first-child,
+.ladm-panel .krds-table tbody td:first-child { padding-left: 20px; }
+.ladm-panel .krds-table thead th:last-child,
+.ladm-panel .krds-table tbody td:last-child { padding-right: 20px; }
+.ladm-panel .krds-table tbody tr:last-child td { border-bottom: 0; }
+
+/* ── 목록 ────────────────────────────────────────────────────────────────── */
 .ladm-listbar {
-    display: flex; gap: 12px; align-items: center;
-    margin: 20px 0 12px;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
 }
-.ladm-search { display: flex; gap: 8px; flex: 1; max-width: 420px; }
-.ladm-search .krds-input { flex: 1; }
+.ladm-search { display: flex; gap: 8px; flex: 1; min-width: 260px; max-width: 480px; }
+.ladm-search .krds-input, .ladm-search .krds-select { flex: 1; }
 
-/* 목록 표·페이저는 전역 프리셋(.krds-table / .krds-pagination / .krds-page)을 그대로 쓴다.
-   ※ 여기서 색을 다시 칠하지 않는다 — KRDS 그레이 스케일은 <b>숫자가 클수록 어둡다</b>
-     (gray-5 #f4f5f6 … gray-95 #131416). 이걸 반대로 알고 thead 에 gray-95 를 깔아
-     검은 배경에 검은 글씨가 나왔다(P7 실측). 색이 필요하면 시맨틱 토큰
-     (--c-surface-subtle / --c-fg-strong / --c-line)만 쓴다. */
-
-/* 표 가로 스크롤 컨테이너 — 좁은 화면에서 본문이 밀리지 않게 */
+/* 표 가로 스크롤 — 좁은 화면에서 본문이 밀리지 않게 */
 .ladm-tablewrap { overflow-x: auto; }
 .ladm-tablewrap .krds-table { min-width: 720px; }
 .krds-table .center { text-align: center; }
+.krds-table .nowrap { white-space: nowrap; }
+
+/* 빈 상태 — 안내 문구만 두지 않고 다음 행동을 제시한다 */
+.ladm-empty { padding: 48px 20px; text-align: center; }
+.ladm-empty svg { margin: 0 auto 12px; display: block; color: var(--c-fg-disabled); }
+.ladm-empty p { margin: 0 0 4px; }
 
 /* 상태 배지 색 — .krds-badge(모양) 위에 의미만 얹는다 */
-.ladm-badge-on {
-    background-color: var(--c-surface-subtle);
-    color: var(--brand-50);
-    border: 1px solid var(--brand-50);
-}
-.ladm-badge-off {
-    background-color: var(--c-surface-subtle);
-    color: var(--c-fg-subtle);
-    border: 1px solid var(--c-line);
-}
+.ladm-badge-on { background-color: var(--brand-5); color: var(--brand-60); }
+.ladm-badge-off { background-color: var(--c-surface-subtler); color: var(--c-fg-subtle); }
 
-/* 폼 — 라벨 위, 입력 아래. 2열 그리드는 넓은 화면에서만 */
-.ladm-form { display: grid; gap: 16px; max-width: 760px; margin-top: 20px; }
+/* ── 대시보드 ────────────────────────────────────────────────────────────── */
+.ladm-stats {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-bottom: 24px;
+}
+.ladm-stat {
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: 12px;
+    padding: 20px;
+    display: block; text-decoration: none; color: inherit;
+}
+a.ladm-stat:hover { border-color: var(--brand-50); background-color: var(--brand-5); }
+.ladm-stat-label { display: block; color: var(--c-fg-subtle); }
+.ladm-stat-value {
+    display: block; margin-top: 6px;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+    color: var(--c-fg-strong);
+}
+.ladm-stat-unit { color: var(--c-fg-subtle); margin-left: 2px; }
+
+/* ── 폼 ──────────────────────────────────────────────────────────────────── */
+.ladm-form { display: grid; gap: 20px; }
+.ladm-fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 16px; }
+.ladm-fieldset legend {
+    padding: 0 0 12px; margin-bottom: 4px; width: 100%;
+    border-bottom: 1px solid var(--c-divider, var(--c-line));
+    color: var(--c-fg-strong);
+}
 .ladm-form-row { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
-.ladm-field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-.ladm-field .krds-input, .ladm-field .krds-select, .ladm-field textarea { width: 100%; }
-.ladm-field textarea {
-    min-height: 120px; font-family: inherit; width: 100%;
-    padding: 9px 12px; border-radius: 8px;
-    border: 1px solid var(--c-line);
-    background-color: var(--c-surface); color: var(--c-fg);
-}
-.ladm-hint { font-size: 12px; color: var(--c-fg-subtle); margin-top: 4px; }
+.ladm-field label { display: block; margin-bottom: 6px; color: var(--c-fg-strong); }
+.ladm-field .krds-input,
+.ladm-field .krds-select,
+.ladm-field .krds-textarea { width: 100%; }
+.ladm-field .krds-textarea { min-height: 120px; }
+.ladm-req { color: var(--point-50, var(--brand-50)); margin-left: 2px; }
+.ladm-hint { color: var(--c-fg-subtle); margin-top: 6px; }
 
-/* 저장·목록·삭제를 한 줄에 — 삭제는 formaction 으로 같은 폼에서 보낸다(폼 중첩 불가) */
-.ladm-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+/* 저장·목록·삭제 한 줄 — 삭제는 오른쪽 끝으로 밀어 실수 클릭을 줄인다 */
+.ladm-actions {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    padding-top: 20px; margin-top: 4px;
+    border-top: 1px solid var(--c-line);
+}
 .ladm-actions .grow { flex: 1; }
 
 /* 화면에서만 숨김(스크린리더는 읽음) */
@@ -120,17 +202,33 @@ a.ladm-lnb-link:hover { background: var(--color-gray-5, #f3f4f6); }
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-/* 모바일 — LNB 를 상단 가로 스크롤 바로 강등 */
+/* ── 모바일 — LNB 를 상단 가로 스크롤 바로 강등 ──────────────────────────── */
 @media (max-width: 768px) {
     .ladm-shell { grid-template-columns: 1fr; }
+    .ladm-main { padding: 20px 16px 40px; }
     .ladm-form-row { grid-template-columns: 1fr; }
-    .ladm-listbar { flex-wrap: wrap; }
+    .ladm-page-head { flex-wrap: wrap; }
+    .ladm-page-head .ladm-head-actions { margin-left: 0; width: 100%; }
     .ladm-lnb {
         display: flex; overflow-x: auto; white-space: nowrap;
-        border-right: 0; border-bottom: 1px solid var(--color-line, #e5e7eb);
-        padding: 8px 12px;
+        border-right: 0; border-bottom: 1px solid var(--c-line);
+        padding: 8px 12px; position: static; max-height: none;
     }
     .ladm-lnb-group { display: none; }
-    .ladm-lnb-link { padding: 6px 10px; }
-    .ladm-active { border-right: 0; border-bottom: 2px solid var(--color-primary-60, #3730a3); }
+    .ladm-lnb-link { padding: 8px 12px; border-left: 0; border-bottom: 3px solid transparent; }
+    .ladm-active { border-left: 0; border-bottom-color: var(--brand-50); }
+}
+
+/* ── 2단계 인증 등록 — QR 왼쪽, 입력 오른쪽 ─────────────────────────────── */
+.ladm-tfa { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.ladm-tfa-qr {
+    border: 1px solid var(--c-line); border-radius: 12px; padding: 8px;
+    background-color: var(--c-surface); flex: none;
+}
+.ladm-tfa-body { flex: 1; min-width: 260px; }
+.ladm-tfa-secret {
+    margin: 6px 0 8px; word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background-color: var(--c-surface-subtle); border: 1px solid var(--c-line);
+    border-radius: 6px; padding: 8px 12px;
 }

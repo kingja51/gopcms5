@@ -8,23 +8,26 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <h1 class="text-heading-lg" th:text="${siteForm.siteId} ? '사이트 수정' : '사이트 등록'">사이트 등록</h1>
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('사이트 등록·수정',
+            '기본 정보와 3축(템플릿·테마·레이아웃)을 지정합니다.')}"></header>
 
     <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
 
-    <form th:action="@{/adm/site/save}" method="post" class="ladm-form">
+    <section class="ladm-panel">
+        <div class="ladm-panel-body">
+        <form th:action="@{/adm/site/save}" method="post" class="ladm-form">
         <input type="hidden" name="siteId" th:value="${siteForm.siteId}"/>
 
         <div class="ladm-form-row">
             <div class="ladm-field">
-                <label for="siteCode">사이트 코드 *</label>
+                <label for="siteCode">사이트 코드<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="siteCode" name="siteCode" class="krds-input" required
                        th:value="${siteForm.siteCode}" pattern="[a-z0-9-]{1,30}"/>
                 <p class="ladm-hint">URL 첫 세그먼트가 됩니다 — <code>/{코드}/index</code>.
                     소문자·숫자·하이픈만. 등록 후 변경하면 기존 링크가 끊깁니다.</p>
             </div>
             <div class="ladm-field">
-                <label for="siteName">사이트 이름 *</label>
+                <label for="siteName">사이트 이름<span class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
                 <input id="siteName" name="siteName" class="krds-input" required
                        th:value="${siteForm.siteName}"/>
             </div>
@@ -119,25 +122,28 @@
 
         <div class="ladm-field">
             <label for="headMeta">head 삽입 조각</label>
-            <textarea id="headMeta" name="headMeta" th:text="${siteForm.headMeta}"></textarea>
+            <textarea class="krds-textarea" id="headMeta" name="headMeta" th:text="${siteForm.headMeta}"></textarea>
             <p class="ladm-hint">사이트 &lt;head&gt; 에 그대로 출력됩니다(th:utext) — 신뢰할 수 있는 값만.</p>
         </div>
 
         <div class="ladm-field">
             <label for="copyright">푸터 저작권 표기</label>
-            <textarea id="copyright" name="copyright" th:text="${siteForm.copyright}"></textarea>
+            <textarea class="krds-textarea" id="copyright" name="copyright" th:text="${siteForm.copyright}"></textarea>
         </div>
 
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/site}" class="krds-btn krds-btn-secondary">목록</a>
+            <span class="grow"></span>
             <button type="submit" th:if="${siteForm.siteId}"
                     th:formaction="@{/adm/site/delete}" formnovalidate
-                    class="krds-btn krds-btn-tertiary"
+                    class="krds-btn krds-btn-point"
                     data-confirm="이 사이트를 삭제할까요? 메뉴·컨텐츠는 남지만 화면은 열리지 않습니다.">삭제</button>
             <span class="grow"></span>
         </div>
-    </form>
+        </form>
+        </div>
+    </section>
 </div>
 </body>
 </html>

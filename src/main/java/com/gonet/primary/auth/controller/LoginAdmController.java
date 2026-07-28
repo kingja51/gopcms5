@@ -34,9 +34,4 @@ public class LoginAdmController {
         return "adm/login";
     }
 
-    /** 관리자 대시보드 골격 — 관리 모듈(P7)에서 확장 */
-    @GetMapping("/adm/index")
-    public String index() {
-        return "adm/index";
-    }
 }
