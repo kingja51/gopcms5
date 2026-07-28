@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>레이아웃 등록·수정</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg"
+        th:text="${layout.layoutId} ? '레이아웃 수정' : '레이아웃 등록'">레이아웃 등록</h1>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <form th:action="@{/adm/layout/save}" method="post" class="ladm-form">
+        <input type="hidden" name="layoutId" th:value="${layout.layoutId}"/>
+
+        <div class="ladm-form-row">
+            <div class="ladm-field">
+                <label for="layoutCode">레이아웃 코드 *</label>
+                <input id="layoutCode" name="layoutCode" class="krds-input" required
+                       th:value="${layout.layoutCode}" pattern="[a-z0-9-]{1,50}"/>
+                <p class="ladm-hint">뷰 폴더명입니다 —
+                    <code>templates/layouts/{코드}/layout.html</code> 이 없으면 다음 기동이 중단됩니다.</p>
+            </div>
+            <div class="ladm-field">
+                <label for="layoutName">이름 *</label>
+                <input id="layoutName" name="layoutName" class="krds-input" required
+                       th:value="${layout.layoutName}"/>
+            </div>
+        </div>
+
+        <div class="ladm-form-row">
+            <div class="ladm-field">
+                <label for="wireframeRef">설계안 참조</label>
+                <input id="wireframeRef" name="wireframeRef" class="krds-input"
+                       th:value="${layout.wireframeRef}" placeholder="frame001"/>
+            </div>
+            <div class="ladm-field">
+                <label for="sortOrder">정렬 순서</label>
+                <input id="sortOrder" name="sortOrder" type="number" class="krds-input"
+                       th:value="${layout.sortOrder}"/>
+            </div>
+        </div>
+
+        <div class="ladm-field">
+            <label for="description">설명</label>
+            <input id="description" name="description" class="krds-input"
+                   th:value="${layout.description}"/>
+        </div>
+
+        <div class="ladm-field">
+            <label for="useYn">상태</label>
+            <select id="useYn" name="useYn">
+                <option value="Y" th:selected="${layout.useYn == 'Y'}">사용</option>
+                <option value="N" th:selected="${layout.useYn == 'N'}">중지</option>
+            </select>
+        </div>
+
+        <div class="ladm-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{/adm/layout}" class="krds-btn krds-btn-secondary">목록</a>
+        </div>
+    </form>
+
+    <form th:if="${layout.layoutId}" th:action="@{/adm/layout/delete}" method="post"
+          style="margin-top:12px">
+        <input type="hidden" name="layoutId" th:value="${layout.layoutId}"/>
+        <button type="submit" class="krds-btn krds-btn-tertiary"
+                data-confirm="이 레이아웃을 삭제할까요?">삭제</button>
+    </form>
+</div>
+</body>
+</html>

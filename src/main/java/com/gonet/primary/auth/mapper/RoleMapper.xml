@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.auth.mapper.RoleMapper">
+
+    <select id="findAllRoles" resultType="com.gonet.primary.auth.dto.RoleNode">
+        SELECT role_id, parent_role_id, role_code
+        FROM tb_role
+        WHERE use_yn = 'Y'
+          AND delete_yn = 'N'
+        ORDER BY sort_order ASC, role_id ASC
+    </select>
+
+    <!-- 재전개는 전량 교체 — 부분 갱신은 고아 행을 남긴다 (한 트랜잭션 안에서만 유효) -->
+    <delete id="deleteAllHierarchy">
+        DELETE FROM tb_role_hierarchy
+    </delete>
+
+    <insert id="insertHierarchy">
+        INSERT INTO tb_role_hierarchy
+            (role_hierarchy_id, ancestor_role_id, descendant_role_id, depth)
+        VALUES
+        <foreach item="edge" collection="edges" separator=",">
+            (#{edge.roleHierarchyId}, #{edge.ancestorRoleId}, #{edge.descendantRoleId}, #{edge.depth})
+        </foreach>
+    </insert>
+
+    <select id="findAdminRolePairs" resultType="com.gonet.primary.auth.dto.UserRoleRow">
+        SELECT ar.admin_id AS user_id, ar.role_id AS role_id
+        FROM tb_admin_role ar
+        JOIN tb_admin a ON a.admin_id = ar.admin_id AND a.delete_yn = 'N'
+        JOIN tb_role r ON r.role_id = ar.role_id AND r.use_yn = 'Y' AND r.delete_yn = 'N'
+        WHERE ar.delete_yn = 'N'
+        ORDER BY ar.admin_id ASC, r.sort_order ASC
+    </select>
+
+    <select id="findAdminRoleCsv" resultType="com.gonet.primary.auth.dto.UserRoleRow">
+        SELECT admin_id AS user_id, role_ids AS role_ids, role_codes AS role_codes
+        FROM tb_admin
+        WHERE delete_yn = 'N'
+    </select>
+
+    <update id="updateAdminRoleCsv">
+        UPDATE tb_admin
+        SET role_ids = #{roleIds},
+            role_codes = #{roleCodes}
+        WHERE admin_id = #{userId}
+    </update>
+
+    <select id="findMemberRoleCsv" resultType="com.gonet.primary.auth.dto.UserRoleRow">
+        SELECT member_id AS user_id, role_ids AS role_ids
+        FROM tb_member
+        WHERE delete_yn = 'N'
+          AND role_ids IS NOT NULL
+          AND role_ids &lt;&gt; ''
+        ORDER BY member_id ASC
+    </select>
+
+    <update id="updateMemberRoleIds">
+        UPDATE tb_member
+        SET role_ids = #{roleIds}
+        WHERE member_id = #{userId}
+    </update>
+
+</mapper>

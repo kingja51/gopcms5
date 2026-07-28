@@ -88,6 +88,11 @@ Flyway loggingFlyway   = …("classpath:db/migration/logging/"   + vendor)…
   (모듈 단위 — 예: V3 게시판, V4 회원). DDL 과 대량 DML 은 파일 분리.
 - MariaDB DDL 은 암묵 커밋이라 실패 시 부분 적용될 수 있다 — 파일을 작게 유지하고,
   실패 복구는 수정 후 `flyway repair`(checksum/실패 기록 정리)로.
+- **CHECK 제약은 테이블 레벨 명명 제약으로 쓴다** —
+  `CONSTRAINT chk_{table}_{col} CHECK (...)`. 컬럼 뒤에 인라인으로 붙이면
+  information_schema 에는 컬럼명으로 보이지만 `DROP CONSTRAINT` 로는 지워지지 않아
+  (MariaDB 11.8 실측: `Can't DROP CONSTRAINT`), 값 목록 하나 늘리는 데도
+  `MODIFY COLUMN` 으로 컬럼을 통째로 재정의해야 한다(V8 사례).
 
 ## 6. 현재 마이그레이션 목록
 
@@ -97,11 +102,19 @@ Flyway loggingFlyway   = …("classpath:db/migration/logging/"   + vendor)…
 | `primary/mariadb/V2__seed_layout_template_theme.sql` | 레이아웃 7종(A~G) · KRDS 기본 템플릿 · 테마 4종 기준 시드 |
 | `primary/mariadb/V3__seed_design_templates.sql` | 시각 언어 템플릿 7종(blueprint-001~midnight-007, design-md 추천 리네이밍) + 테마 19종 |
 | `primary/mariadb/V4__content_history.sql` | tb_content_history — 불변 버전 스냅샷(CNH, PAGE_COMPRESSED) |
+| `primary/mariadb/V6__auth_tables.sql` | 인증·인가 21테이블(ADM·MBR·ROL·RUA 등) + vw_user_login |
+| `primary/mariadb/V7__login_history.sql` | tb_login_history(LGH, insert-only) + 기존 계정 비밀번호 만료일 소급 |
+| `primary/mariadb/V8__login_captcha_expired.sql` | 이력 결과코드 FAIL_EXPIRED 추가 + vw_user_login 에 captcha_required_yn 노출 |
+| `primary/mariadb/V9__cms_extension_tables.sql` | CMS 확장 21테이블 — 파일(FGR·FIL) · 게시판(BBM·BCT·BBA·BBC·LIK·RPT) · 배너/팝업 · 일정(SCM·SCH) · 설문(SVM·SVY·SVQ·SVO·SVR·SVA) · 직원(EMP) · 공휴일·메일템플릿 |
+| `logging/mariadb/V2__log_stat_extension.sql` | 로그 5종(error·file_download·privacy_access·pii_purge·security) + 통계 5종(stat_*) |
 | `logging/mariadb/V1__log_access_audit.sql` | log_access · log_audit(bigint AUTO_INCREMENT 예외, (id, logged_at) 복합 PK) + shedlock |
 | `secondary/mariadb/` | README 만 (테이블 확정 시 V1 부터) |
 | `devdata/primary/V900__demo_site.sql` | (dev 전용) 데모 사이트 main |
 | `devdata/primary/V901__demo_site_ai.sql` | (dev 전용) 데모 사이트 ai(인공지능학과) — 실측 IA: 폴더 6 + 컨텐츠 메뉴·페이지 10 + 게시판 자리 5 |
 | `devdata/primary/V902__demo_site_nursing.sql` | (dev 전용) 데모 사이트 nursingcollege(간호대학) — 실측 IA: 폴더 4 + 컨텐츠 10, trust-002 템플릿 + teal 테마(복합 FK 실증) |
+| `devdata/primary/V906__seed_auth.sql` | (dev 전용) 역할 계층 5종 + closure + admin/user1 계정 |
+| `devdata/primary/V909__seed_url_access_rules.sql` | (dev 전용) URL 접근 규칙 20건 — 무매칭 DENY 의 기준 데이터(conventions §7) |
+| `devdata/primary/V910__seed_mail_template.sql` | (dev 전용) 메일 템플릿 10건 — 발송 기능 도입 시 운영 기준 데이터로 승격 |
 
 이후 예정 — primary: V5 게시판(BBM·BBA·BBC·FIL·LIK·RPT) → V6 회원·조직(ADM·MBR·DPT·STF·ROL·LGH)
 → V7 공통 프로그램(SCH·NTF·SVY·SVA·MWN·COD·AUD) → V8 배너·팝업·약관(BNR·POP·TRM) /

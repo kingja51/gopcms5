@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.theme.mapper.ThemeMapper">
+
+    <sql id="admWhere">
+        WHERE th.delete_yn = 'N'
+        <if test="keyword != null">
+            AND (th.theme_code LIKE CONCAT('%', #{keyword}, '%')
+              OR th.theme_name LIKE CONCAT('%', #{keyword}, '%')
+              OR t.template_code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="findPage" resultType="com.gonet.primary.theme.dto.ThemeAdmDto">
+        SELECT th.theme_id, th.template_id, th.theme_code, th.theme_name,
+               th.css_class, th.sort_order, th.use_yn,
+               t.template_code,
+               (SELECT COUNT(*) FROM tb_site s
+                 WHERE s.theme_id = th.theme_id AND s.delete_yn = 'N') AS site_count
+        FROM tb_theme th
+        LEFT JOIN tb_template t ON t.template_id = th.template_id
+        <include refid="admWhere"/>
+        ORDER BY t.template_code, th.sort_order, th.theme_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_theme th
+        LEFT JOIN tb_template t ON t.template_id = th.template_id
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.theme.dto.ThemeAdmDto">
+        SELECT theme_id, template_id, theme_code, theme_name, css_class, sort_order, use_yn
+        FROM tb_theme
+        WHERE theme_id = #{themeId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByCode" resultType="int">
+        SELECT COUNT(*) FROM tb_theme
+        WHERE template_id = #{templateId}
+          AND theme_code = #{themeCode}
+          AND delete_yn = 'N'
+        <if test="excludeId != null">
+            AND theme_id &lt;&gt; #{excludeId}
+        </if>
+    </select>
+
+    <select id="countByIdAndTemplate" resultType="int">
+        SELECT COUNT(*) FROM tb_theme
+        WHERE theme_id = #{themeId}
+          AND template_id = #{templateId}
+          AND delete_yn = 'N'
+    </select>
+
+    <select id="countReferences" resultType="int">
+        SELECT COUNT(*) FROM tb_site
+        WHERE theme_id = #{themeId} AND delete_yn = 'N'
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.theme.dto.ThemeAdmDto">
+        INSERT INTO tb_theme
+            (theme_id, template_id, theme_code, theme_name, css_class, sort_order, use_yn)
+        VALUES
+            (#{themeId}, #{templateId}, #{themeCode}, #{themeName},
+             #{cssClass}, #{sortOrder}, #{useYn})
+    </insert>
+
+    <update id="update" parameterType="com.gonet.primary.theme.dto.ThemeAdmDto">
+        UPDATE tb_theme
+        SET template_id = #{templateId},
+            theme_code = #{themeCode},
+            theme_name = #{themeName},
+            css_class = #{cssClass},
+            sort_order = #{sortOrder},
+            use_yn = #{useYn}
+        WHERE theme_id = #{themeId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_theme SET delete_yn = 'Y', use_yn = 'N'
+        WHERE theme_id = #{themeId}
+    </update>
+
+    <!-- 사이트 폼의 선택 상자용 — 어느 템플릿의 테마인지 보여야 잘못 고르지 않는다 -->
+    <select id="findAllForSelect" resultType="com.gonet.primary.theme.dto.ThemeAdmDto">
+        SELECT th.theme_id, th.template_id, th.theme_code, th.theme_name, th.css_class,
+               t.template_code
+        FROM tb_theme th
+        LEFT JOIN tb_template t ON t.template_id = th.template_id
+        WHERE th.use_yn = 'Y' AND th.delete_yn = 'N'
+        ORDER BY t.template_code, th.sort_order, th.theme_code
+    </select>
+
+</mapper>

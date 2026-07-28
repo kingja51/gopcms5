@@ -164,26 +164,136 @@ MEMBER 는 site 스코프 필터 필수 — 동일 login_id 양측 공존 가능
       adm/index 대시보드 골격 · _default/member/login)
 - [x] SiteResolveFilter — 해석 ② 순위로 siteCode 쿼리 파라미터 추가 (/login?siteCode=)
 
-### P6-2 DB RBAC (다음)
-- [ ] `DynamicAuthorizationManager` — tb_role_url_access(priority ASC, **무매칭 DENY**)
-- [ ] 새 URL 추가 시 접근 규칙 등록 절차 문서화 (빠뜨리면 화면이 안 열림)
-- [ ] 회원 전용 영역(front) 조임 — default 체인 permitAll 해제
-- [ ] 역할 계층 변경 시 closure 재전개 + 사용자 role_ids/role_codes CSV 재계산 배치
+### P6-2 DB RBAC (완료 2026-07-29)
+- [x] `DynamicAuthorizationManager` — tb_role_url_access(priority ASC → **사이트 규칙 우선** →
+      긴 패턴 우선, 첫 매칭 확정, **무매칭 DENY**+WARN). access_type 7종 전부 구현
+      (ROLE 은 규칙 role_id ∩ 사용자 전개 role_ids). 규칙·권한은 Caffeine `urlAccess`(5분).
+      **두 체인 모두 DB 단일 원천** — `/adm/login` 허용까지 규칙(priority 10)으로 이관
+- [x] V909 규칙 시드 20건 — /adm/**·로그인·정적자원·error·health·회원영역·API DENY·최후 /**.
+      규칙 0건 기동은 `RbacSmokeRunner` 가 중단(전면 차단 상태로 뜨는 침묵 장애 방지)
+- [x] 등록 절차 문서화 — [conventions.md §7](doc/conventions.md) (표·평가 규칙·절차 4단계·
+      지우면 안 되는 규칙) + CLAUDE.md 보안 항목에 "SecurityConfig 예외 금지" 명시
+- [x] 회원 전용 영역 조임 — default 체인 permitAll 해제, `/*/member/**` AUTHENTICATED(MEMBER).
+      미인증은 `SiteAwareAuthenticationEntryPoint` 가 `/login?siteCode=` 로 사이트 유지 유도,
+      `/api/**` 는 401 JSON 계약 (로그인 HTML 응답 금지)
+- [x] `RoleService.rebuildHierarchy()` — adjacency→closure 전량 재전개 + 관리자(tb_admin_role
+      기준)·회원(현재 CSV 기준, 가산만) 역할 CSV 재계산. 순수 로직 `RoleClosure` 분리 +
+      테스트 5종 그린(순환 참조 예외 포함). 배치는 `RoleHierarchyRebuildJob`(cron 기본 비활성 —
+      정상 경로는 P7 저장 훅 직접 호출)
 
-### P6-3 강화
-- [ ] 2FA(TOTP — googleauth·QR) 관리자 강제(tb_admin_group.two_factor_required)
-- [ ] 세션 정책 — 쿠키명 GOPCMS_SID · changeSessionId() · maximumSessions(1)
-- [ ] CSP nonce + 인라인 정리(hc FOUC-free 복원 포함) · 보안 헤더
-- [ ] X-Forwarded-For 신뢰 프록시(GOPCMS_TRUSTED_PROXIES) — client_ip 해석 일원화
-- [ ] 허용 IP CIDR/RANGE 매칭 (현재 SINGLE 완전일치만)
-- [ ] AccessLog actor_* 연결(세션 SecurityContext) + 로그인 이력(LGH) 적재
-- [ ] 비밀번호 만료·이력 재사용 방지(APH/MPH) · CAPTCHA(잠금 해제 후)
+**완료 기준 충족 확인(2026-07-29, 8081 실측)**: RbacSmoke 20건 로드 ·
+익명(front 200 / 정적 200 / `/adm/index`→302 adm/login / `/ai/member/**`→302 `/login?siteCode=ai` /
+`/actuator/env`→302) · 회원 user1 로그인 후 `/ai/member/**` 통과·`/adm/index` 403 ·
+관리자 admin 로그인 후 `/adm/**` 200·`/ai/member/**` 403(user_type 경계) ·
+**사이트 스코프 실증**: user1 의 ROLE_REAL 제거 시 `/ai/member/**` 403(ai 규칙) /
+`/nursingcollege/member/**` 404(전역 규칙 통과) · 재전개 배치 실행으로 role_ids 원복
+(역할 6·closure 16·회원 1건 교정). **→ P6-2 완료, 다음 P6-3.**
 
-## P7+ — 이후 로드맵 (예고)
+### P6-3 강화 (완료 2026-07-29)
+- [x] **2FA(TOTP)** — `TotpService`(googleauth) + QR **서버 생성 data: URI**(외부 차트
+      서비스로 시크릿 전송 금지·CSP img-src 준수) · 등록 화면 `/adm/2fa/setup` ·
+      시크릿은 확정 전까지 세션에만(중도 이탈 시 계정 잠김 방지) · 그룹 강제
+      (`two_factor_required`)면 `TwoFactorEnrollmentFilter` 가 등록 전 전 화면 차단
+- [x] **세션 정책** — GOPCMS_SID(HttpOnly·Lax·30m) · changeSessionId() ·
+      maximumSessions(1, 선점 방식) + 체인별 만료 URL · 로그아웃 쿠키 삭제
+- [x] **CSP nonce + 보안 헤더** — `SecurityHeadersFilter`(요청당 난수 nonce, 전 응답에
+      적용) · script-src 'self' 'nonce-…' · frame-ancestors/object-src none 등 5종 헤더 ·
+      인라인은 **hc 복원 1개만** 남기고 nonce 부착(FOUC 제거 — app.js 복원 로직 이관)
+- [x] **client_ip 일원화** — `ClientIpResolver`(GOPCMS_TRUSTED_PROXIES CIDR CSV,
+      **미설정이면 XFF 무시**, 오른쪽→왼쪽 첫 비신뢰 홉 채택). 접근 로그·감사컬럼·
+      IP 게이트·인증 Provider 전부 이 경로 경유
+- [x] **허용 IP CIDR/RANGE** — `IpMatch`(IpAddressMatcher + RANGE 바이트 비교) ·
+      SQL 완전일치 → 활성 행 Java 매칭으로 전환, touch 는 매칭된 ip_id 기준
+- [x] **AccessLog actor_* + 로그인 이력** — `ActorCaptureFilter`(체인 안쪽에서 주체를
+      request attr 로 이관 — 바깥 AccessLogFilter 시점엔 SecurityContext 가 비어 있음) ·
+      V7 `tb_login_history` + `LoginHistoryRecorder`(REQUIRES_NEW·실패 격리),
+      결과코드 9종으로 **진짜 사유는 이력에, 사용자 응답은 항상 일반 문구**
+- [x] **비밀번호 만료·이력·CAPTCHA** — `PasswordPolicy`(2종 10자/3종 8자·90일) ·
+      `PasswordService`(재사용 금지) + `/adm/password` 화면 · 만료 시 로그인 거부
+      (FAIL_EXPIRED) · `CaptchaService`(잠금 이력 계정 한정 세션 산술 문답, 1회용)
+- [x] **TOTP 시크릿 암호화** — conventions §6 형식(`{AG}` + AES-256-GCM) 프리미티브
+      `Aes256Gcm` 구현. 회원 PII `@Encrypt` TypeHandler 는 이 클래스를 감싸는 형태로 확장
 
-관리자 모듈(사이트/템플릿/메뉴/컨텐츠 CRUD — SQL 수작업 대체) → 게시판(primary V4 +
-BBS 도메인) → 회원·조직(V5) → 템플릿 CSS 진짜 구현(blueprint-001 부터, SG 스타일가이드
-병행) → 나머지 레이아웃 양산(C·F 우선 검증 후) → 공통 프로그램 → eGov 호환성 확인 신청.
+**완료 기준 충족 확인(2026-07-29, 8081 실측 + 단위 테스트 22종 그린)**:
+CSP 헤더-본문 nonce 일치·요청마다 상이 · GOPCMS_SID 발급 · 동시 세션 1개(선점당한 쪽
+`?expired`) · 로그인 이력 SUCCESS/FAIL_NOT_FOUND/FAIL_PASSWORD/FAIL_CAPTCHA/FAIL_EXPIRED/
+FAIL_2FA 적재 · 접근 로그 actor(ADMIN/MEMBER/ANONYMOUS) · 비밀번호 변경 4종 거부
+(현재값 오류·확인 불일치·구성 위반·재사용) + 성공 시 강제 재로그인 ·
+2FA 미등록 시 전 관리 화면 → `/adm/2fa/setup` 강제, 등록 후 OTP 없는 로그인 거부,
+시크릿 `{AG}` 암호문 저장 확인. **P6-2 인가 회귀 통과.**
+
+> **실측 결함 2건 발견·수정**: ① 비밀번호 이력에 *새* 값을 넣어 방금 버린 비밀번호로
+> 되돌아갈 수 있었다 → *물러나는* 값을 남기도록 수정. ② MariaDB 컬럼 인라인 CHECK 는
+> `DROP CONSTRAINT` 로 못 지운다 → `MODIFY COLUMN` 재정의(flyway-migration.md §5 반영).
+> dev 시드는 검증 후 원상복구(관리자 비밀번호·2FA 비강제·이력 테이블 정리).
+
+### P6 잔여 (후속 페이즈에서 회수)
+
+- 회원 비밀번호 변경 화면 — 서비스(`PasswordService`)는 MEMBER 분기까지 구현됐고
+  화면만 없다. 회원 도메인 페이즈에서 `/{sc}/member/password` 로 추가.
+- 만료 계정 셀프 재설정(본인확인 경유) — 현재는 로그인 거부 + 관리자 재설정.
+- 회원 PII `@Encrypt` TypeHandler — `Aes256Gcm` 은 준비됨, MyBatis 배선만 남음.
+- 관리자 접속 허용 시간대(`allowed_time_from/to`) 강제.
+- 로그인 이력 조회 화면 · 이상징후 알림 — P7 관리자 모듈.
+
+## P7 — 관리자 모듈 (진행 2026-07-29)
+
+### P7-1 코어 6테이블 CRUD (완료)
+- [x] 공통 기반 — `PageRequest`/`PageResult`(1-based 페이지·블록 페이저) ·
+      `adm/fragments/adm-ui`(검색바·페이저·플래시·빈목록) · layout-adm LNB 활성화 ·
+      목록/폼 CSS(ladm-table·ladm-form) · 인라인 핸들러 없는 `data-confirm`·
+      `data-submit-on-change` 위임(CSP 규약 유지)
+- [x] **사이트**(tb_site) — 3축 선택·기본사이트 단일성·저장 시 캐시 evict(**무재기동 반영**,
+      P5 숙제 회수) · site_code 예약어(SiteResolveFilter.SKIP_PREFIXES) 차단
+- [x] **템플릿·테마·레이아웃** — 참조 중인 행 삭제 차단(사이트/테마/템플릿 역참조 카운트) ·
+      테마의 템플릿 종속(복합 FK) 사전 검증으로 500 대신 안내 문구
+- [x] **메뉴**(tb_menu) — 트리 목록(페이징 없음)·depth 자동 계산·순환 지정 차단·
+      4단계 제한·menu_type 별 링크 필드 정규화
+- [x] **컨텐츠**(tb_content) — 사이트별 목록·slug 패턴/예약어/중복 검증(ContentUsrController
+      와 목록 공유)·상태 전환 시 게시일시 자동 채움·version_no 증가
+
+**완료 기준 충족 확인(2026-07-29, 8081 실측)**: 6개 목록·폼 200 ·
+컨텐츠 등록(초안→비공개 404) → 게시 수정(즉시 200 반영) → 삭제(404 복귀) 왕복 ·
+검증 거부 6종(예약 slug·중복 slug·대문자 slug·예약 사이트코드·중복 코드·대문자 코드).
+
+> **실측 결함 3건 발견·수정**: ① 전역 advice 의 `site`(SiteContext)와 폼 모델 `site`
+> (SiteAdmDto) 이름 충돌로 저장 실패 시 500 → 폼 모델을 `siteForm` 으로 분리.
+> ② 빈 문자열이 null 로 변환되지 않아 3축 "선택 안 함" 저장이 거부됨 →
+> `FormBinderAdvice`(StringTrimmerEditor) 전역 적용. ③ 물리 뷰가 없는 레이아웃 조합을
+> 저장해 사이트를 500 으로 만들 수 있었음 → 저장 시점 자원 존재 검증 추가
+> (기동 시 LayoutSmokeRunner 가 하던 검사의 런타임 판).
+
+### P7-2 확장 테이블 반영 (완료 2026-07-29)
+- [x] **primary V9** — 21테이블(파일 2·게시판 6·배너/팝업 2·일정 2·설문 6·직원 1·공통 2),
+      전 테이블·컬럼 주석. 원안(D:\test\primary.sql) 대비 교정: DROP TABLE 제거 ·
+      **tb_department 재생성 제외**(V6 기존 테이블·tb_admin FK 보호) · ascii_bin ·
+      대문자 컬럼명 교정(PASSWORD/STATUS/POSITION) · 상충 CHECK 통합 ·
+      FK 6개 보강 · article.file_group_id NOT NULL 완화 · holiday.`year` 개명
+- [x] **logging V2** — 로그 5종(error·file_download·privacy_access·pii_purge·security) +
+      통계 5종. 시각 포함 PK(파티셔닝 대비) 유지, client_ip 폭 통일
+- [x] **V910 메일 템플릿 시드 10건** — PK 를 규약 형식(MTP_ + UUIDv7)으로 교정해 적재
+- [x] 접두어 레지스트리 12종 신규 등록(BCT·FGR·EMP·SCM·SVM·SVQ·SVO·SVR·HOL·MTP·PPG) +
+      실제 테이블명 확정 반영(FIL·LIK·RPT) — conventions §2, UidPrefix enum 동기
+
+> **실측 함정 2건**: ① `WITH PARSER ngram` 은 MySQL 전용 — MariaDB 에서 마이그레이션 실패.
+> 기본 파서로 대체(한국어 검색은 nori 색인 예정). ② Flyway 플레이스홀더 치환이 메일
+> 본문의 Thymeleaf `${siteName}` 을 잡아 실패 → `placeholderReplacement(false)` 전역 해제.
+
+> **tb_member 5건은 적재하지 않았다** (사용자 판단 필요):
+> 컬럼 불일치(PASSWORD/STATUS/group_ids 는 gopcms5 tb_member 에 없음) ·
+> 존재하지 않는 site_id 참조 · 다른 프로젝트 마스터키로 암호화된 `{AG}` 값(복호화 불가) ·
+> 실제 인물의 이름·이메일·전화번호 해시 포함. 필요하면 익명화 후 별도 시드로 요청.
+
+### P7-3 남은 관리 화면 (다음)
+- [ ] 회원·직원·역할/권한 관리 · 배너/팝업 · 일정 · 설문 · 파일 · 공통코드
+- [ ] 접속/보안 로그 조회 화면(logging V2 테이블 활용) · 통계 대시보드
+- [ ] 컨텐츠 에디터(위지윅) + 파일 업로드 연동 · tb_content_history 버전 비교
+
+## P8+ — 이후 로드맵 (예고)
+
+게시판 도메인 구현(V9 테이블 위) → 회원·조직 → 템플릿 CSS 진짜 구현(blueprint-001 부터,
+SG 스타일가이드 병행) → 나머지 레이아웃 양산(C·F 우선 검증 후) → 공통 프로그램 →
+eGov 호환성 확인 신청.
 
 ---
 
@@ -196,4 +306,6 @@ BBS 도메인) → 회원·조직(V5) → 템플릿 CSS 진짜 구현(blueprint-
 | .env 주입 | IntelliJ Run Config 수동 입력 vs EnvFile 플러그인 | P0 |
 | eGov RTE 다운로드 | maven.egovframe.go.kr 접근·좌표 실검증 (pom 주석의 주의사항) | P0 |
 | layout-001 외 레이아웃 | P5 레이아웃 전환 테스트에 최소 1종 추가 필요(layout-003 권장) | P4~P5 |
-| 시큐리티 공백기 | P0~P5 는 인증 없음 — **로컬 개발 한정**, 외부 노출 금지 | 상시 |
+| ~~시큐리티 공백기~~ | ✅ 해소: P6 로 인증·인가·세션·헤더 적용 (P0~P5 는 무인증이었음) | P6 완료 |
+| 인증 기준 데이터 위치 | 역할·관리자·URL 규칙이 dev 시드(V906/V909)에 있다 — 운영 이관 필요 | P7 |
+| 세션 저장소 | 현재 인메모리(단일 인스턴스 전제) — 다중화 시 Redis 등 공유 저장소 필요 | 배포 전 |

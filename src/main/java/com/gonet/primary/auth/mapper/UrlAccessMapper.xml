@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.auth.mapper.UrlAccessMapper">
+
+    <!--
+      평가 순서를 SQL 이 확정한다 (매니저는 첫 매칭을 그대로 채택):
+        ① priority ASC          — 운영자가 지정한 우선순위
+        ② site_id NOT NULL 우선 — 사이트 규칙이 전역 규칙을 덮는다
+        ③ 긴 패턴 우선          — /adm/login 이 /adm/** 보다 구체적
+      (site_id IS NULL) · CHAR_LENGTH 는 MariaDB·PostgreSQL 공통 — 벤더 분기 불필요.
+    -->
+    <select id="findActiveRules" resultType="com.gonet.primary.auth.dto.UrlAccessRule">
+        SELECT url_access_id, site_id, site_code, url_pattern, http_method, access_type,
+               required_roles, required_auths, allowed_user_types, allowed_ips,
+               require_csrf_yn, require_2fa_yn, priority, description
+        FROM tb_role_url_access
+        WHERE use_yn = 'Y'
+          AND delete_yn = 'N'
+        ORDER BY priority ASC,
+                 (site_id IS NULL) ASC,
+                 CHAR_LENGTH(url_pattern) DESC,
+                 url_access_id ASC
+    </select>
+
+    <select id="findAuthIdsByRoleIds" resultType="string">
+        SELECT DISTINCT ra.auth_id
+        FROM tb_role_auth ra
+        JOIN tb_auth a ON a.auth_id = ra.auth_id AND a.use_yn = 'Y' AND a.delete_yn = 'N'
+        WHERE ra.delete_yn = 'N'
+          AND ra.role_id IN
+        <foreach item="roleId" collection="roleIds" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+    </select>
+
+</mapper>

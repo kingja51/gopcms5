@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>템플릿 등록·수정</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg"
+        th:text="${template.templateId} ? '템플릿 수정' : '템플릿 등록'">템플릿 등록</h1>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <form th:action="@{/adm/template/save}" method="post" class="ladm-form">
+        <input type="hidden" name="templateId" th:value="${template.templateId}"/>
+
+        <div class="ladm-form-row">
+            <div class="ladm-field">
+                <label for="templateCode">템플릿 코드 *</label>
+                <input id="templateCode" name="templateCode" class="krds-input" required
+                       th:value="${template.templateCode}" pattern="[a-z0-9-]{1,50}"/>
+                <p class="ladm-hint">CSS 파일명입니다 — <code>/tmpl/css/{코드}.css</code> 가 있어야 적용됩니다.</p>
+            </div>
+            <div class="ladm-field">
+                <label for="templateName">이름 *</label>
+                <input id="templateName" name="templateName" class="krds-input" required
+                       th:value="${template.templateName}"/>
+            </div>
+        </div>
+
+        <div class="ladm-field">
+            <label for="defaultLayoutId">기본 레이아웃 *</label>
+            <select id="defaultLayoutId" name="defaultLayoutId" required>
+                <option value="">선택하세요</option>
+                <option th:each="l : ${layouts}" th:value="${l.layoutId}"
+                        th:selected="${l.layoutId == template.defaultLayoutId}"
+                        th:text="${l.layoutCode + ' — ' + l.layoutName}">code</option>
+            </select>
+            <p class="ladm-hint">사이트가 레이아웃을 고르지 않으면 이 레이아웃이 쓰입니다.</p>
+        </div>
+
+        <div class="ladm-field">
+            <label for="description">설명</label>
+            <input id="description" name="description" class="krds-input"
+                   th:value="${template.description}"/>
+        </div>
+
+        <div class="ladm-field">
+            <label for="designMd">디자인 지침(design-md)</label>
+            <textarea id="designMd" name="designMd" th:text="${template.designMd}"></textarea>
+        </div>
+
+        <div class="ladm-field">
+            <label for="useYn">상태</label>
+            <select id="useYn" name="useYn">
+                <option value="Y" th:selected="${template.useYn == 'Y'}">사용</option>
+                <option value="N" th:selected="${template.useYn == 'N'}">중지</option>
+            </select>
+        </div>
+
+        <div class="ladm-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{/adm/template}" class="krds-btn krds-btn-secondary">목록</a>
+        </div>
+    </form>
+
+    <form th:if="${template.templateId}" th:action="@{/adm/template/delete}" method="post"
+          style="margin-top:12px">
+        <input type="hidden" name="templateId" th:value="${template.templateId}"/>
+        <button type="submit" class="krds-btn krds-btn-tertiary"
+                data-confirm="이 템플릿을 삭제할까요?">삭제</button>
+    </form>
+</div>
+</body>
+</html>

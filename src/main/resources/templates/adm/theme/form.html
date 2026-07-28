@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>테마 등록·수정</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg" th:text="${theme.themeId} ? '테마 수정' : '테마 등록'">테마 등록</h1>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <form th:action="@{/adm/theme/save}" method="post" class="ladm-form">
+        <input type="hidden" name="themeId" th:value="${theme.themeId}"/>
+
+        <div class="ladm-field">
+            <label for="templateId">소속 템플릿 *</label>
+            <select id="templateId" name="templateId" required>
+                <option value="">선택하세요</option>
+                <option th:each="t : ${templates}" th:value="${t.templateId}"
+                        th:selected="${t.templateId == theme.templateId}"
+                        th:text="${t.templateCode + ' — ' + t.templateName}">code</option>
+            </select>
+            <p class="ladm-hint">테마는 템플릿에 종속됩니다 — 다른 템플릿의 테마를 사이트에 물리면 저장이 거부됩니다.</p>
+        </div>
+
+        <div class="ladm-form-row">
+            <div class="ladm-field">
+                <label for="themeCode">테마 코드 *</label>
+                <input id="themeCode" name="themeCode" class="krds-input" required
+                       th:value="${theme.themeCode}" pattern="[a-z0-9-]{1,30}"/>
+            </div>
+            <div class="ladm-field">
+                <label for="themeName">이름 *</label>
+                <input id="themeName" name="themeName" class="krds-input" required
+                       th:value="${theme.themeName}"/>
+            </div>
+        </div>
+
+        <div class="ladm-form-row">
+            <div class="ladm-field">
+                <label for="cssClass">CSS 클래스</label>
+                <input id="cssClass" name="cssClass" class="krds-input"
+                       th:value="${theme.cssClass}" placeholder="theme-teal"/>
+                <p class="ladm-hint">비우면 템플릿 기본 브랜드. 전역 CSS 에 정의된 클래스여야 합니다.</p>
+            </div>
+            <div class="ladm-field">
+                <label for="sortOrder">정렬 순서</label>
+                <input id="sortOrder" name="sortOrder" type="number" class="krds-input"
+                       th:value="${theme.sortOrder}"/>
+            </div>
+        </div>
+
+        <div class="ladm-field">
+            <label for="useYn">상태</label>
+            <select id="useYn" name="useYn">
+                <option value="Y" th:selected="${theme.useYn == 'Y'}">사용</option>
+                <option value="N" th:selected="${theme.useYn == 'N'}">중지</option>
+            </select>
+        </div>
+
+        <div class="ladm-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{/adm/theme}" class="krds-btn krds-btn-secondary">목록</a>
+        </div>
+    </form>
+
+    <form th:if="${theme.themeId}" th:action="@{/adm/theme/delete}" method="post"
+          style="margin-top:12px">
+        <input type="hidden" name="themeId" th:value="${theme.themeId}"/>
+        <button type="submit" class="krds-btn krds-btn-tertiary"
+                data-confirm="이 테마를 삭제할까요?">삭제</button>
+    </form>
+</div>
+</body>
+</html>

@@ -35,4 +35,91 @@
         WHERE content_id = #{contentId}
     </update>
 
+    <!-- ══ 관리 CRUD (P7) ══════════════════════════════════════════════════
+         목록은 상태 무관(초안·예약도 관리 대상)이고 본문은 싣지 않는다(mediumtext). -->
+    <sql id="admWhere">
+        WHERE c.site_id = #{siteId}
+          AND c.delete_yn = 'N'
+        <if test="cond.keyword != null">
+            AND (c.title LIKE CONCAT('%', #{cond.keyword}, '%')
+              OR c.slug  LIKE CONCAT('%', #{cond.keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="findPage" resultType="com.gonet.primary.content.dto.ContentAdmDto">
+        SELECT c.content_id, c.site_id, c.site_code, c.menu_id, c.title, c.slug,
+               c.status, c.published_at, c.publish_scheduled_at, c.unpublish_at,
+               c.view_count, c.version_no, c.updated_at,
+               m.menu_name
+        FROM tb_content c
+        LEFT JOIN tb_menu m ON m.menu_id = c.menu_id
+        <include refid="admWhere"/>
+        ORDER BY c.updated_at DESC, c.content_id DESC
+        LIMIT #{cond.size} OFFSET #{cond.offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_content c
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findAdmById" resultType="com.gonet.primary.content.dto.ContentAdmDto">
+        SELECT content_id, site_id, site_code, menu_id, title, slug, body, summary,
+               meta_keywords, meta_description, status, published_at,
+               publish_scheduled_at, unpublish_at, view_count, version_no
+        FROM tb_content
+        WHERE content_id = #{contentId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countBySlug" resultType="int">
+        SELECT COUNT(*) FROM tb_content
+        WHERE site_id = #{siteId}
+          AND slug = #{slug}
+          AND delete_yn = 'N'
+        <if test="excludeId != null">
+            AND content_id &lt;&gt; #{excludeId}
+        </if>
+    </select>
+
+    <select id="findAllForSelect" resultType="com.gonet.primary.content.dto.ContentAdmDto">
+        SELECT content_id, title, slug, status
+        FROM tb_content
+        WHERE site_id = #{siteId} AND delete_yn = 'N'
+        ORDER BY title
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.content.dto.ContentAdmDto">
+        INSERT INTO tb_content
+            (content_id, site_id, site_code, menu_id, title, slug, body, summary,
+             meta_keywords, meta_description, status, published_at,
+             publish_scheduled_at, unpublish_at)
+        VALUES
+            (#{contentId}, #{siteId}, #{siteCode}, #{menuId}, #{title}, #{slug}, #{body},
+             #{summary}, #{metaKeywords}, #{metaDescription}, #{status}, #{publishedAt},
+             #{publishScheduledAt}, #{unpublishAt})
+    </insert>
+
+    <!-- version_no 는 저장할 때마다 올린다 — 이력(tb_content_history) 도입 시 그대로 이어진다 -->
+    <update id="update" parameterType="com.gonet.primary.content.dto.ContentAdmDto">
+        UPDATE tb_content
+        SET menu_id = #{menuId},
+            title = #{title},
+            slug = #{slug},
+            body = #{body},
+            summary = #{summary},
+            meta_keywords = #{metaKeywords},
+            meta_description = #{metaDescription},
+            status = #{status},
+            published_at = #{publishedAt},
+            publish_scheduled_at = #{publishScheduledAt},
+            unpublish_at = #{unpublishAt},
+            version_no = version_no + 1
+        WHERE content_id = #{contentId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_content SET delete_yn = 'Y'
+        WHERE content_id = #{contentId}
+    </update>
+
 </mapper>

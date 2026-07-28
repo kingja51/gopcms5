@@ -108,7 +108,13 @@ npm run css:sg         # 스타일가이드 재빌드 (design-md/styleguide)
 ## 보안 (선행 프로젝트 웹쉘 침해 대응 경험 — 보수적으로)
 
 - 다중 SecurityFilterChain: `/adm/**`(관리자 2FA) / member / default. URL 네임스페이스 = 컨트롤러 접미어 = 보안 경계 1:1.
-- 파일 업로드 다중 방어(확장자+Tika 매직바이트+재인코딩), CSRF, CSP nonce, OWASP Sanitizer, 로그인 잠금, Bucket4j.
+- **인가는 DB 단일 원천** — `tb_role_url_access` + `DynamicAuthorizationManager`(priority ASC,
+  사이트 규칙 우선, **무매칭 DENY**). 새 URL 은 접근 규칙 INSERT 를 같은 커밋에 넣어야 열린다
+  (절차·주의는 conventions.md §7). SecurityConfig 에 URL 별 예외를 추가하지 말 것.
+- **client_ip 은 `ClientIpResolver` 단일 경로** — `getRemoteAddr()` 직접 호출 금지.
+  신뢰 프록시(`GOPCMS_TRUSTED_PROXIES`) 미설정 시 X-Forwarded-For 를 무시하는 것이 의도된 기본값.
+- 파일 업로드 다중 방어(확장자+Tika 매직바이트+재인코딩), CSRF, CSP nonce(`SecurityHeadersFilter` —
+  인라인 스크립트는 `th:attr="nonce=${cspNonce}"` 없이는 실행 불가), OWASP Sanitizer, 로그인 잠금, Bucket4j.
 - 비밀값은 Jasypt `ENC(...)`/환경변수 — 코드·yml 평문 금지, 미주입 fail-fast 는 의도된 동작.
   키 목록은 [.env.example](.env.example) (실값은 `.env` — git ignore, **example 에 실비밀 입력 금지**).
 - **PII 암호화**: `@Encrypt`(AES-256-GCM, 저장값 `{AG}` 프리픽스) — 마스터키 `GOPCMS_PII_MASTER_KEY`(base64 32바이트) fail-fast.

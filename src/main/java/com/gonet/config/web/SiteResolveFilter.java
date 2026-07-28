@@ -1,6 +1,7 @@
 package com.gonet.config.web;
 
 import com.gonet.common.audit.AuditorContext;
+import com.gonet.common.web.ClientIpResolver;
 import com.gonet.common.web.SiteContextHolder;
 import com.gonet.primary.site.dto.SiteContext;
 import com.gonet.primary.site.service.SiteService;
@@ -31,13 +32,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class SiteResolveFilter extends OncePerRequestFilter {
 
-    /** 사이트 네임스페이스가 아닌 첫 세그먼트 — 해석 자체를 건너뜀. */
-    private static final Set<String> SKIP_PREFIXES = Set.of(
+    /**
+     * 사이트 네임스페이스가 아닌 첫 세그먼트 — 해석 자체를 건너뜀.
+     *
+     * <p>동시에 <b>site_code 로 쓸 수 없는 값</b>이기도 하다(같은 자리를 다투므로) —
+     * 사이트 등록 검증(SiteServiceImpl)이 이 목록을 그대로 참조한다.
+     */
+    public static final Set<String> SKIP_PREFIXES = Set.of(
             "adm", "api", "actuator", "error", "favicon.ico",
             "css", "js", "fonts", "images", "tmpl", "webjars",
             "swagger-ui", "v3");
 
     private final SiteService siteService;
+    private final ClientIpResolver clientIpResolver;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -54,7 +61,9 @@ public class SiteResolveFilter extends OncePerRequestFilter {
                 SiteContextHolder.set(context);
                 request.setAttribute(SiteContextHolder.REQUEST_ATTR, context);
             }
-            AuditorContext.set(null, request.getRemoteAddr()); // userId 는 P6 에서 연결
+            // userId 는 세팅하지 않는다 — 이 필터는 시큐리티 체인 바깥이라 아직 인증 전이다.
+            // AuditorContext 가 조회 시점에 SecurityContext 에서 주체를 읽는다.
+            AuditorContext.set(null, clientIpResolver.resolve(request));
             filterChain.doFilter(request, response);
         } finally {
             SiteContextHolder.clear();

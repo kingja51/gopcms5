@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!-- 컨텐츠 목록 — 상태 무관(초안·예약 포함). '보기'는 실제 사용자 URL 로 연다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>컨텐츠 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg">컨텐츠 관리</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        사이트별 페이지 — slug 가 곧 주소입니다 (<code>/{사이트코드}/{slug}</code>).</p>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <div class="ladm-listbar">
+        <form th:action="@{/adm/content}" method="get" class="ladm-search">
+            <label class="sr-only" for="siteId">사이트</label>
+            <select id="siteId" name="siteId" data-submit-on-change>
+                <option th:each="s : ${sites}" th:value="${s.siteId}"
+                        th:selected="${s.siteId == siteId}"
+                        th:text="${s.siteCode + ' — ' + s.siteName}">site</option>
+            </select>
+            <label class="sr-only" for="keyword">검색어</label>
+            <input id="keyword" name="keyword" class="krds-input" th:value="${cond?.keyword}"
+                   placeholder="제목·slug 검색"/>
+            <button type="submit" class="krds-btn krds-btn-secondary">검색</button>
+        </form>
+        <a th:href="@{/adm/content/form(siteId=${siteId})}" class="krds-btn krds-btn-primary">등록</a>
+    </div>
+
+    <table class="ladm-table">
+        <thead>
+        <tr>
+            <th>제목</th><th>slug</th><th>연결 메뉴</th><th class="center">상태</th>
+            <th>게시일시</th><th class="num">조회</th><th class="num">버전</th><th class="center">관리</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="c : ${page.content()}">
+            <td><a th:href="@{/adm/content/form(contentId=${c.contentId})}" class="krds-link"
+                   th:text="${c.title}">제목</a></td>
+            <td><code th:text="${c.slug}">about</code></td>
+            <td th:text="${c.menuName} ?: '-'">-</td>
+            <td class="center">
+                <span class="ladm-badge"
+                      th:classappend="${c.status == 'PUBLISHED'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                      th:text="${c.status == 'PUBLISHED'} ? '게시' : (${c.status == 'DRAFT'} ? '초안' : '보관')">초안</span>
+            </td>
+            <td th:text="${c.publishedAt} != null ? ${#temporals.format(c.publishedAt, 'yyyy-MM-dd HH:mm')} : '-'">-</td>
+            <td class="num" th:text="${c.viewCount}">0</td>
+            <td class="num" th:text="${c.versionNo}">1</td>
+            <td class="center">
+                <a th:if="${siteCode != null and c.slug != null}"
+                   th:href="@{'/' + ${siteCode} + '/' + ${c.slug}}" target="_blank"
+                   class="krds-btn krds-btn-tertiary krds-btn-sm">보기</a>
+            </td>
+        </tr>
+        <tr th:if="${page.content().isEmpty()}"
+            th:replace="~{adm/fragments/adm-ui :: empty(8)}"></tr>
+        </tbody>
+    </table>
+
+    <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/content')}"></nav>
+</div>
+</body>
+</html>

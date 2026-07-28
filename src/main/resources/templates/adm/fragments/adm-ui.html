@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!-- 관리자 화면 공통 조각 — 목록 헤더(검색·등록)·페이저·플래시 메시지.
+     6개 관리 모듈이 같은 조작 감각을 갖도록 여기 한 곳만 고친다. -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 저장·삭제 결과 안내. 컨트롤러가 RedirectAttributes 로 flash 를 넘긴다 -->
+<div th:fragment="flash" th:remove="tag">
+    <div th:if="${flashOk}" role="status" class="krds-alert krds-alert-success" style="margin-top:16px">
+        <span aria-hidden="true">✓</span><p th:text="${flashOk}">저장되었습니다.</p>
+    </div>
+    <div th:if="${flashError}" role="alert" class="krds-alert krds-alert-danger" style="margin-top:16px">
+        <span aria-hidden="true">✕</span><p th:text="${flashError}">오류</p>
+    </div>
+</div>
+
+<!-- 검색 + 등록 버튼 줄. listUrl = 이 목록의 기본 경로 -->
+<div th:fragment="listbar(listUrl)" class="ladm-listbar">
+    <form th:action="@{${listUrl}}" method="get" class="ladm-search">
+        <label class="sr-only" for="keyword">검색어</label>
+        <input id="keyword" name="keyword" class="krds-input" th:value="${cond?.keyword}"
+               placeholder="이름·코드 검색"/>
+        <button type="submit" class="krds-btn krds-btn-secondary">검색</button>
+    </form>
+    <a th:href="@{${listUrl} + '/form'}" class="krds-btn krds-btn-primary">등록</a>
+</div>
+
+<!-- 페이저. 검색어를 유지한 채 페이지만 바꾼다 -->
+<nav th:fragment="pager(listUrl)" th:if="${page != null and page.totalPages() > 1}"
+     class="ladm-pager" aria-label="페이지 이동">
+    <a th:if="${page.hasPrev()}" class="krds-btn krds-btn-tertiary krds-btn-sm"
+       th:href="@{${listUrl}(page=${page.page() - 1}, keyword=${cond?.keyword})}">이전</a>
+    <a th:each="p : ${page.blockPages()}"
+       th:href="@{${listUrl}(page=${p}, keyword=${cond?.keyword})}"
+       th:text="${p}"
+       th:classappend="${p == page.page()} ? 'ladm-page-current'"
+       class="ladm-page">1</a>
+    <a th:if="${page.hasNext()}" class="krds-btn krds-btn-tertiary krds-btn-sm"
+       th:href="@{${listUrl}(page=${page.page() + 1}, keyword=${cond?.keyword})}">다음</a>
+</nav>
+
+<!-- 목록이 비었을 때 -->
+<tr th:fragment="empty(colspan)">
+    <td th:attr="colspan=${colspan}" class="text-center text-fg-subtle" style="padding:32px">
+        등록된 자료가 없습니다.
+    </td>
+</tr>
+
+</body>
+</html>

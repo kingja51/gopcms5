@@ -55,6 +55,10 @@ public class FlywayConfig {
                 .dataSource(dataSource)
                 .locations(locations.toArray(String[]::new))
                 .validateOnMigrate(true)
+                // 우리는 Flyway 플레이스홀더를 쓰지 않는다. 켜 두면 SQL 안의 ${…} 를 전부
+                // 치환 대상으로 보는데, 메일 템플릿 본문의 Thymeleaf 식(${siteName})이
+                // 그대로 걸려 마이그레이션이 실패한다 (V910 실측).
+                .placeholderReplacement(false)
                 .cleanDisabled(true) // 운영 사고 방지 — 전 프로파일 고정 (로컬 리셋은 DROP DATABASE)
                 .failOnMissingLocations(false) // secondary/logging 은 마이그레이션 0건 허용 (README 만 존재)
                 // devdata(V900+) 가 스키마 버전(V4~)보다 먼저 이력에 남으므로, devdata 를

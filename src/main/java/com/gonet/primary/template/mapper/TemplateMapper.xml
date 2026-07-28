@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.template.mapper.TemplateMapper">
+
+    <sql id="admWhere">
+        WHERE t.delete_yn = 'N'
+        <if test="keyword != null">
+            AND (t.template_code LIKE CONCAT('%', #{keyword}, '%')
+              OR t.template_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="findPage" resultType="com.gonet.primary.template.dto.TemplateAdmDto">
+        SELECT t.template_id, t.template_code, t.template_name, t.default_layout_id,
+               t.description, t.use_yn,
+               l.layout_code AS default_layout_code,
+               (SELECT COUNT(*) FROM tb_theme th
+                 WHERE th.template_id = t.template_id AND th.delete_yn = 'N') AS theme_count,
+               (SELECT COUNT(*) FROM tb_site s
+                 WHERE s.template_id = t.template_id AND s.delete_yn = 'N') AS site_count
+        FROM tb_template t
+        LEFT JOIN tb_layout l ON l.layout_id = t.default_layout_id
+        <include refid="admWhere"/>
+        ORDER BY t.template_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_template t
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.template.dto.TemplateAdmDto">
+        SELECT template_id, template_code, template_name, default_layout_id,
+               design_md, description, use_yn
+        FROM tb_template
+        WHERE template_id = #{templateId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByCode" resultType="int">
+        SELECT COUNT(*) FROM tb_template
+        WHERE template_code = #{templateCode} AND delete_yn = 'N'
+        <if test="excludeId != null">
+            AND template_id &lt;&gt; #{excludeId}
+        </if>
+    </select>
+
+    <select id="countReferences" resultType="int">
+        SELECT (SELECT COUNT(*) FROM tb_site s
+                 WHERE s.template_id = #{templateId} AND s.delete_yn = 'N')
+             + (SELECT COUNT(*) FROM tb_theme th
+                 WHERE th.template_id = #{templateId} AND th.delete_yn = 'N')
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.template.dto.TemplateAdmDto">
+        INSERT INTO tb_template
+            (template_id, template_code, template_name, default_layout_id,
+             design_md, description, use_yn)
+        VALUES
+            (#{templateId}, #{templateCode}, #{templateName}, #{defaultLayoutId},
+             #{designMd}, #{description}, #{useYn})
+    </insert>
+
+    <update id="update" parameterType="com.gonet.primary.template.dto.TemplateAdmDto">
+        UPDATE tb_template
+        SET template_code = #{templateCode},
+            template_name = #{templateName},
+            default_layout_id = #{defaultLayoutId},
+            design_md = #{designMd},
+            description = #{description},
+            use_yn = #{useYn}
+        WHERE template_id = #{templateId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_template SET delete_yn = 'Y', use_yn = 'N'
+        WHERE template_id = #{templateId}
+    </update>
+
+    <select id="findAllForSelect" resultType="com.gonet.primary.template.dto.TemplateAdmDto">
+        SELECT template_id, template_code, template_name
+        FROM tb_template
+        WHERE use_yn = 'Y' AND delete_yn = 'N'
+        ORDER BY template_code
+    </select>
+
+</mapper>

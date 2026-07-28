@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- 사이트 목록 — 3축 선택 결과를 한눈에. '기본' 배지가 루트(/) 리다이렉트 대상이다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>사이트 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg">사이트 관리</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        사이트별 템플릿·테마·레이아웃(3축)을 지정합니다. 저장 즉시 사용자 화면에 반영됩니다.</p>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+    <div th:replace="~{adm/fragments/adm-ui :: listbar('/adm/site')}"></div>
+
+    <table class="ladm-table">
+        <thead>
+        <tr>
+            <th>코드</th><th>사이트명</th><th>템플릿</th><th>테마</th><th>레이아웃</th>
+            <th class="num">메뉴</th><th class="num">컨텐츠</th>
+            <th class="center">기본</th><th class="center">사용</th><th class="center">관리</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="s : ${page.content()}">
+            <td>
+                <a th:href="@{/adm/site/form(siteId=${s.siteId})}" class="krds-link"
+                   th:text="${s.siteCode}">main</a>
+            </td>
+            <td th:text="${s.siteName}">사이트</td>
+            <td th:text="${s.templateCode} ?: '기본(krds)'">krds</td>
+            <td th:text="${s.themeCode} ?: '기본'">-</td>
+            <td th:text="${s.layoutCode} ?: '템플릿 기본'">layout-001</td>
+            <td class="num" th:text="${s.menuCount}">0</td>
+            <td class="num" th:text="${s.contentCount}">0</td>
+            <td class="center">
+                <span th:if="${s.defaultYn == 'Y'}" class="ladm-badge ladm-badge-on">기본</span>
+            </td>
+            <td class="center">
+                <span class="ladm-badge"
+                      th:classappend="${s.useYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                      th:text="${s.useYn == 'Y'} ? '사용' : '중지'">사용</span>
+            </td>
+            <td class="center">
+                <a th:href="@{'/' + ${s.siteCode} + '/index'}" target="_blank"
+                   class="krds-btn krds-btn-tertiary krds-btn-sm">보기</a>
+            </td>
+        </tr>
+        <tr th:if="${page.content().isEmpty()}"
+            th:replace="~{adm/fragments/adm-ui :: empty(10)}"></tr>
+        </tbody>
+    </table>
+
+    <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/site')}"></nav>
+</div>
+</body>
+</html>

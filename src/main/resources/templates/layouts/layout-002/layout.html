@@ -22,6 +22,11 @@
     <link rel="stylesheet" th:href="@{${'/tmpl/css/' + (site != null ? site.templateCode : 'krds') + '.css'}}"/>
     <link rel="stylesheet" href="/css/layouts/layout-002.css"/>
     <th:block th:if="${site != null and site.headMeta != null}" th:utext="${site.headMeta}"/>
+    <!-- 고대비(hc) 복원 — 첫 페인트 전(FOUC 방지). 인라인 예외는 여기 하나, CSP nonce 필수 -->
+    <script th:attr="nonce=${cspNonce}">
+        try { if (localStorage.getItem('gopcms5.hc') === '1')
+            document.documentElement.classList.add('hc'); } catch (e) {}
+    </script>
 </head>
 <body class="bg-bg text-fg">
 

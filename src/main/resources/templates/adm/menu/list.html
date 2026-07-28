@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<!-- 메뉴 목록 — 트리라서 페이징하지 않고 depth 로 들여쓴다. 정렬은 GNB 노출 순서와 같다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>메뉴 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg">메뉴 관리</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        사이트별 메뉴 트리(최대 4단계) — 저장 즉시 GNB·사이트맵에 반영됩니다.</p>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <div class="ladm-listbar">
+        <form th:action="@{/adm/menu}" method="get" class="ladm-search">
+            <label class="sr-only" for="siteId">사이트</label>
+            <select id="siteId" name="siteId" data-submit-on-change>
+                <option th:each="s : ${sites}" th:value="${s.siteId}"
+                        th:selected="${s.siteId == siteId}"
+                        th:text="${s.siteCode + ' — ' + s.siteName}">site</option>
+            </select>
+            <label class="sr-only" for="keyword">검색어</label>
+            <input id="keyword" name="keyword" class="krds-input" th:value="${keyword}"
+                   placeholder="메뉴명 검색"/>
+            <button type="submit" class="krds-btn krds-btn-secondary">검색</button>
+        </form>
+        <a th:href="@{/adm/menu/form(siteId=${siteId})}" class="krds-btn krds-btn-primary">등록</a>
+    </div>
+
+    <table class="ladm-table">
+        <thead>
+        <tr>
+            <th>메뉴명</th><th>유형</th><th>연결 대상</th>
+            <th class="num">깊이</th><th class="num">정렬</th><th class="num">하위</th>
+            <th class="center">인증</th><th class="center">사용</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${menus}">
+            <td>
+                <span th:if="${m.depth > 1}" aria-hidden="true"
+                      th:text="${#strings.repeat('　', m.depth - 1)} + '└ '"></span>
+                <a th:href="@{/adm/menu/form(menuId=${m.menuId})}" class="krds-link"
+                   th:text="${m.menuName}">메뉴</a>
+            </td>
+            <td th:text="${m.menuType}">FOLDER</td>
+            <td th:switch="${m.menuType}">
+                <span th:case="'CONTENT'" th:text="${m.targetTitle} ?: '(연결 대상 없음)'">컨텐츠</span>
+                <span th:case="'URL'" th:text="${m.linkUrl}">https://…</span>
+                <span th:case="*" class="text-fg-subtle">-</span>
+            </td>
+            <td class="num" th:text="${m.depth}">1</td>
+            <td class="num" th:text="${m.sortOrder}">0</td>
+            <td class="num" th:text="${m.childCount}">0</td>
+            <td class="center">
+                <span th:if="${m.authRequiredYn == 'Y'}" class="ladm-badge ladm-badge-on">필요</span>
+            </td>
+            <td class="center">
+                <span class="ladm-badge"
+                      th:classappend="${m.useYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                      th:text="${m.useYn == 'Y'} ? '사용' : '중지'">사용</span>
+            </td>
+        </tr>
+        <tr th:if="${menus.isEmpty()}" th:replace="~{adm/fragments/adm-ui :: empty(8)}"></tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

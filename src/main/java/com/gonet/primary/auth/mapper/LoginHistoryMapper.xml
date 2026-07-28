@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.auth.mapper.LoginHistoryMapper">
+
+    <insert id="insert" parameterType="com.gonet.primary.auth.dto.LoginHistory">
+        INSERT INTO tb_login_history
+            (login_history_id, user_type, user_id, login_id, site_id, site_code,
+             result, fail_reason, client_ip, user_agent, session_id, created_ip)
+        VALUES
+            (#{loginHistoryId}, #{userType}, #{userId}, #{loginId}, #{siteId}, #{siteCode},
+             #{result}, #{failReason}, #{clientIp}, #{userAgent}, #{sessionId}, #{clientIp})
+    </insert>
+
+</mapper>

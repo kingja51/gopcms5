@@ -22,7 +22,9 @@ public class LoginUser {
     private LocalDateTime lastLoginAt;
     private LocalDateTime passwordChangedAt;
     private LocalDateTime passwordExpireAt;
+    private String captchaRequiredYn; // 잠금 이력이 있는 계정 — 다음 성공 시 자동 'N'
     private String twoFactorEnabledYn;
+    private String twoFactorSecret;
     private String roleIds;       // 계층 전개 CSV
     private String roleCodes;     // ROLE_* CSV — Security 권한 부여
     private String departmentId;

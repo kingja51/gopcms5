@@ -1,5 +1,7 @@
 package com.gonet.config.web;
 
+import com.gonet.common.web.ClientIpResolver;
+import com.gonet.common.web.LoginPrincipal;
 import com.gonet.common.web.RequestAttrs;
 import com.gonet.common.web.SiteContextHolder;
 import com.gonet.logging.access.dto.AccessLog;
@@ -31,7 +33,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
  *   <li><b>실패 격리</b> — 적재 예외는 삼키고 WARN 만 남긴다(로그가 요청을 깨지 않음).
  *       트랜잭션도 logging TxManager + REQUIRES_NEW (AccessLogServiceImpl)</li>
  *   <li><b>마스킹</b> — 쿼리스트링의 password/token 류 값은 *** 치환 후 저장</li>
- *   <li>actor_* 는 P6(Security) 에서 인증 주체 연결 — 그 전까지 NULL(ANONYMOUS)</li>
+ *   <li><b>actor_*</b> — 체인 안쪽 {@code ActorCaptureFilter} 가 담아 둔 주체를 회수
+ *       (여기선 SecurityContext 가 이미 비워진 뒤라 직접 읽을 수 없다)</li>
+ *   <li><b>client_ip</b> — {@code ClientIpResolver} 단일 경로(신뢰 프록시 XFF)</li>
  * </ul>
  */
 @Slf4j
@@ -45,6 +49,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
             "css", "js", "fonts", "images", "tmpl", "webjars", "favicon.ico", "actuator");
 
     private final AccessLogService accessLogService;
+    private final ClientIpResolver clientIpResolver;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -79,18 +84,22 @@ public class AccessLogFilter extends OncePerRequestFilter {
         String sessionId = session == null ? null : tail(session.getId(), 8);
         String contentLength = response.getHeader("Content-Length");
 
+        // 인증 주체 — 시큐리티 체인이 이미 반환된 시점이라 SecurityContext 는 비어 있다.
+        // 그래서 체인 안쪽에서 담아 둔 request attribute 로 회수한다(ThreadLocal 아님).
+        LoginPrincipal actor = (LoginPrincipal) request.getAttribute(RequestAttrs.ACTOR);
+
         return AccessLog.builder()
                 .siteId(site == null ? null : site.getSiteId())
                 .siteCode(site == null ? null : site.getSiteCode())
                 .menuId((String) request.getAttribute(RequestAttrs.MENU_ID))
-                .actorUserId(null)   // P6: SecurityContext 인증 주체 연결
-                .actorUserType(null)
-                .actorLoginId(null)
+                .actorUserId(actor == null ? null : actor.userId())
+                .actorUserType(actor == null ? "ANONYMOUS" : actor.userType())
+                .actorLoginId(actor == null ? null : cut(actor.loginId(), 50))
                 .requestUri(cut(request.getRequestURI(), 500))
                 .httpMethod(request.getMethod())
                 .queryString(cut(mask(request.getQueryString()), 500))
                 .referer(cut(request.getHeader("Referer"), 500))
-                .clientIp(request.getRemoteAddr()) // X-Forwarded-For 신뢰 프록시 해석은 P6
+                .clientIp(clientIpResolver.resolve(request))
                 .userAgent(cut(request.getHeader("User-Agent"), 500))
                 .statusCode(response.getStatus())
                 .responseMs(elapsedMs)

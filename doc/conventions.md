@@ -68,16 +68,22 @@ SIT_01890a5d-ac96-774b-bcce-b302099a8057
 | `POP` | tb_popup | 사이트관리(부속) | 오늘 하루 안 보기 |
 | `TRM` | tb_terms | 사이트관리(부속) | 약관 버전 관리 |
 
-### 2.2 게시판
+### 2.2 게시판 · 파일 (V9)
 
 | 접두어 | 테이블 | 비고 |
 |---|---|---|
 | `BBM` | tb_bbs_master | 게시판 정의(스킨 NOTICE·GALLERY…) |
 | `BBA` | tb_bbs_article | 게시글 |
 | `BBC` | tb_bbs_comment | 댓글 |
-| `FIL` | tb_attach_file | 첨부파일(게시판·컨텐츠 공용) |
-| `LIK` | tb_like | 좋아요 |
-| `RPT` | tb_report | 신고 |
+| `BCT` | tb_bbs_category | 게시판 카테고리 |
+| `LIK` | tb_bbs_like | 좋아요 (게시글·댓글·컨텐츠 통합) |
+| `RPT` | tb_bbs_report | 신고 (게시글·댓글·컨텐츠 통합) |
+| `FGR` | tb_file_group | 파일 그룹 — 업로드 묶음의 소유·권한 단위 |
+| `FIL` | tb_file | 업로드 파일 |
+
+※ V9 에서 실제 테이블명이 확정되며 세 항목의 대상이 바뀌었다(설계 초안 → 구현):
+`FIL` tb_attach_file→**tb_file** · `LIK` tb_like→**tb_bbs_like** · `RPT` tb_report→**tb_bbs_report**.
+접두어 자체는 그대로다(재사용·변경 금지 원칙 유지).
 
 ### 2.3 회원·조직·인증 (V6 확장)
 
@@ -108,14 +114,32 @@ SIT_01890a5d-ac96-774b-bcce-b302099a8057
 
 | 접두어 | 테이블 | 비고 |
 |---|---|---|
-| `SCH` | tb_schedule | 학사일정 |
-| `NTF` | tb_notification | 알림함 |
+| `SCM` | tb_schedule_master | 일정 마스터 (사이트·메뉴 소유) |
+| `SCH` | tb_schedule | 개별 일정 |
+| `SVM` | tb_survey_master | 설문 마스터 |
 | `SVY` | tb_survey | 설문 |
-| `SVA` | tb_survey_answer | 설문 응답 |
+| `SVQ` | tb_survey_question | 설문 문항 |
+| `SVO` | tb_survey_option | 설문 선택지 |
+| `SVR` | tb_survey_response | 설문 응답 헤더 |
+| `SVA` | tb_survey_answer | 설문 응답 상세 |
+| `BNR` | tb_banner | 배너 |
+| `POP` | tb_popup | 팝업 |
+| `HOL` | tb_holiday | 공휴일 |
+| `MTP` | tb_mail_template | 메일 템플릿 |
+| `NTF` | tb_notification | 알림함 |
 | `MWN` | tb_minwon | 민원 |
 | `COD` | tb_code | 공통코드 |
 | `CGR` | tb_code_group | 공통코드 그룹 |
 | `AUD` | tb_audit_log | 관리자 감사 로그 |
+
+### 2.5 logging_db
+
+로그 테이블은 대량 append 라 시퀀스(bigint AUTO_INCREMENT) PK 를 쓴다 — §1 의 예외다.
+UUID 채번이 필요한 것은 아래 하나뿐이다.
+
+| 접두어 | 테이블 | 비고 |
+|---|---|---|
+| `PPG` | log_pii_purge | 개인정보 파기 이력 (배치가 개별 채번) |
 
 ## 3. DB · 테이블 네이밍 — 3-DB 분리
 
@@ -216,7 +240,41 @@ BoardApiController ┘      └ BoardServiceImpl extends AbstractCmsService(→E
   예: 평문 100B → 약 176자. DDL 설계 시 평문 기준의 약 2배 + 40자 여유 확보.
 - 마스킹 출력(`MaskUtils`)·접근 기록(logging_db `log_privacy`)은 별도 계층 — 암호화와 병행.
 
-## 7. 결정 요약
+## 7. URL 접근 규칙 등록 — 새 URL 을 만들 때 반드시 함께 하는 일
+
+인가는 `tb_role_url_access` 단일 원천이다(`DynamicAuthorizationManager`).
+**규칙이 없는 URL 은 열리지 않는다** — `SecurityConfig` 에 예외를 추가하는 방식은 쓰지 않는다.
+
+| 열 | 의미 |
+|---|---|
+| `url_pattern` | Ant 패턴. `*`=한 세그먼트, `**`=하위 전체 (예: `/*/member/**`) |
+| `http_method` | `ALL` 또는 단일 메서드 — 조회는 공개·쓰기는 인증 같은 분리에 사용 |
+| `access_type` | `PERMIT_ALL` · `AUTHENTICATED` · `ANONYMOUS` · `ROLE` · `AUTH` · `IP_ONLY` · `DENY` |
+| `required_roles` | `ROLE` 타입의 **role_id CSV** — 사용자 `role_ids`(계층 전개 스냅샷)와 교집합 판정 |
+| `allowed_user_types` | `MEMBER`/`ADMIN` 경계. 비우면 유형 무관 |
+| `site_id` | NULL=전역. 값이 있으면 **해당 사이트 요청에만** 적용되며 전역 규칙보다 우선 |
+| `priority` | 작을수록 먼저. 동순위는 사이트 규칙 → 긴 패턴 순 |
+
+**평가**: 정렬 순서대로 훑어 **첫 매칭 규칙이 최종 결정**이다(이후 규칙은 보지 않음).
+어떤 규칙에도 걸리지 않으면 **DENY** 이며 `접근 규칙 없음 → DENY` WARN 로그가 남는다.
+화면이 403/로그인 리다이렉트로 튕기면 이 로그부터 확인한다.
+
+**절차**
+
+1. 컨트롤러 매핑을 추가한다 (`{도메인}{Usr|Adm|Api}Controller` — §4).
+2. 같은 커밋의 마이그레이션에 규칙 INSERT 를 넣는다. 콘솔 수기 INSERT 금지(CLAUDE.md).
+   기존 규칙보다 **구체적인 패턴은 더 작은 priority** 를 줘야 상위 `/**` 에 먹히지 않는다.
+3. 규칙 편집을 무재기동 반영하려면 `UrlAccessService.evictCache()` (캐시 TTL 5분).
+4. 검증: 익명·회원·관리자 3주체로 각각 호출해 기대 코드(200 / 302 로그인 / 403)를 확인한다.
+   `http/01-front-smoke.http` 의 "인가 계약" 절에 케이스를 추가한다.
+
+**주의**: 정적 자원(`/css/**`·`/js/**`)·`/error`·`/actuator/health` 규칙을 지우면
+화면이 통째로 무너진다. `/**` PERMIT_ALL(최후 규칙)을 지우면 전 사이트가 닫힌다 —
+비공개 전환은 최후 규칙 삭제가 아니라 **사이트 스코프 규칙 추가**로 한다.
+역할 계층을 바꿨다면 `RoleService.rebuildHierarchy()` 로 closure·CSV 스냅샷을 재계산한다
+(안 하면 인가가 조용히 어긋난다).
+
+## 8. 결정 요약
 
 1. PK = `VARCHAR(40)` 고정 형식 `PRE_uuid-v7`(접두어 대문자 3자리) — 시간순 정렬 + ID 자체로 테이블 식별.
 2. 채번은 앱 유틸 단일 경로(`Uid.next(UidPrefix.X)`) — DB 벤더 중립, enum 으로 오타 차단.
@@ -227,3 +285,5 @@ BoardApiController ┘      └ BoardServiceImpl extends AbstractCmsService(→E
 6. 서비스/매퍼는 도메인당 1벌 공유 — eGov 아키텍처 규칙(인터페이스 주입) 그대로.
 7. 컨텐츠 URL = `/{siteCode}/{index|sitemap|{slug}}` — 예약 slug 차단, siteCode 는 경로 유지.
 8. PII = `@Encrypt`(AES-256-GCM, `{AG}` 프리픽스, 마스터키 base64 32B fail-fast) — 검색은 해시 컬럼.
+9. 인가 = `tb_role_url_access` 단일 원천(priority ASC, 사이트 규칙 우선, **무매칭 DENY**) —
+   새 URL 은 규칙 등록이 동반돼야 열린다(§7). 역할은 전개된 `role_ids` 교집합으로 판정.

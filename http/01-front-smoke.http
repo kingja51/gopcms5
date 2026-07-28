@@ -151,3 +151,34 @@ GET {{host}}/nosite/index
 
 ### 404 — slug 패턴 위반(대문자)은 매핑 자체가 거부
 GET {{host}}/ai/About
+
+### ─── 인가 계약 (P6-2 DB RBAC · tb_role_url_access) ────────────────────────
+### 규칙 원천은 V909 시드. 무매칭은 DENY — 새 URL 추가 시 규칙 등록 필수(conventions §7).
+### 로그인이 필요한 케이스는 CSRF 토큰 발급이 선행돼야 해 브라우저/전용 세트에서 확인한다.
+
+### 200 — front 공개 컨텐츠 (최후 규칙 /** PERMIT_ALL)
+GET {{host}}/ai/index
+
+### 200 — 관리자 로그인 폼 (허용 IP 에서만. 미등록 IP 는 "/" 로 리다이렉트)
+GET {{host}}/adm/login
+
+### 302 → /adm/login — 미인증 관리자 영역 (ROLE_ADMIN 규칙)
+GET {{host}}/adm/index
+
+### 302 → /login?siteCode=ai — 회원 전용 영역, 사이트를 유지한 로그인 유도
+GET {{host}}/ai/member/mypage
+
+### 401 — API 네임스페이스는 기본 DENY + JSON 계약(로그인 HTML 로 보내지 않음)
+GET {{host}}/api/v1/ping
+
+### 302 → /login — health 외 액추에이터 차단
+GET {{host}}/actuator/env
+
+### ─── 보안 헤더 · 세션 (P6-3) ─────────────────────────────────────────────
+### 기대: Content-Security-Policy(script-src 'self' 'nonce-…' — 요청마다 다른 값) ·
+###       X-Content-Type-Options · Referrer-Policy · Permissions-Policy ·
+###       Cross-Origin-Opener-Policy. 로그인 시 Set-Cookie 는 GOPCMS_SID(HttpOnly·Lax).
+GET {{host}}/ai/index
+
+### 응답 본문의 nonce 와 위 헤더의 nonce 가 같아야 인라인 hc 복원 스크립트가 실행된다
+GET {{host}}/adm/login

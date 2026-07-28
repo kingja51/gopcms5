@@ -1,9 +1,12 @@
 package com.gonet.primary.auth.controller;
 
+import com.gonet.common.web.ClientIpResolver;
+import com.gonet.config.security.CaptchaService;
 import com.gonet.primary.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
@@ -16,11 +19,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class LoginAdmController {
 
     private final AuthService authService;
+    private final ClientIpResolver clientIpResolver;
+    private final CaptchaService captchaService;
 
     @GetMapping("/adm/login")
-    public String loginForm(HttpServletRequest request) {
-        if (!authService.isIpAllowedForLoginForm(request.getRemoteAddr())) {
+    public String loginForm(HttpServletRequest request, Model model) {
+        if (!authService.isIpAllowedForLoginForm(clientIpResolver.resolve(request))) {
             return "redirect:/"; // 미등록 IP — 폼 자체를 노출하지 않음
+        }
+        // 잠금을 겪은 계정으로 시도한 세션에만 문답이 붙는다 (CaptchaService 가 표시)
+        if (captchaService.isRequired(request.getSession(false))) {
+            model.addAttribute("captchaQuestion", captchaService.issue(request.getSession(true)));
         }
         return "adm/login";
     }

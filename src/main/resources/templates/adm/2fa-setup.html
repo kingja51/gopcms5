@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- 관리자 2단계 인증 등록 — /adm/2fa/setup.
+     QR 은 서버 생성 data: URI (외부 차트 서비스로 시크릿을 보내지 않는다 — CSP img-src 'self' data:).
+     그룹 정책이 2FA 필수인 계정은 등록을 마칠 때까지 다른 관리 화면으로 나갈 수 없다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>2단계 인증 등록</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg">2단계 인증 등록</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        인증 앱(Google Authenticator 등)으로 아래 QR 을 스캔한 뒤, 앱에 표시된 6자리 코드를 입력하세요.</p>
+
+    <div th:if="${error}" role="alert" class="krds-alert krds-alert-danger" style="margin-top:16px">
+        <span aria-hidden="true">✕</span><p th:text="${error}">오류</p>
+    </div>
+
+    <div style="margin-top:24px;display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+        <img th:src="${qrDataUri}" alt="2단계 인증 등록용 QR 코드"
+             width="220" height="220" style="border:1px solid var(--color-line);border-radius:8px"/>
+
+        <div style="max-width:360px">
+            <p class="text-label-sm font-bold">QR 을 쓸 수 없을 때 — 수동 입력 키</p>
+            <p class="text-body-sm" style="margin-top:4px;word-break:break-all;font-family:monospace"
+               th:text="${secret}">SECRET</p>
+            <p class="text-body-xs text-fg-subtle" style="margin-top:8px">
+                등록을 마치기 전에는 계정에 저장되지 않습니다. 페이지를 벗어나면 키가 새로 발급됩니다.</p>
+
+            <form th:action="@{/adm/2fa/setup}" method="post"
+                  style="margin-top:24px;display:grid;gap:16px">
+                <div>
+                    <label for="totpCode" class="text-label-sm font-bold">앱에 표시된 6자리 코드</label>
+                    <input id="totpCode" name="totpCode" type="text" inputmode="numeric"
+                           class="krds-input" autocomplete="one-time-code" required autofocus/>
+                </div>
+                <button type="submit" class="krds-btn krds-btn-primary">등록 완료</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

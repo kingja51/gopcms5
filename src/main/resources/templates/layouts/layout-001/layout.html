@@ -24,6 +24,12 @@
     <link rel="stylesheet" href="/css/layouts/layout-001.css"/>
     <!-- ④ 사이트별 head 조각 (tb_site.head_meta — 관리자 편집) -->
     <th:block th:if="${site != null and site.headMeta != null}" th:utext="${site.headMeta}"/>
+    <!-- ⑤ 고대비(hc) 복원 — 첫 페인트 전에 끝내야 화면이 번쩍이지 않는다(FOUC).
+         인라인 예외는 이 한 곳뿐이며 CSP nonce 없이는 실행되지 않는다. -->
+    <script th:attr="nonce=${cspNonce}">
+        try { if (localStorage.getItem('gopcms5.hc') === '1')
+            document.documentElement.classList.add('hc'); } catch (e) {}
+    </script>
 </head>
 <body class="bg-bg text-fg">
 

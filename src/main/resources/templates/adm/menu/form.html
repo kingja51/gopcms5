@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!-- 메뉴 등록·수정 — depth 는 상위 메뉴에서 자동 계산되므로 입력받지 않는다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>메뉴 등록·수정</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg" th:text="${menu.menuId} ? '메뉴 수정' : '메뉴 등록'">메뉴 등록</h1>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <form th:action="@{/adm/menu/save}" method="post" class="ladm-form">
+        <input type="hidden" name="menuId" th:value="${menu.menuId}"/>
+
+        <div class="ladm-form-row">
+            <div class="ladm-field">
+                <label for="siteId">사이트 *</label>
+                <select id="siteId" name="siteId" required>
+                    <option th:each="s : ${sites}" th:value="${s.siteId}"
+                            th:selected="${s.siteId == menu.siteId}"
+                            th:text="${s.siteCode + ' — ' + s.siteName}">site</option>
+                </select>
+            </div>
+            <div class="ladm-field">
+                <label for="menuName">메뉴명 *</label>
+                <input id="menuName" name="menuName" class="krds-input" required
+                       th:value="${menu.menuName}"/>
+            </div>
+        </div>
+
+        <div class="ladm-form-row">
+            <div class="ladm-field">
+                <label for="parentMenuId">상위 메뉴</label>
+                <select id="parentMenuId" name="parentMenuId">
+                    <option value="">없음 (1단계)</option>
+                    <option th:each="p : ${parents}" th:value="${p.menuId}"
+                            th:if="${p.menuId != menu.menuId}"
+                            th:selected="${p.menuId == menu.parentMenuId}"
+                            th:text="${#strings.repeat('— ', p.depth - 1) + p.menuName}">상위</option>
+                </select>
+                <p class="ladm-hint">깊이는 상위 메뉴에 따라 자동 결정됩니다(최대 4단계).</p>
+            </div>
+            <div class="ladm-field">
+                <label for="menuType">메뉴 유형 *</label>
+                <select id="menuType" name="menuType" required>
+                    <option value="FOLDER" th:selected="${menu.menuType == 'FOLDER'}">폴더 (링크 없음)</option>
+                    <option value="CONTENT" th:selected="${menu.menuType == 'CONTENT'}">컨텐츠 연결</option>
+                    <option value="URL" th:selected="${menu.menuType == 'URL'}">직접 URL</option>
+                    <option value="BOARD" th:selected="${menu.menuType == 'BOARD'}">게시판 (준비 중)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="ladm-field">
+            <label for="linkTargetId">연결 컨텐츠 <span class="text-fg-subtle">(유형=컨텐츠 연결일 때)</span></label>
+            <select id="linkTargetId" name="linkTargetId">
+                <option value="">선택 안 함</option>
+                <option th:each="c : ${contents}" th:value="${c.contentId}"
+                        th:selected="${c.contentId == menu.linkTargetId}"
+                        th:text="${c.title + ' (/' + c.slug + ')'}">컨텐츠</option>
+            </select>
+        </div>
+
+        <div class="ladm-field">
+            <label for="linkUrl">링크 주소 <span class="text-fg-subtle">(유형=직접 URL일 때)</span></label>
+            <input id="linkUrl" name="linkUrl" class="krds-input" th:value="${menu.linkUrl}"
+                   placeholder="https://example.ac.kr/notice"/>
+        </div>
+
+        <div class="ladm-form-row">
+            <div class="ladm-field">
+                <label for="sortOrder">정렬 순서</label>
+                <input id="sortOrder" name="sortOrder" type="number" class="krds-input"
+                       th:value="${menu.sortOrder}"/>
+            </div>
+            <div class="ladm-field">
+                <label for="useYn">상태</label>
+                <select id="useYn" name="useYn">
+                    <option value="Y" th:selected="${menu.useYn == 'Y'}">사용</option>
+                    <option value="N" th:selected="${menu.useYn == 'N'}">중지</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="ladm-field">
+            <label for="authRequiredYn">로그인 필요</label>
+            <select id="authRequiredYn" name="authRequiredYn">
+                <option value="N" th:selected="${menu.authRequiredYn == 'N'}">아니오</option>
+                <option value="Y" th:selected="${menu.authRequiredYn == 'Y'}">예</option>
+            </select>
+        </div>
+
+        <div class="ladm-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{/adm/menu(siteId=${menu.siteId})}" class="krds-btn krds-btn-secondary">목록</a>
+        </div>
+    </form>
+
+    <form th:if="${menu.menuId}" th:action="@{/adm/menu/delete}" method="post"
+          style="margin-top:12px">
+        <input type="hidden" name="menuId" th:value="${menu.menuId}"/>
+        <input type="hidden" name="siteId" th:value="${menu.siteId}"/>
+        <button type="submit" class="krds-btn krds-btn-tertiary"
+                data-confirm="이 메뉴를 삭제할까요?">삭제</button>
+    </form>
+</div>
+</body>
+</html>

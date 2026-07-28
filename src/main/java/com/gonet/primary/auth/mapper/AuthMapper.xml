@@ -17,26 +17,40 @@
         </if>
     </select>
 
+    <!-- user_id 는 전역 유일(ADM_/MBR_ 접두 + UUIDv7)이라 사이트 스코프가 필요 없다 -->
+    <select id="findLoginUserById" resultType="com.gonet.primary.auth.dto.LoginUser">
+        SELECT *
+        FROM vw_user_login
+        WHERE user_type = #{userType}
+          AND user_id = #{userId}
+    </select>
+
     <sql id="activeAllowIp">
           AND use_yn = 'Y'
           AND delete_yn = 'N'
           AND (expires_at IS NULL OR expires_at &gt; NOW())
     </sql>
 
-    <!-- /adm/login 폼 노출 게이트 — 등록된 IP 가 아니면 "/" 리다이렉트 (정책 2026-07-28) -->
-    <select id="countAllowIp" resultType="int">
-        SELECT COUNT(*)
+    <sql id="allowIpColumns">
+        ip_id, admin_id, ip_address, ip_type, ip_start, ip_end, description
+    </sql>
+
+    <!--
+      CIDR/RANGE 는 SQL 로 판정할 수 없어(문자열 비교로는 10.0.0.0/8 을 못 푼다)
+      활성 행을 가져와 IpMatch 에서 매칭한다 — /adm/login 폼 노출 게이트 (정책 2026-07-28).
+    -->
+    <select id="findActiveAllowIps" resultType="com.gonet.primary.auth.dto.AdminAllowIp">
+        SELECT <include refid="allowIpColumns"/>
         FROM tb_admin_allow_ip
-        WHERE ip_address = #{clientIp}
+        WHERE 1 = 1
         <include refid="activeAllowIp"/>
     </select>
 
-    <!-- 인증 조건 — (admin_id, ip_address) 쌍이 참이어야 로그인 가능 -->
-    <select id="countAdminAllowIp" resultType="int">
-        SELECT COUNT(*)
+    <!-- 인증 조건 — (admin_id, ip) 쌍이 참이어야 로그인 가능 -->
+    <select id="findActiveAllowIpsByAdmin" resultType="com.gonet.primary.auth.dto.AdminAllowIp">
+        SELECT <include refid="allowIpColumns"/>
         FROM tb_admin_allow_ip
         WHERE admin_id = #{adminId}
-          AND ip_address = #{clientIp}
         <include refid="activeAllowIp"/>
     </select>
 
@@ -44,8 +58,22 @@
         UPDATE tb_admin_allow_ip
         SET access_count = access_count + 1,
             last_access_at = NOW()
+        WHERE ip_id = #{ipId}
+    </update>
+
+    <select id="findTwoFactorRequired" resultType="string">
+        SELECT two_factor_required
+        FROM tb_admin_group
+        WHERE admin_group_id = #{groupId}
+          AND use_yn = 'Y'
+          AND delete_yn = 'N'
+    </select>
+
+    <update id="enableTwoFactor">
+        UPDATE tb_admin
+        SET two_factor_secret = #{secret},
+            two_factor_enabled_yn = 'Y'
         WHERE admin_id = #{adminId}
-          AND ip_address = #{clientIp}
     </update>
 
     <!-- 실패: 5회 도달 시 30분 잠금 — 파생 컬럼을 먼저 계산(+1 기준) 후 카운트 증가 -->

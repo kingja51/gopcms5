@@ -19,6 +19,11 @@
     <link rel="icon" href="data:,"/>
     <link rel="stylesheet" href="/css/output.css"/>
     <link rel="stylesheet" href="/css/layouts/layout-adm.css"/>
+    <!-- 고대비(hc) 복원 — 첫 페인트 전(FOUC 방지). 인라인 예외는 여기 하나, CSP nonce 필수 -->
+    <script th:attr="nonce=${cspNonce}">
+        try { if (localStorage.getItem('gopcms5.hc') === '1')
+            document.documentElement.classList.add('hc'); } catch (e) {}
+    </script>
 </head>
 <body class="bg-bg text-fg">
 
@@ -42,10 +47,18 @@
            th:classappend="${currentUri == '/adm/index'} ? 'ladm-active'">대시보드</a>
 
         <p class="ladm-lnb-group">사이트 구성</p>
-        <span class="ladm-lnb-link ladm-disabled">사이트 관리 <em>예정</em></span>
-        <span class="ladm-lnb-link ladm-disabled">템플릿·테마 <em>예정</em></span>
-        <span class="ladm-lnb-link ladm-disabled">메뉴 관리 <em>예정</em></span>
-        <span class="ladm-lnb-link ladm-disabled">컨텐츠 관리 <em>예정</em></span>
+        <a class="ladm-lnb-link" th:href="@{/adm/site}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/site')} ? 'ladm-active'">사이트 관리</a>
+        <a class="ladm-lnb-link" th:href="@{/adm/template}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/template')} ? 'ladm-active'">템플릿 관리</a>
+        <a class="ladm-lnb-link" th:href="@{/adm/theme}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/theme')} ? 'ladm-active'">테마 관리</a>
+        <a class="ladm-lnb-link" th:href="@{/adm/layout}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/layout')} ? 'ladm-active'">레이아웃 관리</a>
+        <a class="ladm-lnb-link" th:href="@{/adm/menu}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/menu')} ? 'ladm-active'">메뉴 관리</a>
+        <a class="ladm-lnb-link" th:href="@{/adm/content}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/content')} ? 'ladm-active'">컨텐츠 관리</a>
 
         <p class="ladm-lnb-group">회원·권한</p>
         <span class="ladm-lnb-link ladm-disabled">회원 관리 <em>예정</em></span>

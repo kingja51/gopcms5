@@ -27,8 +27,12 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class ContentUsrController {
 
-    /** 예약 slug — 고정 라우트·상위 네임스페이스 충돌 차단 (conventions §5, 등록측 Validator 와 동일 목록) */
-    private static final Set<String> RESERVED_SLUGS = Set.of(
+    /**
+     * 예약 slug — 고정 라우트·상위 네임스페이스 충돌 차단 (conventions §5).
+     * 등록측 검증(ContentServiceImpl)이 이 목록을 그대로 참조한다 — 목록이 갈라지면
+     * "등록은 되는데 열리지는 않는" 페이지가 생긴다.
+     */
+    public static final Set<String> RESERVED_SLUGS = Set.of(
             "index", "sitemap", "search", "member", "bbs", "prg", "adm", "api");
 
     private final ContentService contentService;

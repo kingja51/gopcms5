@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!-- 테마 목록 — 파일이 없는 축. css_class 가 <html class> 에 붙어 브랜드 변수를 바꾼다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>테마 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg">테마 관리</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        색 변형(3축 중 색) — 새 파일을 만들지 않고 <code>&lt;html class&gt;</code> 로 브랜드 변수를 갈아끼웁니다.
+        테마는 소속 템플릿 안에서만 유효합니다.</p>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+    <div th:replace="~{adm/fragments/adm-ui :: listbar('/adm/theme')}"></div>
+
+    <table class="ladm-table">
+        <thead>
+        <tr>
+            <th>템플릿</th><th>코드</th><th>이름</th><th>CSS 클래스</th>
+            <th class="num">정렬</th><th class="num">사용 사이트</th><th class="center">사용</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="th : ${page.content()}">
+            <td th:text="${th.templateCode}">krds</td>
+            <td><a th:href="@{/adm/theme/form(themeId=${th.themeId})}" class="krds-link"
+                   th:text="${th.themeCode}">teal</a></td>
+            <td th:text="${th.themeName}">청록</td>
+            <td><code th:text="${#strings.isEmpty(th.cssClass)} ? '(기본 브랜드)' : th.cssClass">theme-teal</code></td>
+            <td class="num" th:text="${th.sortOrder}">0</td>
+            <td class="num" th:text="${th.siteCount}">0</td>
+            <td class="center">
+                <span class="ladm-badge"
+                      th:classappend="${th.useYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                      th:text="${th.useYn == 'Y'} ? '사용' : '중지'">사용</span>
+            </td>
+        </tr>
+        <tr th:if="${page.content().isEmpty()}"
+            th:replace="~{adm/fragments/adm-ui :: empty(7)}"></tr>
+        </tbody>
+    </table>
+
+    <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/theme')}"></nav>
+</div>
+</body>
+</html>

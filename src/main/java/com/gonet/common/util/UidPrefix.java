@@ -20,13 +20,17 @@ public enum UidPrefix {
     POP("tb_popup"),
     TRM("tb_terms"),
 
-    /* ── 게시판 ── */
+    /* ── 게시판 (V9) ── */
     BBM("tb_bbs_master"),
     BBA("tb_bbs_article"),
     BBC("tb_bbs_comment"),
-    FIL("tb_attach_file"),
-    LIK("tb_like"),
-    RPT("tb_report"),
+    BCT("tb_bbs_category"),
+    LIK("tb_bbs_like"),
+    RPT("tb_bbs_report"),
+
+    /* ── 파일 (V9) ── */
+    FGR("tb_file_group"),
+    FIL("tb_file"),
 
     /* ── 회원·조직·인증 (V6) ── */
     ADM("tb_admin"),
@@ -40,7 +44,7 @@ public enum UidPrefix {
     MBO("tb_member_oauth"),
     MPH("tb_member_password_history"),
     DPT("tb_department"),
-    STF("tb_staff"),
+    EMP("tb_employee"),
     ROL("tb_role"),
     AUT("tb_auth"),
     RLA("tb_role_auth"),
@@ -49,14 +53,24 @@ public enum UidPrefix {
     LGH("tb_login_history"),
 
     /* ── 공통 프로그램·운영 ── */
+    SCM("tb_schedule_master"),
     SCH("tb_schedule"),
-    NTF("tb_notification"),
+    SVM("tb_survey_master"),
     SVY("tb_survey"),
+    SVQ("tb_survey_question"),
+    SVO("tb_survey_option"),
+    SVR("tb_survey_response"),
     SVA("tb_survey_answer"),
+    HOL("tb_holiday"),
+    MTP("tb_mail_template"),
+    NTF("tb_notification"),
     MWN("tb_minwon"),
     COD("tb_code"),
     CGR("tb_code_group"),
-    AUD("tb_audit_log");
+    AUD("tb_audit_log"),
+
+    /* ── logging_db — 로그는 대개 시퀀스 PK, 아래만 UUID 채번 ── */
+    PPG("log_pii_purge");
 
     private final String tableName;
 

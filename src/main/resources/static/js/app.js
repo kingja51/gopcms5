@@ -1,6 +1,7 @@
 /* ============================================================================
  * gopcms5 공통 스크립트 — 인라인 스크립트 금지 규약(외부 .js, self-host).
- * CSP nonce 는 P6(Security) 에서 적용 — 그 전까지 nonce 미부착 상태로 동작.
+ * CSP: script-src 'self' 'nonce-…' (SecurityHeadersFilter) — 이 파일은 self 로 허용된다.
+ * 유일한 인라인 예외는 각 레이아웃 <head> 의 hc 복원 스니펫(FOUC 방지, nonce 부착).
  *
  * 규약 (CLAUDE.md §UI):
  *  · 이벤트 위임: document 1회 등록 + closest('[data-action]')
@@ -9,13 +10,18 @@
 (function () {
   'use strict';
 
-  /* 고대비(hc) 복원 — FOUC-free nonce 인라인 복원은 P6 에서. 현재는 로드 시 복원(짧은 플래시 허용) */
+  /* 복원은 레이아웃 <head> 의 nonce 인라인이 첫 페인트 전에 끝낸다 — 여기선 토글만 담당 */
   var HC_KEY = 'gopcms5.hc';
-  try {
-    if (localStorage.getItem(HC_KEY) === '1') {
-      document.documentElement.classList.add('hc');
+
+  /* 되돌릴 수 없는 조작(삭제 등) 확인 — 인라인 onclick 금지 규약의 대체 경로.
+     data-confirm="문구" 를 붙이면 취소 시 제출 자체가 일어나지 않는다. */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-confirm]');
+    if (el && !window.confirm(el.dataset.confirm)) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-  } catch (ignore) { /* 프라이빗 모드 등 storage 불가 환경 무시 */ }
+  }, true);
 
   /* 전역 클릭 위임 */
   document.addEventListener('click', function (e) {
@@ -45,6 +51,13 @@
       default:
         break;
     }
+  });
+
+  /* 선택 즉시 조회 — 인라인 onchange 금지 규약(CSP)의 대체 경로.
+     data-submit-on-change 를 단 컨트롤은 값이 바뀌면 소속 폼을 제출한다. */
+  document.addEventListener('change', function (e) {
+    var el = e.target.closest('[data-submit-on-change]');
+    if (el && el.form) el.form.submit();
   });
 
   /* htmx 로 로드된 조각의 요소 초기화 — 멱등(data-initialized 가드) */

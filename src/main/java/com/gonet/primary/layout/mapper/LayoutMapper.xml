@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.layout.mapper.LayoutMapper">
+
+    <sql id="admWhere">
+        WHERE l.delete_yn = 'N'
+        <if test="keyword != null">
+            AND (l.layout_code LIKE CONCAT('%', #{keyword}, '%')
+              OR l.layout_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="findPage" resultType="com.gonet.primary.layout.dto.LayoutAdmDto">
+        SELECT l.layout_id, l.layout_code, l.layout_name, l.wireframe_ref,
+               l.description, l.sort_order, l.use_yn,
+               (SELECT COUNT(*) FROM tb_site s
+                 WHERE s.layout_id = l.layout_id AND s.delete_yn = 'N') AS site_count
+        FROM tb_layout l
+        <include refid="admWhere"/>
+        ORDER BY l.sort_order, l.layout_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_layout l
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.layout.dto.LayoutAdmDto">
+        SELECT layout_id, layout_code, layout_name, wireframe_ref,
+               description, sort_order, use_yn
+        FROM tb_layout
+        WHERE layout_id = #{layoutId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByCode" resultType="int">
+        SELECT COUNT(*) FROM tb_layout
+        WHERE layout_code = #{layoutCode} AND delete_yn = 'N'
+        <if test="excludeId != null">
+            AND layout_id &lt;&gt; #{excludeId}
+        </if>
+    </select>
+
+    <!-- 사이트가 직접 고른 경우 + 템플릿 기본 레이아웃으로 물린 경우 둘 다 참조다 -->
+    <select id="countReferences" resultType="int">
+        SELECT (SELECT COUNT(*) FROM tb_site s
+                 WHERE s.layout_id = #{layoutId} AND s.delete_yn = 'N')
+             + (SELECT COUNT(*) FROM tb_template t
+                 WHERE t.default_layout_id = #{layoutId} AND t.delete_yn = 'N')
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.layout.dto.LayoutAdmDto">
+        INSERT INTO tb_layout
+            (layout_id, layout_code, layout_name, wireframe_ref, description, sort_order, use_yn)
+        VALUES
+            (#{layoutId}, #{layoutCode}, #{layoutName}, #{wireframeRef},
+             #{description}, #{sortOrder}, #{useYn})
+    </insert>
+
+    <update id="update" parameterType="com.gonet.primary.layout.dto.LayoutAdmDto">
+        UPDATE tb_layout
+        SET layout_code = #{layoutCode},
+            layout_name = #{layoutName},
+            wireframe_ref = #{wireframeRef},
+            description = #{description},
+            sort_order = #{sortOrder},
+            use_yn = #{useYn}
+        WHERE layout_id = #{layoutId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_layout SET delete_yn = 'Y', use_yn = 'N'
+        WHERE layout_id = #{layoutId}
+    </update>
+
+    <select id="findAllForSelect" resultType="com.gonet.primary.layout.dto.LayoutAdmDto">
+        SELECT layout_id, layout_code, layout_name
+        FROM tb_layout
+        WHERE use_yn = 'Y' AND delete_yn = 'N'
+        ORDER BY sort_order, layout_code
+    </select>
+
+</mapper>

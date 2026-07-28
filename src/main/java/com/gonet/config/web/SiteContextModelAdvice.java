@@ -1,5 +1,6 @@
 package com.gonet.config.web;
 
+import com.gonet.common.web.RequestAttrs;
 import com.gonet.common.web.SiteContextHolder;
 import com.gonet.primary.site.dto.SiteContext;
 import com.gonet.primary.site.service.SiteServiceImpl;
@@ -49,5 +50,11 @@ public class SiteContextModelAdvice {
     @ModelAttribute("currentUri")
     public String currentUri(HttpServletRequest request) {
         return request.getRequestURI();
+    }
+
+    /** CSP nonce — 인라인 스크립트는 {@code th:attr="nonce=${cspNonce}"} 없이는 실행되지 않는다. */
+    @ModelAttribute("cspNonce")
+    public String cspNonce(HttpServletRequest request) {
+        return (String) request.getAttribute(RequestAttrs.CSP_NONCE);
     }
 }

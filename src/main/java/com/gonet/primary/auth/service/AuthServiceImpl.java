@@ -2,6 +2,7 @@ package com.gonet.primary.auth.service;
 
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.config.datasource.MyBatisConfig;
+import com.gonet.primary.auth.dto.AdminAllowIp;
 import com.gonet.primary.auth.dto.LoginUser;
 import com.gonet.primary.auth.mapper.AuthMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,13 +22,31 @@ public class AuthServiceImpl extends AbstractCmsService implements AuthService {
     }
 
     @Override
-    public boolean isIpAllowedForLoginForm(String clientIp) {
-        return authMapper.countAllowIp(clientIp) > 0;
+    public LoginUser findLoginUserById(String userType, String userId) {
+        return authMapper.findLoginUserById(userType, userId);
     }
 
     @Override
-    public boolean isIpAllowedForAdmin(String adminId, String clientIp) {
-        return authMapper.countAdminAllowIp(adminId, clientIp) > 0;
+    public boolean isIpAllowedForLoginForm(String clientIp) {
+        return authMapper.findActiveAllowIps().stream().anyMatch(allow -> allow.matches(clientIp));
+    }
+
+    @Override
+    public AdminAllowIp matchAllowIp(String adminId, String clientIp) {
+        return authMapper.findActiveAllowIpsByAdmin(adminId).stream()
+                .filter(allow -> allow.matches(clientIp))
+                .findFirst().orElse(null);
+    }
+
+    @Override
+    public boolean isTwoFactorRequired(String groupId) {
+        return groupId != null && "Y".equals(authMapper.findTwoFactorRequired(groupId));
+    }
+
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public void enableTwoFactor(String adminId, String encryptedSecret) {
+        authMapper.enableTwoFactor(adminId, encryptedSecret);
     }
 
     /** 쓰기 — writable override (트랜잭션 함정 규약) */
@@ -43,10 +62,12 @@ public class AuthServiceImpl extends AbstractCmsService implements AuthService {
 
     @Override
     @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
-    public void loginSucceeded(String userType, String userId, String clientIp) {
+    public void loginSucceeded(String userType, String userId, String clientIp, String allowIpId) {
         if ("ADMIN".equals(userType)) {
             authMapper.adminLoginSuccess(userId, clientIp);
-            authMapper.touchAllowIp(userId, clientIp);
+            if (allowIpId != null) {
+                authMapper.touchAllowIp(allowIpId);
+            }
         } else {
             authMapper.memberLoginSuccess(userId, clientIp);
         }

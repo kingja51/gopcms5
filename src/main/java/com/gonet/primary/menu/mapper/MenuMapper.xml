@@ -25,4 +25,67 @@
         ORDER BY m.depth, m.sort_order, m.menu_id
     </select>
 
+    <!-- ══ 관리 CRUD (P7) ══════════════════════════════════════════════════
+         목록은 use_yn 무관(중지 메뉴도 관리 대상)이고, 정렬은 트리 조립 순서와 같다. -->
+    <select id="findAdmBySite" resultType="com.gonet.primary.menu.dto.MenuAdmDto">
+        SELECT m.menu_id, m.site_id, m.site_code, m.parent_menu_id, m.menu_name,
+               m.menu_type, m.link_target_id, m.link_url, m.sort_order, m.depth,
+               m.auth_required_yn, m.use_yn,
+               p.menu_name AS parent_menu_name,
+               c.title     AS target_title,
+               (SELECT COUNT(*) FROM tb_menu ch
+                 WHERE ch.parent_menu_id = m.menu_id AND ch.delete_yn = 'N') AS child_count
+        FROM tb_menu m
+        LEFT JOIN tb_menu p    ON p.menu_id = m.parent_menu_id
+        LEFT JOIN tb_content c ON m.menu_type = 'CONTENT'
+                              AND c.content_id = m.link_target_id
+                              AND c.delete_yn = 'N'
+        WHERE m.site_id = #{siteId}
+          AND m.delete_yn = 'N'
+        <if test="keyword != null">
+            AND m.menu_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY m.depth, m.sort_order, m.menu_id
+    </select>
+
+    <select id="findAdmById" resultType="com.gonet.primary.menu.dto.MenuAdmDto">
+        SELECT menu_id, site_id, site_code, parent_menu_id, menu_name, menu_type,
+               link_target_id, link_url, sort_order, depth, auth_required_yn, use_yn
+        FROM tb_menu
+        WHERE menu_id = #{menuId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countChildren" resultType="int">
+        SELECT COUNT(*) FROM tb_menu
+        WHERE parent_menu_id = #{menuId} AND delete_yn = 'N'
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.menu.dto.MenuAdmDto">
+        INSERT INTO tb_menu
+            (menu_id, site_id, site_code, parent_menu_id, menu_name, menu_type,
+             link_target_id, link_url, sort_order, depth, auth_required_yn, use_yn)
+        VALUES
+            (#{menuId}, #{siteId}, #{siteCode}, #{parentMenuId}, #{menuName}, #{menuType},
+             #{linkTargetId}, #{linkUrl}, #{sortOrder}, #{depth}, #{authRequiredYn}, #{useYn})
+    </insert>
+
+    <update id="update" parameterType="com.gonet.primary.menu.dto.MenuAdmDto">
+        UPDATE tb_menu
+        SET parent_menu_id = #{parentMenuId},
+            menu_name = #{menuName},
+            menu_type = #{menuType},
+            link_target_id = #{linkTargetId},
+            link_url = #{linkUrl},
+            sort_order = #{sortOrder},
+            depth = #{depth},
+            auth_required_yn = #{authRequiredYn},
+            use_yn = #{useYn}
+        WHERE menu_id = #{menuId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_menu SET delete_yn = 'Y', use_yn = 'N'
+        WHERE menu_id = #{menuId}
+    </update>
+
 </mapper>

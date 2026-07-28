@@ -45,4 +45,121 @@
         ORDER BY s.sort_order
     </select>
 
+    <!-- ══ 관리 CRUD (P7) ══════════════════════════════════════════════════
+         목록은 편집 원본(template_id 등 NULL 여부)을 그대로 싣고, 코드는 표시용 조인.
+         메뉴·컨텐츠 건수는 상관 서브쿼리 — 사이트 수가 수십 규모라 조인보다 단순하다. -->
+    <sql id="admWhere">
+        WHERE s.delete_yn = 'N'
+        <if test="keyword != null">
+            AND (s.site_code LIKE CONCAT('%', #{keyword}, '%')
+              OR s.site_name LIKE CONCAT('%', #{keyword}, '%')
+              OR s.domain    LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="findPage" resultType="com.gonet.primary.site.dto.SiteAdmDto">
+        SELECT s.site_id, s.site_code, s.site_name, s.domain, s.default_lang,
+               s.parent_site_id, s.template_id, s.theme_id, s.layout_id,
+               s.default_yn, s.sort_order, s.use_yn,
+               t.template_code, th.theme_code, l.layout_code,
+               (SELECT COUNT(*) FROM tb_menu m
+                 WHERE m.site_id = s.site_id AND m.delete_yn = 'N') AS menu_count,
+               (SELECT COUNT(*) FROM tb_content c
+                 WHERE c.site_id = s.site_id AND c.delete_yn = 'N') AS content_count
+        FROM tb_site s
+        LEFT JOIN tb_template t  ON t.template_id = s.template_id
+        LEFT JOIN tb_theme    th ON th.theme_id   = s.theme_id
+        LEFT JOIN tb_layout   l  ON l.layout_id   = s.layout_id
+        <include refid="admWhere"/>
+        ORDER BY s.sort_order, s.site_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_site s
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findAdmById" resultType="com.gonet.primary.site.dto.SiteAdmDto">
+        SELECT site_id, site_code, site_name, domain, default_lang, parent_site_id,
+               template_id, theme_id, layout_id, default_yn, sort_order,
+               logo_path, favicon_path, description, head_meta, copyright, use_yn
+        FROM tb_site
+        WHERE site_id = #{siteId}
+          AND delete_yn = 'N'
+    </select>
+
+    <select id="countByCode" resultType="int">
+        SELECT COUNT(*) FROM tb_site
+        WHERE site_code = #{siteCode}
+          AND delete_yn = 'N'
+        <if test="excludeId != null">
+            AND site_id &lt;&gt; #{excludeId}
+        </if>
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.site.dto.SiteAdmDto">
+        INSERT INTO tb_site
+            (site_id, site_code, site_name, domain, default_lang, parent_site_id,
+             template_id, theme_id, layout_id, default_yn, sort_order,
+             logo_path, favicon_path, description, head_meta, copyright, use_yn)
+        VALUES
+            (#{siteId}, #{siteCode}, #{siteName}, #{domain}, #{defaultLang}, #{parentSiteId},
+             #{templateId}, #{themeId}, #{layoutId}, #{defaultYn}, #{sortOrder},
+             #{logoPath}, #{faviconPath}, #{description}, #{headMeta}, #{copyright}, #{useYn})
+    </insert>
+
+    <update id="update" parameterType="com.gonet.primary.site.dto.SiteAdmDto">
+        UPDATE tb_site
+        SET site_code = #{siteCode},
+            site_name = #{siteName},
+            domain = #{domain},
+            default_lang = #{defaultLang},
+            parent_site_id = #{parentSiteId},
+            template_id = #{templateId},
+            theme_id = #{themeId},
+            layout_id = #{layoutId},
+            default_yn = #{defaultYn},
+            sort_order = #{sortOrder},
+            logo_path = #{logoPath},
+            favicon_path = #{faviconPath},
+            description = #{description},
+            head_meta = #{headMeta},
+            copyright = #{copyright},
+            use_yn = #{useYn}
+        WHERE site_id = #{siteId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_site SET delete_yn = 'Y', use_yn = 'N'
+        WHERE site_id = #{siteId}
+    </update>
+
+    <update id="clearDefaultExcept">
+        UPDATE tb_site SET default_yn = 'N'
+        WHERE default_yn = 'Y'
+          AND site_id &lt;&gt; #{siteId}
+    </update>
+
+    <!--
+      저장하려는 3축 조합이 실제로 어떤 코드로 해석되는지 — 폴백까지 반영한 결과.
+      레이아웃은 "고른 것 → 템플릿 기본" 순, 템플릿은 고른 것 그대로.
+      화면이 500 으로 죽기 전에 물리 파일 존재를 확인하려고 미리 뽑는다(P7 실측).
+    -->
+    <select id="findEffectiveCodes" resultType="com.gonet.primary.site.dto.SiteAdmDto">
+        SELECT COALESCE(sel.layout_code, def.layout_code) AS layout_code,
+               t.template_code AS template_code
+        FROM (SELECT 1 AS one) dummy
+        LEFT JOIN tb_layout   sel ON sel.layout_id   = #{layoutId}
+        LEFT JOIN tb_template t   ON t.template_id   = #{templateId}
+        LEFT JOIN tb_layout   def ON def.layout_id   = t.default_layout_id
+    </select>
+
+    <select id="findAllForSelect" resultType="com.gonet.primary.site.dto.SiteAdmDto">
+        SELECT site_id, site_code, site_name
+        FROM tb_site
+        WHERE use_yn = 'Y' AND delete_yn = 'N'
+        ORDER BY sort_order, site_code
+    </select>
+
 </mapper>

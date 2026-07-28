@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!-- 레이아웃 목록 — 코드가 곧 뷰 폴더명(templates/layouts/{code}/). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>레이아웃 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg">레이아웃 관리</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        화면 구조(3축 중 구조) — 코드는 뷰 폴더명 <code>templates/layouts/{코드}/</code> 와 1:1 입니다.</p>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+    <div th:replace="~{adm/fragments/adm-ui :: listbar('/adm/layout')}"></div>
+
+    <table class="ladm-table">
+        <thead>
+        <tr>
+            <th>코드</th><th>이름</th><th>설계안</th><th>설명</th>
+            <th class="num">정렬</th><th class="num">사용 사이트</th><th class="center">사용</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="l : ${page.content()}">
+            <td><a th:href="@{/adm/layout/form(layoutId=${l.layoutId})}" class="krds-link"
+                   th:text="${l.layoutCode}">layout-001</a></td>
+            <td th:text="${l.layoutName}">표준형</td>
+            <td th:text="${l.wireframeRef} ?: '-'">frame001</td>
+            <td th:text="${l.description} ?: '-'">-</td>
+            <td class="num" th:text="${l.sortOrder}">0</td>
+            <td class="num" th:text="${l.siteCount}">0</td>
+            <td class="center">
+                <span class="ladm-badge"
+                      th:classappend="${l.useYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                      th:text="${l.useYn == 'Y'} ? '사용' : '중지'">사용</span>
+            </td>
+        </tr>
+        <tr th:if="${page.content().isEmpty()}"
+            th:replace="~{adm/fragments/adm-ui :: empty(7)}"></tr>
+        </tbody>
+    </table>
+
+    <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/layout')}"></nav>
+</div>
+</body>
+</html>

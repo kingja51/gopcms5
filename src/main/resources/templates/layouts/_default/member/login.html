@@ -19,6 +19,9 @@
         <div th:if="${param.error}" role="alert" class="krds-alert krds-alert-danger" style="margin-top:16px">
             <span aria-hidden="true">✕</span><p>로그인에 실패했습니다. 입력 정보를 확인해 주세요.</p>
         </div>
+        <div th:if="${param.expired}" role="alert" class="krds-alert krds-alert-warning" style="margin-top:16px">
+            <span aria-hidden="true">!</span><p>다른 기기에서 로그인되어 이 세션이 종료되었습니다.</p>
+        </div>
 
         <form th:action="@{/login}" method="post" style="margin-top:24px;display:grid;gap:16px">
             <input type="hidden" name="siteCode"
@@ -31,6 +34,14 @@
                 <label for="password" class="text-label-sm font-bold">비밀번호</label>
                 <input id="password" name="password" type="password" class="krds-input"
                        autocomplete="current-password" required/>
+            </div>
+            <!-- 잠금을 겪은 계정으로 시도한 세션에만 노출 (CaptchaService) -->
+            <div th:if="${captchaQuestion}">
+                <label for="captchaAnswer" class="text-label-sm font-bold">
+                    자동입력 방지 — <span th:text="${captchaQuestion}">3 + 4 = ?</span>
+                </label>
+                <input id="captchaAnswer" name="captchaAnswer" type="text" inputmode="numeric"
+                       class="krds-input" autocomplete="off" required/>
             </div>
             <button type="submit" class="krds-btn krds-btn-primary krds-btn-lg" style="width:100%">로그인</button>
         </form>

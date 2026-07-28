@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!-- 템플릿 목록 — 코드가 곧 CSS 파일 1장(/tmpl/css/{code}.css). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>템플릿 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 class="text-heading-lg">템플릿 관리</h1>
+    <p class="text-body-md text-fg-subtle" style="margin-top:8px">
+        시각 언어(3축 중 색·타이포·간격) — 코드는 CSS 1장 <code>/tmpl/css/{코드}.css</code> 와 1:1 입니다.</p>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+    <div th:replace="~{adm/fragments/adm-ui :: listbar('/adm/template')}"></div>
+
+    <table class="ladm-table">
+        <thead>
+        <tr>
+            <th>코드</th><th>이름</th><th>기본 레이아웃</th><th>설명</th>
+            <th class="num">테마</th><th class="num">사용 사이트</th><th class="center">사용</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="t : ${page.content()}">
+            <td><a th:href="@{/adm/template/form(templateId=${t.templateId})}" class="krds-link"
+                   th:text="${t.templateCode}">krds</a></td>
+            <td th:text="${t.templateName}">KRDS 기본</td>
+            <td th:text="${t.defaultLayoutCode} ?: '-'">layout-001</td>
+            <td th:text="${t.description} ?: '-'">-</td>
+            <td class="num" th:text="${t.themeCount}">0</td>
+            <td class="num" th:text="${t.siteCount}">0</td>
+            <td class="center">
+                <span class="ladm-badge"
+                      th:classappend="${t.useYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                      th:text="${t.useYn == 'Y'} ? '사용' : '중지'">사용</span>
+            </td>
+        </tr>
+        <tr th:if="${page.content().isEmpty()}"
+            th:replace="~{adm/fragments/adm-ui :: empty(7)}"></tr>
+        </tbody>
+    </table>
+
+    <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/template')}"></nav>
+</div>
+</body>
+</html>
