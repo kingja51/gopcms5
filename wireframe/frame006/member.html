@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 F안 — 회원(로그인·가입·마이페이지)</title>
+<link rel="stylesheet" href="wireframe6.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>회원 — 풀페이지 로그인 · 한 화면 한 질문 가입 · MY 탭 설정 리스트 <span class="wf-badge-f">F안</span></h1>
+  <p><span class="route">GET /member/login</span><span class="route">GET /member/join</span><span class="route">GET /member/mypage</span> — 로그인/가입은 탭바 없는 몰입 풀페이지, 마이페이지는 탭바의 MY 탭(iOS 설정 문법).</p>
+</div>
+
+<div class="wf-duo">
+
+  <!-- ══════════ 모바일: 로그인 ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 로그인 /member/login (정본 · 탭바 없음)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/member/login</div>
+
+      <div class="wf-appbar" style="border-bottom:none">
+        <span class="wf-chip">✕</span><span class="wf-grow"></span>
+      </div>
+
+      <div class="wf-p" style="padding:8px 24px 24px">
+        <div class="wf-h1" style="text-align:center">의학과</div>
+        <div style="text-align:center;font-size:11px;color:#64748b">건양대학교 학과 포털 통합 로그인</div>
+
+        <div class="mt-4">
+          <span class="wf-input full" style="display:block">아이디</span>
+          <span class="wf-input full mt-2" style="display:block">비밀번호</span>
+          <div class="wf-row mt-2" style="font-size:11px"><span class="wf-chip">☐ 아이디 저장</span><span class="wf-grow"></span><span style="color:#64748b">아이디/비밀번호 찾기</span></div>
+          <span class="wf-btn sky full mt-4">로그인</span>
+        </div>
+
+        <div class="wf-row mt-4" style="font-size:10px;color:#94a3b8"><span class="wf-grow" style="border-top:1px solid #e2e8f0"></span>또는<span class="wf-grow" style="border-top:1px solid #e2e8f0"></span></div>
+
+        <span class="wf-btn ghost full mt-4">🟡 카카오로 계속하기</span>
+        <span class="wf-btn ghost full mt-2">🟢 네이버로 계속하기</span>
+        <span class="wf-btn ghost full mt-2">⚪ Google 로 계속하기</span>
+
+        <div style="text-align:center;font-size:11.5px" class="mt-4">아직 회원이 아니세요? <b style="color:#0284c7">회원가입 →</b></div>
+
+        <span class="wf-note">로그인 풀페이지 — 탭바·푸터 없는 몰입 화면(✕ = 이전 페이지 복귀). 세션 PCMS_SID + changeSessionId() + maximumSessions(1), CSRF(XSRF-TOKEN 쿠키) 선발급.
+        <b>로그인 잠금 5회/30분</b> — 실패 시 남은 횟수 안내. 소셜 로그인은 확장 슬롯(OAuth2 도입 결정 전까지 미노출 — tb_member 연동 설계는 PLAN 결정 대기).
+        성공 시 returnUrl 검증 후 리다이렉트(오픈 리다이렉트 차단). 회원 인가 = AUTHENTICATED + user_type=MEMBER(v_user_login VIEW).</span>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 모바일: 가입 위저드 ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 가입 /member/join — 한 화면 한 질문 (2/3단계 예시)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/member/join?step=2</div>
+
+      <div class="wf-appbar" style="border-bottom:none">
+        <span class="wf-chip">←</span><span class="wf-grow"></span><span style="font-size:11px;color:#64748b">2 / 3</span>
+      </div>
+      <div style="padding:0 24px"><div class="wf-progress"><span style="width:66%"></span></div></div>
+
+      <div class="wf-p" style="padding:20px 24px">
+        <div class="wf-h2">기본 정보를 입력해 주세요</div>
+        <div style="font-size:11px;color:#64748b">한 번에 하나씩 — 스크롤 없이 끝나는 단계</div>
+
+        <div class="mt-4">
+          <span class="wf-input full" style="display:block">아이디 <span class="wf-tag">중복확인 htmx blur</span></span>
+          <span class="wf-input full mt-2" style="display:block">비밀번호</span>
+          <span class="wf-input full mt-2" style="display:block">비밀번호 확인</span>
+          <span class="wf-input full mt-2" style="display:block">이름</span>
+          <span class="wf-input full mt-2" style="display:block">이메일</span>
+        </div>
+
+        <span class="wf-btn sky full mt-4">다음 →</span>
+
+        <div class="wf-box wf-gray mt-4" style="padding:8px 12px;font-size:11px">
+          <b>1단계</b> 약관 동의(전체동의 + 필수/선택 &lt;details&gt;) →
+          <b>2단계</b> 기본 정보(현재) →
+          <b>3단계</b> 완료(환영 + 로그인 유도)
+        </div>
+        <span class="wf-note">한 화면 한 질문 진행 — 상단 진행바(width % = 서버 렌더) + 뒤로가기 = 이전 단계.
+        단계 전환 = 서버 왕복(step 파라미터) — 단계별 서버 검증 필수(클라이언트 상태에 의존 금지). <b>hx-history="false"</b>(입력값 히스토리 캐시 방지).
+        이메일·이름 등 PII 는 @Encrypt(AES-256-GCM) 저장 + log_privacy 기록. 아이디 중복확인 = hx-get blur 트리거. 가입 완료 = HX-Redirect → 완료 화면.</span>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 모바일: 마이페이지 ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 마이페이지 = MY 탭 /member/mypage (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/member/mypage</div>
+
+      <div class="wf-appbar">
+        <b>MY</b><span class="wf-grow"></span><span class="wf-chip">🔔</span>
+      </div>
+
+      <!-- 프로필 헤더 -->
+      <div class="wf-band wf-sky" style="padding:16px 14px">
+        <div class="wf-row">
+          <span class="wf-avatar lg">사진</span>
+          <div><b style="font-size:14px">홍길동</b><div style="font-size:11px;color:#64748b">hong***@konyang.ac.kr · 일반회원</div></div>
+          <span class="wf-grow"></span><span class="wf-chip">편집 ›</span>
+        </div>
+      </div>
+
+      <!-- iOS 설정 스타일 리스트 그룹 -->
+      <div class="wf-p" style="padding:12px 14px">
+        <div style="font-size:10.5px;color:#94a3b8;padding:0 4px">계정</div>
+        <div class="wf-box mt-2" style="margin-bottom:12px">
+          <div class="wf-band" style="padding:10px 12px"><div class="wf-row"><span>👤</span><b style="font-size:12px">프로필 수정</b><span class="wf-grow"></span><span class="wf-chip">›</span></div></div>
+          <div class="wf-band" style="padding:10px 12px"><div class="wf-row"><span>🔑</span><b style="font-size:12px">비밀번호 변경</b><span class="wf-grow"></span><span class="wf-chip">›</span></div></div>
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px"><div class="wf-row"><span>🔔</span><b style="font-size:12px">알림 설정</b><span class="wf-grow"></span><span class="wf-chip">›</span></div></div>
+        </div>
+        <div style="font-size:10.5px;color:#94a3b8;padding:0 4px">활동</div>
+        <div class="wf-box mt-2" style="margin-bottom:12px">
+          <div class="wf-band" style="padding:10px 12px"><div class="wf-row"><span>📝</span><b style="font-size:12px">내가 쓴 글</b><span class="wf-grow"></span><span style="font-size:11px;color:#94a3b8">12</span><span class="wf-chip">›</span></div></div>
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px"><div class="wf-row"><span>💬</span><b style="font-size:12px">내 댓글</b><span class="wf-grow"></span><span style="font-size:11px;color:#94a3b8">34</span><span class="wf-chip">›</span></div></div>
+        </div>
+        <div style="font-size:10.5px;color:#94a3b8;padding:0 4px">기타</div>
+        <div class="wf-box mt-2">
+          <div class="wf-band" style="padding:10px 12px"><div class="wf-row"><span>🚪</span><b style="font-size:12px">로그아웃</b></div></div>
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px"><div class="wf-row"><span>⚠️</span><b style="font-size:12px;color:#64748b">회원 탈퇴</b><span class="wf-grow"></span><span class="wf-chip">›</span></div></div>
+        </div>
+        <span class="wf-note">iOS 설정 문법 — 그룹 캡션 + 라운드 리스트 그룹 + › 셰브런. 항목 = 일반 링크(프로필 /member/mypage/profile 등).
+        <b>프로필 수정·비밀번호 변경·탈퇴 진입 시 재인증 게이트</b>(비밀번호 재확인, A안 동일). 이메일 표기 = MaskUtils 마스킹.
+        탈퇴 = soft-delete + 생명주기 배치(휴면 01:00 → 퍼지 04:45) 안내 문구 동반. 비로그인으로 MY 탭 진입 시 /member/login 리다이렉트.</span>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab active"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ 데스크톱 (확장) ══════════ -->
+<div class="wf-doc-header"><h1 style="font-size:15px">🖥 데스크톱 (확장) — 같은 화면을 협폭 센터 카드로</h1></div>
+<div class="wf-canvas solo">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/mypage</span></div>
+  <div class="wf-band" style="padding:16px">
+    <div class="wf-deskcol">
+      <div class="wf-grid-2">
+        <div>
+          <div class="wf-caption">로그인/가입</div>
+          <div class="wf-box wf-p" style="max-width:380px">
+            <div class="wf-h2" style="text-align:center">의학과 로그인</div>
+            <span class="wf-input full mt-2" style="display:block">아이디</span>
+            <span class="wf-input full mt-2" style="display:block">비밀번호</span>
+            <span class="wf-btn sky full mt-2">로그인</span>
+            <span class="wf-btn ghost full mt-2">🟡 카카오로 계속하기</span>
+          </div>
+        </div>
+        <div>
+          <div class="wf-caption">마이페이지</div>
+          <div class="wf-box wf-p">
+            <div class="wf-row"><span class="wf-avatar">사진</span><b style="font-size:13px">홍길동</b><span class="wf-grow"></span><span class="wf-chip">편집</span></div>
+            <div class="wf-line thin w80 mt-2"></div>
+            <div class="wf-row mt-2"><span class="wf-chip">프로필 수정</span><span class="wf-chip">비밀번호</span><span class="wf-chip">내가 쓴 글</span><span class="wf-chip">탈퇴</span></div>
+          </div>
+        </div>
+      </div>
+      <span class="wf-note">데스크톱 — 로그인/가입은 모바일 카드가 화면 중앙에 뜬 형태(max-width 380~420px 센터), 마이페이지는 같은 설정 리스트 그룹을 2컬럼으로 재배열. 마크업·라우트·재인증 게이트 동일.
+      /member/** 는 tb_role_url_access 기존 규칙(회원 전용 구간 AUTHENTICATED) — F안 추가 URL 없음. 로그인·가입·마이페이지 전부 <b>hx-history="false"</b>(뒤로가기 민감 화면) + HTML no-store.</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,193 @@
+/* ============================================================
+   PCMS 2026-001 와이어프레임 F안(frame006) 공용 스타일
+   - 콘셉트: "모바일 퍼스트 앱형" — 모바일 프레임(~390px)이 정본,
+     데스크톱은 센터 협폭(~860px) 1컬럼으로 확장
+   - 그레이스케일 = 화면 구조, 스카이블루 = 주석/배지/활성, 점선 = 동적 슬롯
+   - 브라우저에서 각 html 을 직접 열어 참고 (서버 불필요, JS 없음)
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+  background: #e9f1f7;              /* 아주 연한 하늘빛 회색 */
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 24px;
+}
+
+/* ── 페이지 머리말 ── */
+.wf-doc-header { max-width: 1320px; margin: 0 auto 20px; }
+.wf-doc-header h1 { font-size: 20px; color: #0c4a6e; margin-bottom: 4px; }
+.wf-doc-header p  { color: #475569; font-size: 13px; }
+.wf-doc-header .route { display:inline-block; font-family: Consolas, monospace; background:#075985; color:#e0f2fe; padding:2px 8px; border-radius:4px; font-size:12px; margin:4px 4px 0 0; }
+.wf-back { display:inline-block; margin-bottom:12px; color:#0284c7; text-decoration:none; font-size:12px; }
+.wf-back:hover { text-decoration:underline; }
+.wf-badge-f { display:inline-block; background:#0284c7; color:#fff; font-size:11px; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:8px; font-weight:400; }
+
+/* ── 듀오 배치: 모바일 프레임(정본) + 데스크톱 캔버스(확장) 병기 ── */
+.wf-duo { display:flex; gap:24px; align-items:flex-start; max-width:1320px; margin:0 auto 40px; flex-wrap:wrap; }
+.wf-col { display:flex; flex-direction:column; }
+.wf-caption { font-size:11px; font-weight:700; color:#0369a1; margin-bottom:6px; }
+
+/* ── 모바일 프레임 (F안 정본 캔버스) ── */
+.wf-phone {
+  width: 390px; flex-shrink: 0; background: #fff;
+  border: 2px solid #475569; border-radius: 34px; overflow: hidden;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(2,132,199,.16);
+}
+.wf-status { display:flex; justify-content:space-between; align-items:center; padding:7px 24px 2px; font-size:11px; color:#0f172a; position:relative; }
+.wf-notch { position:absolute; left:50%; top:0; transform:translateX(-50%); width:126px; height:20px; background:#0f172a; border-radius:0 0 14px 14px; }
+.wf-phone-url {
+  margin:8px 14px 0; background:#f1f5f9; border:1px solid #bae6fd; border-radius:14px;
+  text-align:center; font-family:Consolas, monospace; font-size:10.5px; color:#0369a1;
+  padding:2px 10px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+}
+.wf-appbar { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1.5px solid #94a3b8; background:#fff; }
+.wf-appbar b { font-size:14px; color:#0f172a; }
+.wf-screen { background:#fff; }
+
+/* 하단 고정 탭바 5개 — 실제 구현은 position:fixed (와이어프레임은 프레임 하단 배치) */
+.wf-tabbar { display:flex; border-top:1.5px solid #94a3b8; background:#fff; }
+.wf-tab { flex:1; text-align:center; padding:7px 0 3px; font-size:10px; color:#64748b; border-right:1px dashed #e2e8f0; }
+.wf-tab:last-child { border-right:none; }
+.wf-tab .ico { display:block; font-size:15px; line-height:1.2; }
+.wf-tab.active { color:#0284c7; font-weight:700; }
+.wf-homebar { width:120px; height:4px; background:#cbd5e1; border-radius:2px; margin:7px auto 9px; }
+
+/* 플로팅 버튼(FAB) / 바텀 시트 */
+.wf-fab {
+  position:absolute; right:16px; bottom:100px; width:46px; height:46px; border-radius:50%;
+  background:#0284c7; color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:18px; border:1.5px solid #075985; box-shadow:0 4px 10px rgba(2,132,199,.4);
+}
+.wf-sheet {
+  border:1.5px solid #475569; border-bottom:none; border-radius:18px 18px 0 0;
+  background:#fff; box-shadow:0 -6px 18px rgba(15,23,42,.18); margin:0 8px;
+}
+.wf-sheet-grip { width:44px; height:4px; background:#cbd5e1; border-radius:2px; margin:8px auto; }
+
+/* 가로 스크롤 칩 바 / 연락처 리스트 / 인덱스 점프 바 */
+.wf-chipbar { display:flex; gap:6px; overflow:hidden; padding:8px 12px; border-bottom:1.5px solid #e2e8f0; white-space:nowrap; }
+.wf-avatar {
+  width:40px; height:40px; border-radius:50%; flex-shrink:0;
+  border:1.5px solid #94a3b8; background:#e2e8f0;
+  display:flex; align-items:center; justify-content:center; font-size:11px; color:#64748b;
+}
+.wf-avatar.lg { width:64px; height:64px; font-size:12px; }
+.wf-indexbar { display:flex; flex-direction:column; gap:1px; font-size:9px; color:#0284c7; text-align:center; padding:2px 3px; flex-shrink:0; line-height:1.5; }
+
+/* 상세 하단 고정 액션바 */
+.wf-actionbar { display:flex; border-top:1.5px solid #94a3b8; background:#f8fafc; }
+.wf-actionbar > span { flex:1; text-align:center; padding:8px 0; font-size:11px; color:#475569; border-right:1px dashed #e2e8f0; }
+.wf-actionbar > span:last-child { border-right:none; }
+
+/* 가입 위저드 진행바 */
+.wf-progress { height:6px; background:#e2e8f0; border-radius:3px; overflow:hidden; }
+.wf-progress > span { display:block; height:100%; background:#0284c7; }
+
+/* ── 데스크톱 캔버스 (확장 뷰) ── */
+.wf-canvas {
+  flex:1; min-width:560px; background:#fff;
+  border:2px solid #64748b; border-radius:8px; overflow:hidden;
+  box-shadow:0 4px 16px rgba(2,132,199,.10);
+}
+.wf-canvas.solo { max-width:1080px; min-width:0; margin:0 auto 40px; }
+.wf-browserbar {
+  display:flex; align-items:center; gap:8px;
+  background:#dbeafe; padding:8px 12px; border-bottom:2px solid #64748b;
+}
+.wf-browserbar .dot { width:10px; height:10px; border-radius:50%; background:#93c5fd; }
+.wf-browserbar .url {
+  flex:1; background:#f8fafc; border:1px solid #94a3b8; border-radius:12px;
+  padding:2px 12px; font-family:Consolas, monospace; font-size:12px; color:#334155;
+}
+/* 데스크톱 센터 협폭 컬럼(~860px) — 풀블리드 밴드 안에서 본문만 좁힘 */
+.wf-deskcol { max-width:860px; margin:0 auto; }
+
+/* ── 기본 박스 ── */
+.wf-box  { border:1.5px solid #94a3b8; background:#fff; border-radius:10px; }
+.wf-band { border-bottom:1.5px solid #94a3b8; padding:10px 16px; }
+.wf-gray { background:#f1f5f9; }
+.wf-sky  { background:#f0f9ff; }
+.wf-dark { background:#0f172a; color:#e2e8f0; }
+
+/* 동적 슬롯(htmx/JS 렌더) — 점선 */
+.wf-slot {
+  border:2px dashed #7dd3fc; background:#f8fbfd; color:#64748b;
+  padding:10px 14px; text-align:center; border-radius:10px;
+}
+
+/* 이미지 자리표시(X 박스) */
+.wf-img {
+  position:relative; background:#e2e8f0; border:1.5px solid #94a3b8;
+  display:flex; align-items:center; justify-content:center;
+  color:#64748b; font-size:11px; overflow:hidden; min-height:60px; border-radius:10px;
+}
+.wf-img::before, .wf-img::after {
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(to top right, transparent calc(50% - .75px), #94a3b8, transparent calc(50% + .75px));
+}
+.wf-img::after { transform:scaleX(-1); }
+.wf-img span { position:relative; z-index:1; background:#e2e8f0; padding:1px 6px; }
+
+/* ── 컨트롤 목업 ── */
+.wf-btn {
+  display:inline-block; border:1.5px solid #334155; background:#334155; color:#fff;
+  padding:5px 14px; font-size:12px; border-radius:8px; white-space:nowrap;
+}
+.wf-btn.ghost { background:#fff; color:#334155; }
+.wf-btn.sky { background:#0284c7; border-color:#0369a1; }
+.wf-btn.sm { padding:2px 8px; font-size:11px; }
+.wf-btn.full { display:block; text-align:center; }
+.wf-input {
+  border:1.5px solid #94a3b8; background:#fff; border-radius:8px;
+  padding:5px 10px; color:#94a3b8; font-size:12px; display:inline-block;
+}
+.wf-chip { display:inline-block; border:1px solid #94a3b8; border-radius:12px; padding:1px 8px; font-size:11px; color:#64748b; background:#f8fafc; white-space:nowrap; }
+.wf-chip.on { background:#0284c7; border-color:#0369a1; color:#fff; }
+
+/* ── 텍스트 목업 ── */
+.wf-h1 { font-size:20px; font-weight:700; color:#0f172a; }
+.wf-h2 { font-size:15px; font-weight:700; color:#0f172a; }
+.wf-line { height:8px; background:#cbd5e1; border-radius:4px; margin:6px 0; }
+.wf-line.w40 { width:40%; } .wf-line.w60 { width:60%; } .wf-line.w80 { width:80%; }
+.wf-line.thin { height:5px; background:#e2e8f0; }
+
+/* ── 주석(설명) — 스카이블루 ── */
+.wf-note {
+  color:#0369a1; font-size:11px;
+  background:#f0f9ff; border-left:3px solid #0284c7; padding:3px 8px;
+  display:block; margin-top:6px; border-radius:0 6px 6px 0;
+}
+.wf-tag {
+  display:inline-block; background:#0284c7; color:#fff; font-size:10px;
+  padding:1px 6px; border-radius:3px; vertical-align:middle; margin-left:6px; font-weight:400;
+}
+.wf-code { font-family:Consolas, monospace; font-size:11px; background:#e0f2fe; padding:0 4px; border-radius:3px; color:#0c4a6e; }
+
+/* ── 레이아웃 유틸 ── */
+.wf-row  { display:flex; gap:10px; align-items:center; }
+.wf-row.stretch { align-items:stretch; }
+.wf-grow { flex:1; }
+.wf-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.wf-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.wf-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.wf-grid-6 { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
+.wf-p { padding:16px; }
+.wf-section { padding:16px; border-bottom:1.5px solid #cbd5e1; }
+.wf-section:last-child { border-bottom:none; }
+.mt-2 { margin-top:8px; } .mt-4 { margin-top:16px; } .mb-2 { margin-bottom:8px; }
+
+/* ── 테이블 목업 ── */
+.wf-table { width:100%; border-collapse:collapse; font-size:12px; }
+.wf-table th, .wf-table td { border:1px solid #cbd5e1; padding:6px 10px; text-align:left; vertical-align:top; }
+.wf-table th { background:#e0f2fe; color:#0c4a6e; }
+.wf-table td { color:#64748b; }
+
+/* ── IA 트리(index 전용) ── */
+.wf-tree { font-family:Consolas, monospace; font-size:12.5px; line-height:1.9; color:#334155; }
+.wf-tree a { color:#0284c7; text-decoration:none; }
+.wf-tree a:hover { text-decoration:underline; }
+.wf-tree .dim { color:#94a3b8; }

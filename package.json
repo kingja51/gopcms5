@@ -1,0 +1,15 @@
+{
+  "name": "gopcms5-css",
+  "version": "0.0.1",
+  "private": true,
+  "description": "gopcms5 KRDS × Tailwind CSS v4 빌드 (exec-maven-plugin 의 npm run css 진입점)",
+  "scripts": {
+    "css": "tailwindcss -i ./src/krds.css -o ./dist/krds.css --minify",
+    "css:watch": "tailwindcss -i ./src/krds.css -o ./dist/krds.css --watch",
+    "css:sg": "tailwindcss -i ./design-md/styleguide/SG-krds-input.css -o ./design-md/styleguide/SG-krds-output.css"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
+    "tailwindcss": "^4.1.0"
+  }
+}

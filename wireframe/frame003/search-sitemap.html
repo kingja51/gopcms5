@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 C안 — 통합검색 · 사이트맵</title>
+<link rel="stylesheet" href="wireframe3.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>통합검색 · 사이트맵 <span class="wf-badge-c">C안</span></h1>
+  <p><span class="route">GET /search?siteCode={sc}&amp;keyword=</span><span class="route">GET /{sc}/sitemap</span>
+     — 검색은 사이드바 상단 인풋 상시 노출 + 결과 무한스크롤, 사이트맵은 사이드바 메뉴 트리의 풀 확장 뷰(1~4뎁스 전체).</p>
+</div>
+
+<!-- ── 통합검색 ── -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/search?siteCode=ai&amp;keyword=장학</span></div>
+
+  <div class="wf-frame">
+    <div class="wf-side">
+      <div class="wf-side-logo">인공지능학과<span class="en">KONYANG UNIV.</span></div>
+      <div class="wf-side-search" style="border-color:#5eead4;color:#fff">🔍 장학<span style="color:#5eead4">|</span></div>
+      <div class="wf-side-item">홈</div>
+      <div class="wf-side-item group">소개 ▸</div>
+      <div class="wf-side-item group">구성원 ▸</div>
+      <div class="wf-side-item group">교육 ▸</div>
+      <div class="wf-side-item group">연구 ▸</div>
+      <div class="wf-side-item group">커뮤니티 ▸</div>
+      <div class="wf-side-util"><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div>
+    </div>
+
+    <div class="wf-main">
+      <div class="wf-utilbar">홈 › 통합검색 <span class="wf-grow"></span><span class="wf-chip">🔍</span></div>
+      <div class="wf-p">
+        <div class="wf-row"><div class="wf-h1">"장학" 검색 결과</div><span style="font-size:12px;color:#4d605b">24건</span></div>
+
+        <!-- 유형 필터 칩 -->
+        <div class="wf-row mt-2">
+          <span class="wf-chip teal">전체 24</span><span class="wf-chip">게시글 18</span><span class="wf-chip">첨부파일 4</span><span class="wf-chip">콘텐츠 1</span><span class="wf-chip">교수진 1</span>
+          <span class="wf-grow"></span>
+          <span class="wf-chip">정확도순 ▾</span>
+        </div>
+
+        <!-- 결과 리스트 -->
+        <div class="wf-box mt-2">
+          <div class="wf-band">
+            <div class="wf-row"><span class="wf-chip">공지사항</span><b style="font-size:12.5px">2026 국가<mark style="background:#99f6e4">장학</mark>금 2차 신청 안내</b></div>
+            <div class="wf-line thin w80" style="margin:4px 0"></div>
+            <span style="font-size:10.5px;color:#9db3ae">/bbs/ai/notice · 2026-07-02</span>
+          </div>
+          <div class="wf-band">
+            <div class="wf-row"><span class="wf-chip">학과소식</span><b style="font-size:12.5px;font-weight:400">교내 <mark style="background:#99f6e4">장학</mark> 제도 개편 ─────</b></div>
+            <div class="wf-line thin w60" style="margin:4px 0"></div>
+            <span style="font-size:10.5px;color:#9db3ae">/bbs/ai/news · 2026-06-19</span>
+          </div>
+          <div class="wf-band" style="border-bottom:none">
+            <div class="wf-row"><span class="wf-chip">콘텐츠</span><b style="font-size:12.5px;font-weight:400">학과소개 — <mark style="background:#99f6e4">장학</mark> 안내 절</b></div>
+            <div class="wf-line thin w80" style="margin:4px 0"></div>
+            <span style="font-size:10.5px;color:#9db3ae">/ai/about</span>
+          </div>
+        </div>
+
+        <!-- 무한스크롤 센티널 -->
+        <div class="wf-slot mt-2" style="padding:14px">
+          ⟳ 다음 20건 자동 로드 — hx-get="/search?siteCode=ai&amp;keyword=장학&amp;page=2" hx-trigger="revealed" hx-swap="afterend"
+        </div>
+        <span class="wf-note">무한스크롤(C안 고유) — 마지막 결과 뒤 센티널 요소에 hx-trigger="revealed": 뷰포트 진입 시 다음 페이지 조각을 afterend 로 이어붙임. 페이지네이션 버튼 없음, JS 미동작 시 폴백 "더보기" 링크(같은 URL page 파라미터).
+        검색 상태는 URL 쿼리가 진실 — 뒤로가기 시 스크롤 위치 복원은 포기(hx-history="false")하고 첫 페이지부터 재렌더(단순성 우선).</span>
+        <span class="wf-note">검색 실행 — 사이드바 인풋(상시 노출)에서 Enter = GET /search 일반 내비게이션. 결과 내 유형 칩·정렬 = hx-get 부분갱신(결과 리스트만). keyword 는 전량 #{} 바인딩 + 출력 이스케이프(하이라이트는 서버에서 이스케이프 후 mark 래핑). siteCode 스코프 강제 — 타 사이트 결과 미노출.</span>
+      </div>
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#3d5a54"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 사이트맵 ── -->
+<div class="wf-doc-header"><h1 style="font-size:15px">사이트맵 — /{sc}/sitemap (사이드바 트리의 풀 확장 뷰 · 1~4뎁스 전체)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/me/sitemap</span></div>
+
+  <div class="wf-frame" style="min-height:320px">
+    <div class="wf-side">
+      <div class="wf-side-logo">기계공학과<span class="en">KONYANG UNIV.</span></div>
+      <div class="wf-side-search">🔍 통합검색 …</div>
+      <div class="wf-side-item">홈</div>
+      <div class="wf-side-item group">소개 ▾</div>
+      <div class="wf-side-sub">학과소개 ▸</div>
+      <div class="wf-side-sub">오시는길</div>
+      <div class="wf-side-item group">구성원 ▾</div>
+      <div class="wf-side-sub">교수진 ▸</div>
+      <div class="wf-side-sub">직원</div>
+      <div class="wf-side-item group">교육 ▾</div>
+      <div class="wf-side-sub">교과과정 ▾</div>
+      <div class="wf-side-sub2">학부</div>
+      <div class="wf-side-sub2">대학원</div>
+      <div class="wf-side-sub">수업계획서</div>
+      <div class="wf-side-sub">학사일정</div>
+      <div class="wf-side-item group">연구 ▾</div>
+      <div class="wf-side-sub">연구실</div>
+      <div class="wf-side-sub">연구성과 ▸</div>
+      <div class="wf-side-item group">커뮤니티 ▾</div>
+      <div class="wf-side-sub">공지사항 ▸</div>
+      <div class="wf-side-sub">학과소식</div>
+      <div class="wf-side-sub">세미나</div>
+      <div class="wf-side-sub">자료실 ▸</div>
+      <div class="wf-side-util"><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div>
+    </div>
+
+    <div class="wf-main">
+      <div class="wf-utilbar">홈 › 사이트맵 <span class="wf-grow"></span><span class="wf-chip">🔍</span></div>
+      <div class="wf-p">
+        <div class="wf-h1">사이트맵</div>
+        <div class="wf-grid-5 mt-2">
+          <div class="wf-box wf-p" style="padding:10px">
+            <b style="font-size:12px;color:#0d9488">소개</b>
+            <div class="wf-tree mt-2" style="font-size:11px;line-height:1.8">
+              학과소개<br/>
+              &nbsp;└ 인사말 · 비전·인재상 · 연혁<br/>
+              오시는길
+            </div>
+          </div>
+          <div class="wf-box wf-p" style="padding:10px">
+            <b style="font-size:12px;color:#0d9488">구성원</b>
+            <div class="wf-tree mt-2" style="font-size:11px;line-height:1.8">
+              교수진<br/>
+              &nbsp;└ 전임교원 · 겸임·초빙 · 명예교수<br/>
+              직원
+            </div>
+          </div>
+          <div class="wf-box wf-p" style="padding:10px">
+            <b style="font-size:12px;color:#0d9488">교육</b>
+            <div class="wf-tree mt-2" style="font-size:11px;line-height:1.8">
+              교과과정<br/>
+              &nbsp;├ 학부<br/>
+              &nbsp;│&nbsp;&nbsp;└ <span class="dim">전공필수 · 전공선택</span><br/>
+              &nbsp;└ 대학원<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;└ <span class="dim">석사과정 · 박사과정</span><br/>
+              수업계획서<br/>
+              학사일정
+            </div>
+          </div>
+          <div class="wf-box wf-p" style="padding:10px">
+            <b style="font-size:12px;color:#0d9488">연구</b>
+            <div class="wf-tree mt-2" style="font-size:11px;line-height:1.8">
+              연구실<br/>
+              연구성과<br/>
+              &nbsp;└ 논문 · 특허·기술이전
+            </div>
+          </div>
+          <div class="wf-box wf-p" style="padding:10px">
+            <b style="font-size:12px;color:#0d9488">커뮤니티</b>
+            <div class="wf-tree mt-2" style="font-size:11px;line-height:1.8">
+              공지사항<br/>
+              &nbsp;└ 학사 · 장학 · 취업<br/>
+              학과소식<br/>
+              세미나<br/>
+              자료실<br/>
+              &nbsp;├ 학사서식<br/>
+              &nbsp;│&nbsp;&nbsp;└ <span class="dim">휴·복학 서식 · 졸업 서식</span><br/>
+              &nbsp;└ 강의자료
+            </div>
+          </div>
+        </div>
+        <span class="wf-note"><b>메뉴는 3뎁스까지, 사이트맵만 4뎁스</b> — 동일 siteContext.menuTree 재사용(depth 1~4 저장), 사이드바·사이트맵이 렌더 뎁스만 달리한다.
+        회색 항목 = 4뎁스(전공필수·전공선택, 석사·박사과정, 휴·복학/졸업 서식): 메뉴 미노출 — 3뎁스 페이지 내 탭/필터로 진입. 3뎁스도 성격은 제각각(소개=페이지 내 앵커, 공지·연구성과=게시판 카테고리 필터, 교과과정=하위 페이지) — link_url 이 앵커/쿼리를 그대로 담는다.</span>
+        <span class="wf-note">사이트맵 = menuTree 를 그룹 컬럼으로 풀 확장 렌더(정적 SSR, JS 불필요) — C안에서는 "사이드바 아코디언을 전부 펼친 모습"의 확장판(+4뎁스)이라 별도 학습 비용 없음.
+        display_yn=N 메뉴 제외, link_url 직접 사용. 사이드바 쪽도 이 페이지에선 전 그룹 open 렌더(우측과 호응 — 단 사이드바는 규칙대로 3뎁스까지만).</span>
+        <span class="wf-note">권한 표시 — 로그인 필요 메뉴(마이페이지 등)는 🔒 뱃지. 라우트 /{sc}/sitemap 은 tb_role_url_access ANONYMOUS 등록(무매칭 DENY). 45개 학과 사이트 전부 같은 템플릿 — 트리 내용만 site_code 시드 차이.</span>
+      </div>
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#3d5a54"></div></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

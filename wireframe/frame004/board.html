@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 D안 — 게시판 목록/상세</title>
+<link rel="stylesheet" href="wireframe4.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>게시판 — 매거진 그리드 목록 · 에디토리얼 상세 <span class="wf-badge-d">D안</span></h1>
+  <p><span class="route">GET /bbs/{sc}/{bbsCode}</span><span class="route">GET /bbs/{sc}/{bbsCode}/{articleId}</span> — NOTICE·news 계열 = 매거진 그리드(리드 1 + 2열 카드), FILE/QNA 등 기능형 = 협폭 리스트 변형.</p>
+</div>
+
+<!-- 목록: 매거진 그리드 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/bbs/ai/notice</span></div>
+
+  <div class="wf-shrinkbar">
+    <b style="font-size:13px">AI 인공지능학과</b>
+    <span class="wf-grow"></span>
+    <span class="wf-chip">🔔</span><span class="wf-chip">🔍</span><span class="wf-chip">◐</span><span class="wf-btn sm">☰ 메뉴</span>
+  </div>
+
+  <div class="wf-hero wf-dark" style="min-height:150px;padding:42px 24px 28px">
+    <div class="fg">
+      <span class="wf-kicker" style="color:#b7a8e3">커뮤니티</span>
+      <div class="wf-display" style="color:#fff">공지사항</div>
+      <div style="font-size:11px;color:#8b84a3;margin-top:8px">홈 › 커뮤니티 › 공지사항</div>
+    </div>
+  </div>
+
+  <div class="wf-band" style="padding:20px 24px">
+    <!-- 툴바 -->
+    <div class="wf-row">
+      <span class="wf-chip on">전체</span><span class="wf-chip">학사</span><span class="wf-chip">장학</span><span class="wf-chip">취업</span>
+      <span style="font-size:12px;color:#8b84a3">128건</span>
+      <span class="wf-grow"></span>
+      <span class="wf-chip on">최신순</span><span class="wf-chip">조회순</span>
+      <span class="wf-input" style="width:170px">🔍 제목+내용 검색</span>
+      <span class="wf-btn violet sm">✏ 글쓰기</span>
+    </div>
+    <span class="wf-note">카테고리 칩(학사·장학·취업) = menuTree 3뎁스를 <b>게시판 카테고리 필터</b>로 렌더(별도 라우트 아님 — <span class="wf-code">?cat=</span> 쿼리) — 메뉴 뎁스 규칙과 동일 원천.
+    카테고리·정렬 토글·검색 = <span class="wf-code">hx-get="/bbs/{sc}/{bbsCode}?cat=…&amp;sort=…&amp;q=…"</span> 그리드 블록 부분갱신(300ms debounce), <span class="wf-code">hx-history="false"</span>(뒤로가기 민감). 글쓰기 권한은 tb_role_url_access + bbs 마스터 정책.</span>
+
+    <!-- 고정 공지 스트립 -->
+    <div class="wf-box mt-4" style="background:#ede6fd;box-shadow:none;padding:10px 16px">
+      <div class="wf-row"><span class="wf-chip" style="background:#7c3aed;color:#fff">📌 고정</span><b style="font-size:12.5px">[고정 공지] ─────────────</b><span class="wf-grow"></span><span style="font-size:11px;color:#8b84a3">07-01</span></div>
+    </div>
+    <span class="wf-note">고정공지 = 매거진 그리드 위 보라 면 스트립(그리드에 섞지 않음 — 리드 기사 자리는 항상 최신 일반 글).</span>
+
+    <!-- 매거진 그리드: 리드 1 + 2열 카드 -->
+    <div class="wf-slot mt-2" style="text-align:left;padding:14px">
+      <div class="wf-box">
+        <div class="wf-row stretch" style="gap:0">
+          <div class="wf-img flat" style="flex:1.3;min-height:160px"><span>리드 기사 대형 썸네일</span></div>
+          <div style="flex:1;padding:20px 24px">
+            <span class="wf-kicker">Lead · 07-05</span>
+            <b style="font-size:17px;display:block;letter-spacing:-.4px;margin-top:4px">대형 리드 기사 제목 ─────────</b>
+            <div class="wf-line thin w80 mt-2"></div><div class="wf-line thin w60"></div>
+            <span style="font-size:11px;color:#8b84a3">관리자 · 조회 45 · 👍 3 · 📎</span>
+          </div>
+        </div>
+      </div>
+      <div class="wf-grid-2 mt-2">
+        <div class="wf-box"><div class="wf-img flat" style="height:90px"><span>썸네일</span></div><div class="wf-p" style="padding:12px"><span style="font-size:10px;color:#8b84a3">06-30</span><br/><b style="font-size:13px">카드 제목 ────────</b><div class="wf-line thin w60"></div><span style="font-size:11px;color:#8b84a3">관리자 · 조회 102</span></div></div>
+        <div class="wf-box"><div class="wf-img flat" style="height:90px"><span>썸네일</span></div><div class="wf-p" style="padding:12px"><span style="font-size:10px;color:#8b84a3">06-28 · 📎</span><br/><b style="font-size:13px">카드 제목 ─────</b><div class="wf-line thin w80"></div><span style="font-size:11px;color:#8b84a3">관리자 · 조회 67</span></div></div>
+        <div class="wf-box"><div class="wf-img flat" style="height:90px"><span>썸네일</span></div><div class="wf-p" style="padding:12px"><span style="font-size:10px;color:#8b84a3">06-24</span><br/><b style="font-size:13px">카드 제목 ──────────</b><div class="wf-line thin w60"></div><span style="font-size:11px;color:#8b84a3">관리자 · 조회 31</span></div></div>
+        <div class="wf-box"><div class="wf-img flat" style="height:90px"><span>썸네일</span></div><div class="wf-p" style="padding:12px"><span style="font-size:10px;color:#8b84a3">06-20</span><br/><b style="font-size:13px">카드 제목 ───────</b><div class="wf-line thin w80"></div><span style="font-size:11px;color:#8b84a3">관리자 · 조회 88</span></div></div>
+      </div>
+    </div>
+    <span class="wf-note">매거진 그리드 — 1페이지 = 리드 1 + 카드 8(2열). 썸네일 = 본문 첫 이미지 자동 추출, 없으면 브랜드 패턴 면 폴백(레이아웃 붕괴 없음).
+    NOTICE·news·seminar·BODO·GALLERY·YOUTUBE 에 적합(GALLERY/YOUTUBE 는 카드 3열·16:9 변형). 모바일 = 리드 포함 전부 1열.</span>
+
+    <!-- 페이징 -->
+    <div class="wf-row mt-2" style="justify-content:center">
+      <span class="wf-chip">‹</span><span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">3</span><span class="wf-chip">›</span>
+    </div>
+    <span class="wf-note">페이징 = PageRequest 공통 + htmx 그리드 블록 갱신. 상세 진입 후 목록 복귀 시 검색·페이지 쿼리 보존.</span>
+  </div>
+</div>
+
+<!-- 상세: 에디토리얼 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">게시글 상세 — /bbs/{sc}/{bbsCode}/{articleId} (에디토리얼 본문)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-band" style="padding:28px 24px 20px">
+    <div class="wf-narrow">
+      <span class="wf-kicker">공지사항 · 2026-07-01</span>
+      <div class="wf-display sm mt-2">게시글 제목 — 큰 제목 타이포 ─────</div>
+      <div class="wf-quote mt-2" style="font-size:16px">리드문 한두 문장이 본문 위에 크게 얹히는 에디토리얼 구성입니다.</div>
+      <div class="wf-row mt-2" style="font-size:11px;color:#8b84a3">
+        <span>관리자</span><span>·</span><span>조회 231</span>
+        <span class="wf-grow"></span><span class="wf-chip">URL 복사</span><span class="wf-chip">🖨 인쇄</span>
+      </div>
+      <div class="wf-line thin mt-4"></div>
+
+      <!-- 본문 -->
+      <div class="mt-4" style="min-height:110px">
+        <div class="wf-line"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+        <div class="wf-img mt-4" style="height:110px"><span>본문 이미지</span></div>
+        <div class="wf-line mt-4 w80"></div><div class="wf-line w40"></div>
+      </div>
+
+      <!-- 첨부 -->
+      <div class="wf-box wf-gray mt-4" style="box-shadow:none;padding:12px 16px">
+        <b style="font-size:12px">📎 첨부 2</b>
+        <div class="wf-row mt-2"><span style="font-size:12px">파일명.pdf (1.2MB)</span><span class="wf-chip">미리보기</span><span class="wf-chip vi">다운로드</span></div>
+        <div class="wf-row mt-2"><span style="font-size:12px">양식.hwp (240KB)</span><span class="wf-chip vi">다운로드</span></div>
+      </div>
+
+      <div class="wf-row mt-4" style="justify-content:center">
+        <span class="wf-btn ghost sm">👍 좋아요 12</span><span class="wf-btn ghost sm">🚩 신고</span>
+      </div>
+      <span class="wf-note">에디토리얼 상세 — 협폭 720px, 큰 제목(<span class="wf-code">text-display-sm</span>) + 리드문(본문 첫 단락 또는 요약 필드). 본문 = Sanitizer 통과 HTML(safelist 유틸 클래스만),
+      첨부는 본문 하단(읽기 흐름 우선), 다운로드 = 6중 방어 자원 + 로그. 좋아요/신고 = htmx POST 블록 갱신.</span>
+
+      <!-- 댓글 -->
+      <div class="wf-h2 mt-6 mb-2">댓글 3</div>
+      <div class="wf-row stretch mb-2">
+        <span class="wf-input square wf-grow" style="min-height:40px">댓글 입력 (비로그인 시 로그인 유도 카드)</span>
+        <span class="wf-btn">등록</span>
+      </div>
+      <div class="wf-box wf-p">
+        <div class="wf-row"><b style="font-size:12px">홍**</b><span style="font-size:11px;color:#8b84a3">07-02 10:31</span><span class="wf-grow"></span><span class="wf-chip">답글</span><span class="wf-chip">신고</span></div>
+        <div class="wf-line thin w80"></div>
+        <div style="margin-left:24px;border-left:2px solid #e9e4f4;padding-left:10px" class="mt-2">
+          <div class="wf-row"><b style="font-size:12px">↳ 김**</b><span style="font-size:11px;color:#8b84a3">07-02 11:02</span></div>
+          <div class="wf-line thin w60"></div>
+        </div>
+      </div>
+      <span class="wf-note">댓글 = htmx 블록 갱신 + 작성자 MaskUtils 마스킹 + CUD는 try-catch·log·HX-Redirect 규약(A안 동일). 등록 폼은 CSRF(XSRF-TOKEN 쿠키) 자동 포함.</span>
+
+      <!-- 이전/다음 글 -->
+      <div class="wf-row mt-4">
+        <div class="wf-box wf-p wf-grow" style="padding:12px 16px"><span style="font-size:10px;color:#8b84a3">← 이전 글</span><br/><b style="font-size:12px">이전 게시글 제목 ────</b></div>
+        <div class="wf-box wf-p wf-grow" style="padding:12px 16px;text-align:right"><span style="font-size:10px;color:#8b84a3">다음 글 →</span><br/><b style="font-size:12px">다음 게시글 제목 ──</b></div>
+      </div>
+      <div class="wf-row mt-2">
+        <span class="wf-btn ghost sm">← 목록</span>
+        <span class="wf-grow"></span>
+        <span class="wf-btn ghost sm">수정</span><span class="wf-btn ghost sm">삭제</span>
+      </div>
+      <span class="wf-note">이전/다음 글 = 제목 노출 카드 2분할(콘텐츠 페이지의 prev-next 와 같은 시각 문법 — 게시판은 글 순번 기준). 수정/삭제 버튼은 권한 보유 시만 렌더.</span>
+    </div>
+  </div>
+</div>
+
+<!-- 기능형 게시판 변형 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">기능형 게시판 변형 — FILE / QNA / FAQ (협폭 리스트)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-band" style="padding:20px 24px">
+    <div class="wf-narrow">
+      <!-- FILE -->
+      <b style="font-size:13px">FILE 자료실</b>
+      <div class="wf-box mt-2">
+        <div class="wf-band" style="border-bottom:1px solid #efecf6"><div class="wf-row"><b style="font-size:12.5px">자료 제목 ─────</b><span class="wf-grow"></span><span class="wf-chip">📎 3</span><span class="wf-chip vi">일괄 다운로드</span></div></div>
+        <div class="wf-band"><div class="wf-row"><b style="font-size:12.5px">자료 제목 ────────</b><span class="wf-grow"></span><span class="wf-chip">📎 1</span><span class="wf-chip vi">다운로드</span></div></div>
+      </div>
+      <!-- QNA -->
+      <b style="font-size:13px;display:block;margin-top:18px">QNA 질의응답</b>
+      <div class="wf-box mt-2">
+        <div class="wf-band" style="border-bottom:1px solid #efecf6"><div class="wf-row"><span class="wf-chip" style="background:#7c3aed;color:#fff">답변완료</span><b style="font-size:12.5px">질문 제목 ─────</b><span class="wf-grow"></span><span class="wf-chip">🔒</span></div></div>
+        <div class="wf-band"><div class="wf-row"><span class="wf-chip">답변대기</span><b style="font-size:12.5px">질문 제목 ───────</b><span class="wf-grow"></span><span style="font-size:11px;color:#8b84a3">07-02</span></div></div>
+      </div>
+      <!-- FAQ -->
+      <b style="font-size:13px;display:block;margin-top:18px">FAQ</b>
+      <div class="wf-box mt-2">
+        <div class="wf-band" style="border-bottom:1px solid #efecf6"><div class="wf-row"><b style="font-size:12.5px">Q. 자주 묻는 질문 ─────</b><span class="wf-grow"></span><span class="wf-chip">▾</span></div>
+          <div class="wf-gray mt-2" style="padding:10px;border-radius:8px"><div class="wf-line thin w80" style="margin:0"></div></div></div>
+        <div class="wf-band"><div class="wf-row"><b style="font-size:12.5px">Q. 자주 묻는 질문 ──────────</b><span class="wf-grow"></span><span class="wf-chip">▸</span></div></div>
+      </div>
+    </div>
+    <span class="wf-note">기능형 게시판은 매거진 그리드 대신 협폭 리스트 — 스킨만 다르고 골격(검색폼+목록+페이징, htmx 부분갱신)은 동일(tb_bbs_master.bbs_type 스킨 스위치).
+    FAQ 행 = 네이티브 <span class="wf-code">&lt;details&gt;/&lt;summary&gt;</span>(JS 불필요). QNA 비밀글 🔒 = 작성자/관리자만 열람. FILE 일괄 다운로드 = zip 스트림(로그 기록).</span>
+  </div>
+</div>
+
+</body>
+</html>

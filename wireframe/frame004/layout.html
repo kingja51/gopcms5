@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 D안 — 공용 레이아웃</title>
+<link rel="stylesheet" href="wireframe4.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>공용 레이아웃 D — 투명 헤더 + 풀스크린 메뉴 + 에디토리얼 본문 <span class="wf-badge-d">D안</span></h1>
+  <p>A안과 동일하게 <span class="wf-code">front/layouts/KRDS/krds.html</span> 1개 파일 체계 유지.
+     차이는 헤더를 <b>투명 오버레이</b>로 히어로 위에 얹고, GNB 를 <b>풀스크린 오버레이 메뉴</b>로 대체하며,
+     본문을 <b>풀블리드 섹션 스택 + 협폭(720px) 읽기 컬럼</b>으로 구성하는 것 — 템플릿 CSS·조각 교체로 흡수.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/{sc}/…  (모든 페이지 공통 프레임)</span></div>
+
+  <!-- 스킵 링크 -->
+  <div class="wf-band wf-gray" style="padding:6px 20px">
+    <span class="wf-chip">본문으로 건너뛰기</span>
+    <span class="wf-tag">sr-only, 포커스 시에만 노출 (A안 동일)</span>
+  </div>
+
+  <!-- ① 투명 오버레이 헤더 (히어로 위에 얹힘) -->
+  <div class="wf-band" style="padding:0">
+    <div style="position:relative;min-height:150px">
+      <div class="wf-img flat bg" style="position:absolute;inset:0"><span>페이지 히어로 배경(어두운 이미지/그라디언트)</span></div>
+      <div class="wf-ghostbar">
+        <b style="font-size:16px">AI 인공지능학과</b><span style="font-size:10px;opacity:.7">KONYANG UNIV.</span>
+        <span class="wf-grow"></span>
+        <span class="wf-chip">🔔</span><span class="wf-chip">🔍</span><span class="wf-chip">◐</span><span class="wf-btn onimg sm">☰ 메뉴</span>
+      </div>
+    </div>
+    <span class="wf-note" style="margin:8px 20px 12px">① 투명 헤더 — 로고 + 우측 미니 아이콘(알림·검색·고대비·☰)만. GNB 밴드 없음(A안 드롭다운·B안 1뎁스 나열 폐지).
+    히어로 위에서는 투명, 스크롤 시 아래 ①′ 축소 고정 헤더로 전환 — <span class="wf-code">position:sticky</span> + IntersectionObserver 로 히어로 이탈 감지 후 <span class="wf-code">.is-scrolled</span> 클래스 토글(외부 .js + CSP nonce, 인라인 스크립트 금지). 유틸(로그인·회원가입·관련 사이트)은 풀스크린 메뉴 하단으로 이동.</span>
+  </div>
+
+  <!-- ①′ 축소 고정 헤더 -->
+  <div class="wf-shrinkbar">
+    <b style="font-size:13px">AI 인공지능학과</b>
+    <span class="wf-grow"></span>
+    <span class="wf-chip">🔔</span><span class="wf-chip">🔍</span><span class="wf-chip">◐</span><span class="wf-btn sm">☰ 메뉴</span>
+  </div>
+  <div class="wf-band" style="padding:4px 20px 12px">
+    <span class="wf-note">①′ 축소 고정 헤더 — 스크롤 후/히어로 없는 페이지 기본형. 반투명 흰 면 + 얇은 경계.
+    색은 시맨틱 토큰(<span class="wf-code">bg-surface</span>·<span class="wf-code">border-line</span>·<span class="wf-code">text-fg</span>)으로만 — raw hex 금지. 테마는 <span class="wf-code">&lt;html class="theme-*"&gt;</span> / <span class="wf-code">--brand-*</span> 스왑(tb_site 연동), 고대비 <span class="wf-code">hc</span> 모드 동일 지원.</span>
+  </div>
+
+  <!-- ② 풀스크린 오버레이 메뉴 -->
+  <div class="wf-band" style="padding:12px 20px">
+    <div class="wf-overlay" style="border-radius:12px">
+      <div class="wf-row"><b style="color:#b7a8e3">② 풀스크린 오버레이 메뉴 (☰ 클릭 시 — &lt;dialog&gt; 전체화면)</b><span class="wf-grow"></span><span class="wf-chip" style="background:rgba(255,255,255,.14);color:#fff">✕ 닫기 (ESC)</span></div>
+      <div class="wf-row stretch mt-4" style="gap:28px">
+        <div style="flex:1">
+          <div class="item dim">소개</div>
+          <div class="item dim">구성원</div>
+          <div class="item" style="color:#7c3aed">교육 ←</div>
+          <div class="item dim">연구</div>
+          <div class="item dim">커뮤니티</div>
+        </div>
+        <div style="flex:1.3;border-left:1px solid #3a3153;padding-left:24px">
+          <span class="wf-kicker" style="color:#b7a8e3">교육 — 선택 그룹의 2뎁스 프리뷰</span>
+          <div class="d2 focus mt-2">교과과정 → /{sc}/curriculum <span class="hint">← 2뎁스 hover/포커스</span></div>
+          <div class="d3">└ 학부 · 대학원 <span class="hint">(3뎁스 — 2뎁스 hover/포커스 시 이어서 노출)</span></div>
+          <div class="d2">수업계획서 → /prg/syllabus/{sc}</div>
+          <div class="d2">학사일정 → /schedule/{master}</div>
+          <div class="wf-img mt-4" style="height:52px;background:#2c2547"><span>그룹 대표 이미지(선택)</span></div>
+        </div>
+      </div>
+      <div class="wf-row mt-4" style="border-top:1px solid #3a3153;padding-top:12px;font-size:11px;color:#b7abd8">
+        <span class="wf-chip" style="background:rgba(255,255,255,.1);color:#dcd6ee">로그인</span>
+        <span class="wf-chip" style="background:rgba(255,255,255,.1);color:#dcd6ee">회원가입</span>
+        <span class="wf-chip" style="background:rgba(255,255,255,.1);color:#dcd6ee">관련 사이트 ▾</span>
+        <span class="wf-grow"></span><span>ko / EN</span>
+      </div>
+    </div>
+    <span class="wf-note">② 메뉴 = 거대 타이포 1뎁스 5그룹 세로 나열(좌) + 선택 그룹의 2뎁스 리스트(우), 2뎁스 hover/포커스 시 3뎁스가 이어서 노출.
+    <b>출력 규칙: 메뉴는 1~3뎁스까지만 노출</b> — 4뎁스(전공필수·전공선택 / 석사·박사과정 / 휴·복학·졸업 서식)는 메뉴에 넣지 않고 3뎁스 페이지 내 탭/필터로 처리. 사이트맵(<span class="wf-code">/{sc}/sitemap</span>)만 1~4뎁스 전체 전개.
+    데이터는 siteContext.menuTree 하나(depth 1~4 저장, 사이트맵과 동일) — 오버레이 메뉴·사이트맵이 <b>렌더 뎁스만 달리함</b>, 추가 쿼리 없음. 네이티브 <span class="wf-code">&lt;dialog&gt;</span> 전체화면 + ESC/포커스 트랩 기본 제공,
+    좌측 1뎁스·우측 2뎁스의 포커스/호버 전환은 이벤트 위임(document 1회 + <span class="wf-code">closest('[data-action]')</span>) 순수 JS. 1뎁스 타이포는 <span class="wf-code">text-display-md</span> 토큰(굵기 700) — KRDS 범위 내.</span>
+  </div>
+
+  <!-- ③ 서브페이지 히어로 -->
+  <div class="wf-hero wf-dark" style="min-height:180px;padding:48px 24px 32px">
+    <div class="fg">
+      <span class="wf-kicker" style="color:#b7a8e3">구성원</span>
+      <div class="wf-display" style="color:#fff">교수진</div>
+      <div style="font-size:13px;color:#b7abd8;margin-top:6px">AI 인공지능학과의 사람들을 소개합니다</div>
+      <div style="font-size:11px;color:#8b84a3;margin-top:10px">홈 › 구성원 › 교수진</div>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 12px">
+    <span class="wf-note">③ 페이지 히어로 — 거대 타이포 제목(<span class="wf-code">text-display-lg</span>) + 한 줄 소개 + breadcrumb 미니 텍스트를 하나의 밴드로 통합(A안 breadcrumb 밴드·B안 타이틀 밴드 대체).
+    SUB_HERO 배너(<span class="wf-code">GET /api/v1/sites/{sc}/banners?location=SUB_HERO</span>)는 히어로 <b>배경 이미지</b>로 흡수 — 배너 0건이면 브랜드 단색/그라디언트 폴백이라 레이아웃 붕괴 없음. 한 줄 소개는 tb_menu 설명 필드 또는 콘텐츠 요약.</span>
+  </div>
+
+  <!-- ④ 본문 스택 -->
+  <div class="wf-band" style="padding:12px 20px">
+    <div class="wf-slot" style="min-height:150px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+      <b style="font-size:15px">④ 본문 — layout:fragment="content"</b>
+      <span>풀블리드 섹션 스택(홈·연구실 밴드·지도) 또는 협폭 720px 에디토리얼 컬럼(읽기 페이지)</span>
+      <span style="font-size:11px">LNB 없음 — 같은 그룹 내 이동은 하단 이전/다음 내비 + 풀스크린 메뉴가 담당</span>
+    </div>
+    <span class="wf-note">④ 본문 2형: <b>풀블리드형</b>(섹션이 캔버스 좌우 끝까지, 면 교차로 리듬) / <b>협폭형</b>(<span class="wf-code">.narrow</span> = max-width 720px 센터 — 에디토리얼 읽기 폭).
+    박스 구분은 선 대신 면(옅은 채움 <span class="wf-code">bg-surface-alt</span> 교차) + 그림자 최소. radius 는 KRDS 상한 12px 준수.</span>
+  </div>
+
+  <!-- ⑤ 이전/다음 페이지 내비 + 좋아요/신고 -->
+  <div class="wf-band wf-gray">
+    <div class="wf-narrow">
+      <div class="wf-row">
+        <div class="wf-box wf-p wf-grow" style="padding:12px 16px;opacity:.45"><span style="font-size:10px;color:#8b84a3">← 이전</span><br/><b style="font-size:12.5px">(없음 — 그룹 첫 페이지)</b></div>
+        <div class="wf-box wf-p wf-grow" style="padding:12px 16px;text-align:right"><span style="font-size:10px;color:#8b84a3">다음 →</span><br/><b style="font-size:12.5px">직원</b></div>
+      </div>
+      <div class="wf-row mt-2" style="justify-content:center">
+        <span class="wf-btn ghost sm">👍 좋아요 12</span><span class="wf-btn ghost sm">🚩 신고</span>
+      </div>
+    </div>
+    <span class="wf-note">⑤ 이전/다음 = menuTree 에서 현재 메뉴의 형제(같은 그룹) 앞뒤 항목을 렌더(fragments/prev-next 신설) — LNB 를 대체하는 D안 핵심 동선.
+    좋아요/신고 밴드는 A안 동일(contentId 있는 페이지만, htmx POST + 블록 갱신).</span>
+  </div>
+
+  <!-- ⑥ 푸터 -->
+  <div class="wf-band wf-dark" style="border-bottom:none;padding:24px 20px">
+    <div class="wf-display sm" style="color:#4b4468">AI 인공지능학과</div>
+    <div class="wf-row mt-4">
+      <div class="wf-grow"><div class="wf-line w40" style="background:#3a3153"></div><div class="wf-line thin w60" style="background:#2c2547"></div></div>
+      <span class="wf-chip" style="background:#2c2547;color:#b7abd8">개인정보처리방침</span>
+      <span class="wf-chip" style="background:#2c2547;color:#b7abd8">이메일무단수집거부</span>
+      <span class="wf-chip" style="background:#2c2547;color:#b7abd8">TOP ↑</span>
+    </div>
+    <span class="wf-note" style="text-align:left">⑥ 푸터 — 대형 워터마크 타이포(학과명, 저채도) + 건양대 표준 공용 링크(fragments/site-footer 동일). TOP 버튼은 앵커 스크롤(순수 JS, smooth 는 prefers-reduced-motion 시 auto).</span>
+  </div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">A안 → D안 구현 시 바뀌는 것</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <table class="wf-table">
+      <tr><th style="width:220px">변경 지점</th><th>내용</th></tr>
+      <tr><td>krds.html 헤더부</td><td>마스트헤드+GNB 밴드 → 투명/축소 이중 상태 헤더 + 풀스크린 &lt;dialog&gt; 메뉴. 조각 교체 수준(메뉴 데이터 동일)</td></tr>
+      <tr><td>fragments/page-hero (신설)</td><td>거대 타이포 제목 + 소개문 + breadcrumb + SUB_HERO 배경 통합 밴드</td></tr>
+      <tr><td>fragments/prev-next (신설)</td><td>menuTree 형제 항목 앞뒤 렌더 — LNB 대체 동선</td></tr>
+      <tr><td>header.js (신설)</td><td>IntersectionObserver 로 히어로 이탈 감지 → 헤더 상태 클래스 토글. 외부 .js + nonce, htmx:load 멱등(data-initialized 가드)</td></tr>
+      <tr><td>본문 컨테이너</td><td>와이드 1단 → 풀블리드 섹션 스택 / .narrow(720px) 이원화 — 템플릿 CSS 로 흡수</td></tr>
+      <tr><td>변경 없음</td><td>라우트·컨트롤러·tb_menu·tb_role_url_access(무매칭 DENY)·팝업/좋아요/푸터 조각·CSP/htmx 규약·hx-history 정책</td></tr>
+    </table>
+    <span class="wf-note">스크립트 계층(외부 .js + nonce, 이벤트 위임, htmx:load 멱등 초기화, self-host·CDN 금지)은 A안과 동일 규약. 모든 모션(헤더 전환·카운트업·스크롤스파이)은 prefers-reduced-motion 존중.</span>
+  </div>
+</div>
+
+</body>
+</html>

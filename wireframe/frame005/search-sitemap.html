@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 E안 — 통합검색 · 사이트맵</title>
+<link rel="stylesheet" href="wireframe5.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>통합검색 · 사이트맵 <span class="wf-badge-e">E안</span></h1>
+  <p><span class="route">GET /search?siteCode={sc}&amp;keyword=</span><span class="route">GET /{sc}/sitemap</span>
+     — 헤더 검색인풋에서 바로 결과 페이지 진입(오버레이 없음). 좌 필터 카드 + 우 그룹별 결과 카드 스택. 사이트맵 = 5그룹 카드, <b>1~4뎁스 전체 전개</b>(메뉴는 3뎁스까지 — 출력 규칙).</p>
+</div>
+
+<!-- 통합검색 결과 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/search?siteCode=me&amp;keyword=장학금</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 20px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔 알림</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">기계공학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-input" style="width:150px;border-color:#e11d48;color:#44403c">🔍 장학금</span></div></div>
+
+  <div class="wf-section">
+    <!-- 검색 요약 카드 -->
+    <div class="wf-card">
+      <div class="wf-card-body" style="padding:10px 14px">
+        <div class="wf-row"><span style="font-size:13px">"<b style="color:#e11d48">장학금</b>" 검색 결과 <b>17건</b></span><span class="wf-grow"></span><span class="wf-input" style="width:220px">🔍 다시 검색</span><span class="wf-btn sm">검색</span></div>
+      </div>
+    </div>
+    <span class="wf-note">헤더 검색인풋 제출 → 이 페이지로 직행(A안 독립 페이지와 같되 <b>진입점이 상시 인풋</b> — 오버레이 단계 없음). keyword 는 서버에서 이스케이프 후 하이라이트(&lt;mark&gt;), XSS 방지. 검색 로그 = logging DB.</span>
+
+    <div class="wf-row stretch mt-4">
+      <!-- 좌: 필터 카드 -->
+      <div style="width:220px;flex-shrink:0">
+        <div class="wf-card">
+          <div class="wf-card-head" style="font-size:12px">범위</div>
+          <div class="wf-card-body" style="padding:10px 14px;font-size:12px">
+            <div class="wf-row"><span class="wf-chip on">전체 17</span></div>
+            <div class="wf-row mt-2"><span class="wf-chip">콘텐츠 2</span></div>
+            <div class="wf-row mt-2"><span class="wf-chip">게시글 12</span></div>
+            <div class="wf-row mt-2"><span class="wf-chip">파일 3</span></div>
+          </div>
+        </div>
+        <div class="wf-card mt-2">
+          <div class="wf-card-head" style="font-size:12px">기간</div>
+          <div class="wf-card-body" style="padding:10px 14px;font-size:12px">
+            <div class="wf-row"><span class="wf-chip on">전체</span><span class="wf-chip">1개월</span></div>
+            <div class="wf-row mt-2"><span class="wf-chip">6개월</span><span class="wf-chip">1년</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 우: 그룹별 결과 카드 스택 -->
+      <div class="wf-grow">
+        <div class="wf-card">
+          <div class="wf-card-head" style="font-size:12px">📄 콘텐츠 <span class="wf-chip" style="font-size:10px">2</span></div>
+          <div class="wf-card-body" style="padding:10px 14px">
+            <b style="font-size:12.5px">학과소개 — <span style="color:#e11d48">장학금</span> 제도 안내</b>
+            <div class="wf-line thin w80"></div>
+            <span style="font-size:11px;color:#a8a29e">/me/about</span>
+          </div>
+        </div>
+        <div class="wf-card mt-2">
+          <div class="wf-card-head" style="font-size:12px">📋 게시글 <span class="wf-chip" style="font-size:10px">12</span><span class="wf-grow"></span><span class="wf-chip" style="font-size:10px">더보기 →</span></div>
+          <div class="wf-card-body" style="padding:0">
+            <div class="wf-band"><b style="font-size:12.5px">2026-2 <span style="color:#e11d48">장학금</span> 신청 안내</b><div class="wf-line thin w60" style="margin:4px 0 0"></div><span style="font-size:11px;color:#a8a29e">공지사항 · 07-01</span></div>
+            <div class="wf-band" style="border-bottom:none"><b style="font-size:12.5px">성적 <span style="color:#e11d48">장학금</span> 선발 결과</b><div class="wf-line thin w80" style="margin:4px 0 0"></div><span style="font-size:11px;color:#a8a29e">학과소식 · 06-20</span></div>
+          </div>
+        </div>
+        <div class="wf-card mt-2">
+          <div class="wf-card-head" style="font-size:12px">📎 파일 <span class="wf-chip" style="font-size:10px">3</span></div>
+          <div class="wf-card-body" style="padding:10px 14px">
+            <div class="wf-row"><span style="font-size:12px"><span style="color:#e11d48">장학금</span>_신청서.hwp</span><span class="wf-grow"></span><span class="wf-chip">다운로드</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">필터 칩 클릭 = hx-get 으로 <b>우측 결과 카드 스택만 부분갱신</b>(hx-target) + hx-push-url 쿼리 동기. 그룹 카드 = 콘텐츠/게시글/파일 각 상위 N건 + "더보기"로 그룹 전체 목록. 결과는 열람 권한 필터 적용(비공개 게시판 제외 — tb_role_url_access 와 게시판 권한 동시 검증). 0건 그룹은 카드 미출력, 전체 0건이면 안내 카드 1장.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#57534e"></div></div>
+</div>
+
+<!-- 사이트맵 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">사이트맵 — /{sc}/sitemap (메뉴 5그룹 = 카드 5장 · 1~4뎁스 전체 전개)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/me/sitemap</span></div>
+
+  <div class="wf-section">
+    <div class="wf-card">
+      <div class="wf-card-body"><span style="font-size:11px;color:#a8a29e">홈 › 사이트맵</span><div class="wf-h1">사이트맵</div></div>
+    </div>
+
+    <div class="wf-grid-3 mt-4">
+      <div class="wf-card">
+        <div class="wf-card-head">소개</div>
+        <div class="wf-card-body" style="font-size:12px">
+          <div>· 학과소개 <span style="color:#a8a29e;font-size:10px">/me/about</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 인사말 · 비전·인재상 · 연혁 <span style="font-size:10px;color:#a8a29e">(페이지 내 앵커/탭)</span></div>
+          <div class="mt-2">· 오시는길 <span style="color:#a8a29e;font-size:10px">/me/location</span></div>
+        </div>
+      </div>
+      <div class="wf-card">
+        <div class="wf-card-head">구성원</div>
+        <div class="wf-card-body" style="font-size:12px">
+          <div>· 교수진 <span style="color:#a8a29e;font-size:10px">/prg/faculty/me</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 전임교원 · 겸임·초빙 · 명예교수</div>
+          <div class="mt-2">· 직원 <span style="color:#a8a29e;font-size:10px">/prg/staff/me</span></div>
+        </div>
+      </div>
+      <div class="wf-card">
+        <div class="wf-card-head">교육</div>
+        <div class="wf-card-body" style="font-size:12px">
+          <div>· 교과과정 <span style="color:#a8a29e;font-size:10px">/me/curriculum</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 학부</div>
+          <div style="margin-left:28px;font-size:11px;color:#a8a29e">└ 전공필수 · 전공선택 <span style="font-size:10px">(4뎁스)</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 대학원</div>
+          <div style="margin-left:28px;font-size:11px;color:#a8a29e">└ 석사과정 · 박사과정 <span style="font-size:10px">(4뎁스)</span></div>
+          <div class="mt-2">· 수업계획서 <span style="color:#a8a29e;font-size:10px">/prg/syllabus/me</span></div>
+          <div class="mt-2">· 학사일정 <span style="color:#a8a29e;font-size:10px">/schedule/{master}</span></div>
+        </div>
+      </div>
+      <div class="wf-card">
+        <div class="wf-card-head">연구</div>
+        <div class="wf-card-body" style="font-size:12px">
+          <div>· 연구실 <span style="color:#a8a29e;font-size:10px">/prg/lab/me</span></div>
+          <div class="mt-2">· 연구성과 <span style="color:#a8a29e;font-size:10px">/bbs/me/pub</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 논문 · 특허·기술이전 <span style="font-size:10px;color:#a8a29e">(게시판 카테고리)</span></div>
+        </div>
+      </div>
+      <div class="wf-card">
+        <div class="wf-card-head">커뮤니티</div>
+        <div class="wf-card-body" style="font-size:12px">
+          <div>· 공지사항 <span style="color:#a8a29e;font-size:10px">/bbs/me/notice</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 학사 · 장학 · 취업 <span style="font-size:10px;color:#a8a29e">(카테고리 필터)</span></div>
+          <div class="mt-2">· 학과소식 <span style="color:#a8a29e;font-size:10px">/bbs/me/news</span></div>
+          <div class="mt-2">· 세미나 <span style="color:#a8a29e;font-size:10px">/bbs/me/seminar</span></div>
+          <div class="mt-2">· 자료실 <span style="color:#a8a29e;font-size:10px">/bbs/me/archive</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 학사서식</div>
+          <div style="margin-left:28px;font-size:11px;color:#a8a29e">└ 휴·복학 서식 · 졸업 서식 <span style="font-size:10px">(4뎁스)</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 강의자료</div>
+        </div>
+      </div>
+      <div class="wf-card" style="border-style:dashed;box-shadow:none">
+        <div class="wf-card-head" style="font-size:12px;color:#a8a29e">회원 · 기타</div>
+        <div class="wf-card-body" style="font-size:12px;color:#a8a29e">
+          <div>· 로그인 /member/login</div>
+          <div class="mt-2">· 마이페이지 /member/mypage</div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note"><b>출력 규칙: 메뉴(GNB 드롭 카드)는 3뎁스까지, 사이트맵만 1~4뎁스 전체 전개 — 동일 siteContext.menuTree 재사용</b>(depth 1~4 저장, 렌더 뎁스만 달리함. GNB 드롭다운·푸터 미니 사이트맵과 같은 데이터, tb_menu 시드가 정본). 4뎁스(전공필수·석사과정·휴·복학 서식 등)는 실제로는 3뎁스 페이지 내 탭/필터로 연결 — 사이트맵에서만 위계 전개로 보여줌. 카드 1장 = 1뎁스 그룹, 들여쓰기 = 2→3→4뎁스.</span>
+    <span class="wf-note">그룹 순서·노출 여부는 tb_menu use_yn/sort_order 따름. use_yn='N' 메뉴는 미출력 — 별도 관리 화면 불필요. 3컬럼 → 모바일 1컬럼.</span>
+  </div>
+</div>
+
+</body>
+</html>

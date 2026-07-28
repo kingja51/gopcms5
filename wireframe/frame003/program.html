@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 C안 — 프로그램 페이지</title>
+<link rel="stylesheet" href="wireframe3.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>프로그램 — 필터 패널 + 카드 그리드 교수진 <span class="wf-badge-c">C안</span></h1>
+  <p><span class="route">GET /prg/faculty/{sc}</span><span class="route">GET /prg/{staff|lab|syllabus}/{sc}</span>
+     — 제네릭 /prg 조각(secondary DB, 다학과 공용). 교수진은 좌측 필터 패널 + 우측 카드 그리드.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/prg/faculty/ai</span></div>
+
+  <div class="wf-frame">
+    <div class="wf-side">
+      <div class="wf-side-logo">인공지능학과<span class="en">KONYANG UNIV.</span></div>
+      <div class="wf-side-search">🔍 통합검색 …</div>
+      <div class="wf-side-item">홈</div>
+      <div class="wf-side-item group">소개 ▸</div>
+      <div class="wf-side-item group">구성원 ▾</div>
+      <div class="wf-side-sub active">교수진 ▾</div>
+      <div class="wf-side-sub2">전임교원</div>
+      <div class="wf-side-sub2">겸임·초빙</div>
+      <div class="wf-side-sub2">명예교수</div>
+      <div class="wf-side-sub">직원</div>
+      <div class="wf-side-item group">교육 ▸</div>
+      <div class="wf-side-item group">연구 ▸</div>
+      <div class="wf-side-item group">커뮤니티 ▸</div>
+      <div class="wf-side-util"><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div>
+    </div>
+
+    <div class="wf-main">
+      <div class="wf-utilbar">홈 › 구성원 › 교수진 <span class="wf-grow"></span><span class="wf-chip">🔍</span></div>
+
+      <div class="wf-p">
+        <div class="wf-row"><div class="wf-h1">교수진</div><span class="wf-grow"></span><span style="font-size:12px;color:#4d605b">전체 12명</span></div>
+
+        <div class="wf-row stretch mt-2">
+          <!-- 좌측 필터 패널 -->
+          <div class="wf-box" style="width:180px;flex-shrink:0;align-self:flex-start">
+            <div class="wf-band wf-gray" style="padding:8px 12px"><b style="font-size:12px">필터</b></div>
+            <div class="wf-band" style="padding:8px 12px">
+              <b style="font-size:11px">전공분야</b>
+              <div style="font-size:11.5px;margin-top:4px;color:#4d605b">
+                ☑ 머신러닝 (4)<br/>☑ 컴퓨터비전 (3)<br/>☐ 자연어처리 (2)<br/>☐ 로보틱스 (3)
+              </div>
+            </div>
+            <div class="wf-band" style="padding:8px 12px;border-bottom:none">
+              <b style="font-size:11px">직급</b>
+              <div class="wf-row mt-2" style="flex-wrap:wrap;gap:4px">
+                <span class="wf-chip teal">전체</span><span class="wf-chip">교수</span><span class="wf-chip">부교수</span><span class="wf-chip">조교수</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 우측 카드 그리드 -->
+          <div class="wf-grow">
+            <div class="wf-row mb-2">
+              <span class="wf-chip teal">머신러닝 ✕</span><span class="wf-chip teal">컴퓨터비전 ✕</span><span class="wf-chip">초기화</span>
+              <span class="wf-grow"></span>
+              <span class="wf-chip">이름순</span><span class="wf-chip" style="opacity:.6">직급순</span>
+            </div>
+            <div class="wf-grid-3">
+              <div class="wf-box"><div class="wf-img" style="height:90px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div>
+                <div style="padding:8px 10px"><b style="font-size:12px">김○○ 교수</b> <span class="wf-chip" style="font-size:10px">머신러닝</span><div class="wf-line thin w80"></div><span style="font-size:10px;color:#9db3ae">✉ k**@konyang.ac.kr · ☎ 041-***</span></div></div>
+              <div class="wf-box"><div class="wf-img" style="height:90px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div>
+                <div style="padding:8px 10px"><b style="font-size:12px">이○○ 부교수</b> <span class="wf-chip" style="font-size:10px">비전</span><div class="wf-line thin w60"></div><span style="font-size:10px;color:#9db3ae">✉ l**@konyang.ac.kr</span></div></div>
+              <div class="wf-box"><div class="wf-img" style="height:90px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div>
+                <div style="padding:8px 10px"><b style="font-size:12px">박○○ 조교수</b> <span class="wf-chip" style="font-size:10px">머신러닝</span><div class="wf-line thin w80"></div><span style="font-size:10px;color:#9db3ae">✉ p**@konyang.ac.kr</span></div></div>
+              <div class="wf-box"><div class="wf-img" style="height:90px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div>
+                <div style="padding:8px 10px"><b style="font-size:12px">최○○ 교수</b> <span class="wf-chip" style="font-size:10px">비전</span><div class="wf-line thin w60"></div><span style="font-size:10px;color:#9db3ae">✉ c**@konyang.ac.kr</span></div></div>
+              <div class="wf-box"><div class="wf-img" style="height:90px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div>
+                <div style="padding:8px 10px"><b style="font-size:12px">정○○ 교수</b> <span class="wf-chip" style="font-size:10px">머신러닝</span><div class="wf-line thin w80"></div><span style="font-size:10px;color:#9db3ae">✉ j**@konyang.ac.kr</span></div></div>
+              <div class="wf-box"><div class="wf-img" style="height:90px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div>
+                <div style="padding:8px 10px"><b style="font-size:12px">한○○ 부교수</b> <span class="wf-chip" style="font-size:10px">머신러닝</span><div class="wf-line thin w60"></div><span style="font-size:10px;color:#9db3ae">✉ h**@konyang.ac.kr</span></div></div>
+            </div>
+            <div class="wf-row mt-2" style="justify-content:center">
+              <span class="wf-chip">‹</span><span class="wf-chip teal">1</span><span class="wf-chip">2</span><span class="wf-chip">›</span>
+            </div>
+          </div>
+        </div>
+
+        <span class="wf-note">필터 패널(C안 고유) — 체크/칩 변경 = form 전체를 hx-get="/prg/faculty/ai/grid" 부분갱신(hx-target 카드 그리드, hx-include 필터폼, 300ms debounce).
+        change 이벤트는 document 위임 1회 등록. 선택 필터는 그리드 상단 제거형 칩으로 재표기. hx-push-url 로 필터 상태 URL 반영(공유 가능) — hx-history 는 기본 유지.</span>
+        <span class="wf-note">데이터 — tb_faculty(secondary DB, FAC_ 접두 PK, site_code 스코프): /prg/faculty/{sc} 제네릭 컨트롤러가 다학과 공용(새 학과 추가 시 복사 불필요, 시드만).
+        이메일·전화는 MaskUtils 마스킹 출력. 카드 클릭 → 상세 &lt;dialog&gt;(hx-get 조각) — 연구실적·담당과목 포함. 전공분야 파라미터는 전량 #{} 바인딩(매퍼 3벤더 XML 동기).</span>
+      </div>
+
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#3d5a54"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 변형 3종 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">변형 — 직원 · 연구실 · 수업계획서 (같은 사이드바 프레임, 본문만 교체)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-grid-3">
+      <div>
+        <b style="font-size:12.5px">직원 — /prg/staff/{sc}</b>
+        <div class="wf-box mt-2">
+          <div class="wf-band wf-gray" style="padding:6px 10px;font-size:11px"><b>이름 · 담당업무 · 연락처</b></div>
+          <div class="wf-band" style="padding:6px 10px"><div class="wf-line thin w80" style="margin:0"></div></div>
+          <div class="wf-band" style="padding:6px 10px"><div class="wf-line thin w60" style="margin:0"></div></div>
+          <div class="wf-band" style="padding:6px 10px;border-bottom:none"><div class="wf-line thin w80" style="margin:0"></div></div>
+        </div>
+        <span class="wf-note">인원 적어 필터 없음 — 단순 테이블(tb_staff, STF_ 접두). 연락처 마스킹 동일.</span>
+      </div>
+      <div>
+        <b style="font-size:12.5px">연구실 — /prg/lab/{sc}</b>
+        <div class="wf-box mt-2">
+          <div class="wf-row stretch" style="gap:0">
+            <div class="wf-img" style="width:70px;min-height:64px;border:none;border-right:1px solid #8ba39d"><span>사진</span></div>
+            <div style="padding:8px 10px;flex:1"><b style="font-size:11.5px">지능시스템 연구실</b><div class="wf-line thin w80"></div><span style="font-size:10px;color:#9db3ae">담당: 김○○ 교수</span></div>
+          </div>
+        </div>
+        <div class="wf-box mt-2">
+          <div class="wf-row stretch" style="gap:0">
+            <div class="wf-img" style="width:70px;min-height:64px;border:none;border-right:1px solid #8ba39d"><span>사진</span></div>
+            <div style="padding:8px 10px;flex:1"><b style="font-size:11.5px">비전인식 연구실</b><div class="wf-line thin w60"></div><span style="font-size:10px;color:#9db3ae">담당: 이○○ 교수</span></div>
+          </div>
+        </div>
+        <span class="wf-note">1열 와이드 카드(tb_lab, LAB_ 접두) — 담당교수는 tb_faculty 조인, 교수 카드 &lt;dialog&gt; 재사용.</span>
+      </div>
+      <div>
+        <b style="font-size:12.5px">수업계획서 — /prg/syllabus/{sc}</b>
+        <div class="wf-row mt-2"><span class="wf-input" style="width:100px">2026-2학기 ▾</span><span class="wf-input wf-grow">과목명 검색</span></div>
+        <div class="wf-box mt-2">
+          <div class="wf-band wf-gray" style="padding:6px 10px;font-size:11px"><b>과목 · 담당 · 학점 · 계획서</b></div>
+          <div class="wf-band" style="padding:6px 10px"><div class="wf-row"><div class="wf-line thin w60" style="margin:0;flex:1"></div><span class="wf-chip" style="font-size:10px">PDF 보기</span></div></div>
+          <div class="wf-band" style="padding:6px 10px;border-bottom:none"><div class="wf-row"><div class="wf-line thin w80" style="margin:0;flex:1"></div><span class="wf-chip" style="font-size:10px">PDF 보기</span></div></div>
+        </div>
+        <span class="wf-note">학기 셀렉트·검색 = hx-get 부분갱신(tb_syllabus, SYL_ 접두). PDF 보기 = 뷰어 새창 — 다운로드 자원은 6중 방어 경로 경유.</span>
+      </div>
+    </div>
+    <span class="wf-note">/prg/** 4종 모두 제네릭(R5 격리: primary 쉘 + secondary 조각) — tb_role_url_access 에 /prg/** 패턴 ANONYMOUS 등록 1회로 전 학과 커버. 사이드바 active 는 menuTree 의 link_url 매칭으로 자동 표시.
+    교수진 3뎁스(전임교원·겸임·초빙·명예교수)는 /prg/faculty/{sc}?cat= 카테고리 필터 딥링크 — 사이드바 3뎁스 클릭 = 필터 프리셋 진입(메뉴는 3뎁스까지 노출 규칙).</span>
+  </div>
+</div>
+
+</body>
+</html>

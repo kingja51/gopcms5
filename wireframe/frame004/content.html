@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 D안 — 콘텐츠 페이지</title>
+<link rel="stylesheet" href="wireframe4.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>콘텐츠 페이지 — 협폭 에디토리얼 <span class="wf-badge-d">D안</span></h1>
+  <p><span class="route">GET /{sc}/about</span><span class="route">GET /{sc}/location</span> — 거대 타이포 페이지 히어로 → 센터 협폭(720px) 본문 → 이전/다음 내비. 오시는길은 풀블리드 지도 변형.</p>
+</div>
+
+<!-- 학과소개 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/about</span></div>
+
+  <div class="wf-shrinkbar">
+    <b style="font-size:13px">AI 인공지능학과</b>
+    <span class="wf-grow"></span>
+    <span class="wf-chip">🔔</span><span class="wf-chip">🔍</span><span class="wf-chip">◐</span><span class="wf-btn sm">☰ 메뉴</span>
+  </div>
+
+  <!-- 페이지 히어로 -->
+  <div class="wf-hero wf-dark" style="min-height:170px;padding:44px 24px 30px">
+    <div class="fg">
+      <span class="wf-kicker" style="color:#b7a8e3">소개</span>
+      <div class="wf-display" style="color:#fff">학과소개</div>
+      <div style="font-size:13px;color:#b7abd8;margin-top:6px">사람을 향한 지능을 연구하는 공학 공동체</div>
+      <div style="font-size:11px;color:#8b84a3;margin-top:10px">홈 › 소개 › 학과소개</div>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 0">
+    <span class="wf-note">페이지 히어로 — SUB_HERO 배너를 배경으로 흡수(0건이면 브랜드 단색). 제목 = <span class="wf-code">text-display-lg</span>, 소개문 = tb_menu 설명/콘텐츠 요약. tb_role_url_access 에 /{sc}/about 등록 필수(무매칭 DENY).</span>
+  </div>
+
+  <!-- 협폭 본문 -->
+  <div class="wf-band" style="padding:28px 24px">
+    <div class="wf-narrow">
+      <!-- 3뎁스 = 페이지 내 앵커/탭 -->
+      <div class="wf-row" style="justify-content:center">
+        <span class="wf-chip on">인사말</span><span class="wf-chip">비전·인재상</span><span class="wf-chip">연혁</span>
+      </div>
+      <span class="wf-note">3뎁스(인사말·비전·인재상·연혁)는 메뉴에 노출하되 <b>페이지 내 앵커/탭</b>으로 처리 — menuTree 3뎁스를 앵커 칩으로 렌더(클릭 = 해당 섹션 스크롤, URL 해시 동기화). 별도 페이지·라우트 아님.</span>
+      <div class="wf-quote mt-4">우리는 질문에서 출발합니다.</div>
+      <div class="mt-4">
+        <div class="wf-line"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+      </div>
+      <div class="wf-img mt-4" style="height:150px"><span>본문 와이드 이미지 (협폭보다 살짝 넓게 돌출 허용)</span></div>
+      <div class="mt-4">
+        <b style="font-size:15px">교육 목표</b>
+        <div class="wf-line thin mt-2"></div><div class="wf-line thin w80"></div><div class="wf-line thin w60"></div>
+      </div>
+      <div class="mt-4">
+        <b style="font-size:15px">연혁</b>
+        <div class="wf-row mt-2"><span class="wf-chip vi">2026</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+        <div class="wf-row mt-2"><span class="wf-chip vi">2021</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+        <div class="wf-row mt-2"><span class="wf-chip vi">2017</span><div class="wf-line thin w40" style="margin:0;flex:1"></div></div>
+      </div>
+    </div>
+    <span class="wf-note">협폭 본문 — <span class="wf-code">.narrow</span>(720px) 에디토리얼 읽기 컬럼. 본문 = tb_content 관리자 HTML(OWASP Sanitizer 통과, 콘텐츠 유틸 클래스는 safelist 범위만).
+    리드문(큰 인용)은 콘텐츠 첫 블록 스타일 — 관리자 서식(samples 스캐폴딩)으로 제공. 이미지 돌출(breakout)도 safelist 클래스로 정의.</span>
+  </div>
+
+  <!-- 이전/다음 -->
+  <div class="wf-band wf-gray">
+    <div class="wf-narrow">
+      <div class="wf-row">
+        <div class="wf-box wf-p wf-grow" style="padding:12px 16px;opacity:.45"><span style="font-size:10px;color:#8b84a3">← 이전</span><br/><b style="font-size:12.5px">(없음 — 그룹 첫 페이지)</b></div>
+        <div class="wf-box wf-p wf-grow" style="padding:12px 16px;text-align:right"><span style="font-size:10px;color:#8b84a3">다음 →</span><br/><b style="font-size:12.5px">오시는길</b></div>
+      </div>
+      <div class="wf-row mt-2" style="justify-content:center">
+        <span class="wf-btn ghost sm">👍 좋아요 8</span><span class="wf-btn ghost sm">🚩 신고</span>
+      </div>
+    </div>
+    <span class="wf-note">이전/다음 = menuTree 형제 항목(fragments/prev-next). 좋아요/신고 = contentId 기반 htmx POST → 블록 갱신(A안 규약 동일, CUD 는 try-catch + log + HX-Redirect).</span>
+  </div>
+</div>
+
+<!-- 오시는길 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">오시는길 — /{sc}/location (풀블리드 지도 변형)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/location</span></div>
+
+  <div class="wf-hero wf-dark" style="min-height:130px;padding:40px 24px 26px">
+    <div class="fg">
+      <span class="wf-kicker" style="color:#b7a8e3">소개</span>
+      <div class="wf-display" style="color:#fff">오시는길</div>
+      <div style="font-size:11px;color:#8b84a3;margin-top:8px">홈 › 소개 › 오시는길</div>
+    </div>
+  </div>
+
+  <!-- 풀블리드 지도 -->
+  <div class="wf-band" style="padding:0">
+    <div class="wf-img flat" style="height:200px"><span>지도 (풀블리드 — 캔버스 좌우 끝까지)</span></div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 0">
+    <span class="wf-note">지도는 self-host 정적 지도 이미지 또는 CSP 허용 목록에 등록된 지도 SDK 만(외부 CDN 무단 추가 금지 — connect-src/frame-src 정책 확인). 인터랙티브 지도 스크립트도 외부 .js + nonce.</span>
+  </div>
+
+  <!-- 협폭 정보 -->
+  <div class="wf-band" style="padding:24px">
+    <div class="wf-narrow">
+      <div class="wf-grid-2">
+        <div class="wf-box wf-p"><span class="wf-kicker">Address</span><div class="wf-line thin mt-2 w80"></div><div class="wf-line thin w60"></div></div>
+        <div class="wf-box wf-p"><span class="wf-kicker">Contact</span><div class="wf-line thin mt-2 w60"></div><div class="wf-line thin w40"></div></div>
+      </div>
+      <div class="wf-box wf-p mt-2">
+        <span class="wf-kicker">How to come</span>
+        <div class="wf-row mt-2"><span class="wf-chip">🚌 버스</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+        <div class="wf-row mt-2"><span class="wf-chip">🚄 기차</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+        <div class="wf-row mt-2"><span class="wf-chip">🚗 자가용</span><div class="wf-line thin w40" style="margin:0;flex:1"></div></div>
+      </div>
+    </div>
+    <span class="wf-note">지도 아래 협폭 정보 카드 — 주소/연락처/교통편은 관리자 콘텐츠. 카드 구분은 면(bg-surface) + 최소 그림자, 선 없음 — D안 아이덴티티. 이하 이전/다음 내비(학과소개 ↔) 동일.</span>
+  </div>
+</div>
+
+</body>
+</html>

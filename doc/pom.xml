@@ -1,0 +1,911 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+  GoPCMS - eGovFramework 5.0 호환 멀티사이트 CMS
+  ============================================================================
+  · Java 21 LTS (2026-05-12 Java 17 → 21 마이그레이션)
+  · Spring Boot 3.5.6 (Spring Framework 6.2.x 전이)
+  · eGovFramework RTE 5.0.0 (호환성 필수 4종: fdl.cmmn / psl.dataaccess / ptl.mvc / fdl.logging
+    + 선택: fdl.idgnr) — 호환성확인 가이드라인 2026-06-22 p.3 기준
+      ※ eGov RTE 5.0.0 은 공식 Java 21 지원 명시는 없으나 실측 호환 확인.
+  · MyBatis 3.0.5 (spring-boot-starter 3.0.5 — MyBatis core 3.5.19)
+  · Tomcat 10.1.x 외부 배포 (war 패키징, IntelliJ 로컬은 임베디드 ServletInitializer)
+  · 필수 라이브러리 버전 고정 (변경 금지):
+      - jasypt-spring-boot-starter 3.0.5
+      - thumbnailator 0.4.20
+      - googleauth 1.5.0
+      - poi-ooxml 5.4.1
+  · Virtual threads 활성: spring.threads.virtual.enabled=true (Java 21 Loom)
+  · 설계서 §3 및 §4.1 호환성 규칙 준수
+  · [주의] eGov RTE 4종 Maven 좌표는 공식 wiki 기준이며, 실제 빌드 전
+    https://www.egovframe.go.kr/maven 저장소 접근 확인 필요.
+  ============================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Spring Boot Parent -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.9</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.gonet</groupId>
+    <artifactId>gopcms5</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <!--
+      외부 Tomcat 10.1.x 배포 — war 패키징.
+      IntelliJ 로컬 임베디드 실행은 GopcmsApplication 의 main() + SpringBootServletInitializer
+      이중 진입점을 통해 가능. mvn spring-boot:run / IntelliJ Spring Boot Run Configuration 모두 동작.
+    -->
+    <packaging>war</packaging>
+
+    <name>gopcms5</name>
+    <description>gopcms5 - eGovFramework 5.0 Compatible Web CMS  + KRDS UI</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- eGovFramework RTE 5.0.0 (4종 동일 버전) — 2026-05-12 Java 21 실측 호환 -->
+        <egovframe.rte.version>5.0.0</egovframe.rte.version>
+
+        <!--
+          외부 Tomcat 10.1.x 강제 — Spring Boot parent 의 기본 임베디드 Tomcat 버전을 override.
+          외부 배포 시에는 실제로는 운영 Tomcat 의 버전이 사용되지만, 임베디드 실행
+          (IntelliJ / mvn spring-boot:run) 시 동일 버전을 유지하기 위함.
+        -->
+        <tomcat.version>10.1.42</tomcat.version>
+
+        <!-- 고정 라이브러리 (변경 금지) -->
+        <jasypt.version>3.0.5</jasypt.version>
+        <thumbnailator.version>0.4.20</thumbnailator.version>
+        <googleauth.version>1.5.0</googleauth.version>
+        <zxing.version>3.5.3</zxing.version>
+        <jodconverter.version>4.4.9</jodconverter.version>
+        <poi.version>5.4.1</poi.version>
+        <google-genai.version>1.45.0</google-genai.version>
+        <hwplib.version>1.1.7</hwplib.version>
+        <hwpxlib.version>1.0.5</hwpxlib.version>
+
+        <!-- 기타 — 2026-05-12 Java 21 호환 최신 안정 버전 -->
+        <lombok.version>1.18.36</lombok.version>
+        <mybatis-spring-boot.version>3.0.5</mybatis-spring-boot.version>
+        <tika.version>2.9.2</tika.version>
+        <shedlock.version>5.16.0</shedlock.version>
+        <owasp-html-sanitizer.version>20240325.1</owasp-html-sanitizer.version>
+        <lucene.version>9.12.1</lucene.version>
+        <!--
+          Bucket4j 8.10.1 유지 — 상위 버전(8.14 등) 은 Maven Central 좌표 변동
+          (com.bucket4j → io.github.bucket4j) 이력이 있어 안정성 우선.
+        -->
+        <bucket4j.version>8.10.1</bucket4j.version>
+        <caffeine.version>3.1.8</caffeine.version>
+        <!--
+          Springdoc 호환성 매트릭스:
+            · 2.x → Spring Boot 3.x (이 프로젝트 = 3.5.6 → 2.8.5 사용)
+            · 3.x → Spring Boot 4.x (호환 안 됨 — 4.x 모듈을 transitively 끌어와
+                                     ApplicationServletEnvironment NoClassDefFoundError)
+          Spring Boot 메이저 버전 업그레이드 시 함께 변경.
+        -->
+        <springdoc-openapi.version>2.8.5</springdoc-openapi.version>
+        <logstash-logback.version>8.0</logstash-logback.version>
+        <archunit.version>1.4.0</archunit.version>
+        <testcontainers.version>1.20.4</testcontainers.version>
+        <ical4j.version>4.0.6</ical4j.version>
+
+        <!--
+          NICE 실명인증 / Java 21 모듈 플래그.
+          NiceID_v1.1.jar 가 java.base 의 com.sun.crypto.provider.SunJCE 내부 클래스를
+          직접 참조 — JDK 9+ JPMS 가 IllegalAccessError 로 차단하므로 unnamed module 에
+          export/open 처리.
+          surefire / spring-boot:run / 외부 Tomcat 의 setenv 에 동일 옵션 적용 필요.
+        -->
+        <nice.jvm.args>--add-exports=java.base/com.sun.crypto.provider=ALL-UNNAMED --add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED</nice.jvm.args>
+
+        <!--
+          Tailwind CSS 빌드(npm) 스킵 토글.
+          CDN 제거 후 런타임 JIT 이 없어 빌드 시 output.css 컴파일이 필수가 됨 → exec-maven-plugin 이
+          generate-resources 에서 `npm run css` 실행. 시스템 Node 사용(별도 다운로드 없음).
+          오프라인/자바 전용 검증(예: CLAUDE.md 의 `./mvnw -o compile -DskipTests`)에서는
+          -Dtailwind.skip=true 로 건너뛴다.
+        -->
+        <tailwind.skip>false</tailwind.skip>
+    </properties>
+
+    <!-- ================================================================
+         Maven Repositories
+         ================================================================ -->
+
+    <repositories>
+        <repository>
+            <id>mvn2s</id>
+            <url>https://repo1.maven.org/maven2/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>egovframe</id>
+            <url>https://maven.egovframe.go.kr/maven/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+
+    <dependencies>
+
+        <!-- ================================================================
+             1. Spring Boot Starters
+             ================================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+          외부 Tomcat 10.1.x 배포 — embedded Tomcat 을 provided 로 전환.
+          운영 Tomcat 의 servlet 컨테이너가 실제 servlet API/Tomcat 라이브러리를 제공.
+          IntelliJ 임베디드 실행 (spring-boot:run / main 메서드) 시에는 maven 의 test/runtime
+          classpath 에 provided 가 자동 포함되므로 정상 동작.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Lombok — 컴파일 타임 애노테이션 프로세서 (런타임 의존성 없음) -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Thymeleaf: Layout Dialect + Security extras -->
+        <dependency>
+            <groupId>nz.net.ultraq.thymeleaf</groupId>
+            <artifactId>thymeleaf-layout-dialect</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+
+        <!-- ================================================================
+             2. eGovFramework RTE 5.0.0
+             ================================================================
+             호환성확인 가이드라인(2026-06-22) p.3 필수 4종 — 동일 버전 강제:
+             - ptl.mvc           : 프레젠테이션 MVC Layer
+             - fdl.cmmn          : 공통 Foundation Layer
+             - psl.dataaccess    : 데이터 접근 Persistence Layer
+             - fdl.logging       : 로깅 Foundation Layer (jar 존재 필수 —
+                                   단, 하위 log4j2 브리지는 제외하고 Logback 유지)
+             선택 적용:
+             - fdl.idgnr         : ID 생성 (UUID/Sequence)
+             레포지토리: https://www.egovframe.go.kr/maven
+             ================================================================ -->
+        <dependency>
+            <groupId>org.egovframe.rte</groupId>
+            <artifactId>egovframe-rte-fdl-cmmn</artifactId>
+            <version>${egovframe.rte.version}</version>
+            <!-- ============================================================
+                 Log4j2 ↔ SLF4J 양방향 브리지 충돌 차단 (2026-05-18)
+                 ============================================================
+                 egovframe-rte-fdl-cmmn 5.0.0 의 transitive
+                 egovframe-rte-fdl-logging 가 log4j-core + log4j-slf4j2-impl
+                 (log4j2 → slf4j) 을 끌어온다. Spring Boot 3.x 의 기본 starter-logging
+                 은 반대 방향 log4j-to-slf4j (slf4j → log4j2) 를 포함 — 두
+                 브리지 동시 존재 시 "log4j-slf4j2-impl cannot be present with
+                 log4j-to-slf4j" 로 부팅 실패.
+                 본 프로젝트의 로깅 백엔드는 Logback. egov fdl-logging 모듈
+                 자체를 제외해서 Spring Boot 의 Logback 으로 일원화.
+                 ============================================================ -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.egovframe.rte</groupId>
+                    <artifactId>egovframe-rte-fdl-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.egovframe.rte</groupId>
+            <artifactId>egovframe-rte-psl-dataaccess</artifactId>
+            <version>${egovframe.rte.version}</version>
+            <!-- egov fdl-logging 제외 — 사유는 egovframe-rte-fdl-cmmn 의 exclusion 참조 -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.egovframe.rte</groupId>
+                    <artifactId>egovframe-rte-fdl-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.egovframe.rte</groupId>
+            <artifactId>egovframe-rte-ptl-mvc</artifactId>
+            <version>${egovframe.rte.version}</version>
+            <!-- ============================================================
+                 Log4j2 ↔ SLF4J 양방향 브리지 충돌 차단 (2026-05-18)
+                 ============================================================
+                 egovframe-rte-ptl-mvc:5.0.0 는 log4j-core + log4j-slf4j2-impl
+                 을 직접 의존 (transitive 아님). 또한 fdl-logging 도 끌어옴.
+                 본 프로젝트는 Logback 사용 — Log4j2 impl 모두 제외하여
+                 "log4j-slf4j2-impl cannot be present with log4j-to-slf4j" 회귀 차단.
+                 ============================================================ -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.egovframe.rte</groupId>
+                    <artifactId>egovframe-rte-fdl-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.egovframe.rte</groupId>
+            <artifactId>egovframe-rte-fdl-idgnr</artifactId>
+            <version>${egovframe.rte.version}</version>
+            <!-- egov fdl-logging 제외 — 사유는 egovframe-rte-fdl-cmmn 의 exclusion 참조.
+                 (fdl-logging 은 아래에서 직접 의존성으로 재선언 — 직접 선언이 우선되어
+                  브리지 제외를 한 곳에서 통제하기 위함) -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.egovframe.rte</groupId>
+                    <artifactId>egovframe-rte-fdl-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- ============================================================
+             egovframe-rte-fdl-logging — 호환성확인 필수 4종의 하나 (2026-06-22 가이드 p.3)
+             ============================================================
+             jar 자체는 war 의 WEB-INF/lib 에 반드시 존재해야 호환성 검사를 통과한다
+             (검사 대상: org.egovframe.rte* jar 의 존재 + 해시 무결성).
+             단, 이 모듈이 끌어오는 log4j-core + log4j-slf4j2-impl (log4j2→slf4j) 은
+             Spring Boot 기본 starter-logging 의 log4j-to-slf4j (slf4j→log4j2) 와
+             양방향 브리지 충돌로 부팅이 실패하므로 transitive 만 제외한다.
+             → jar 바이너리는 원본 그대로 (해시 무결, 가이드 p.2 규칙 1 충족)
+             → 로깅 백엔드는 Logback 일원화 유지 (fdl-logging 클래스는 사용하지 않음 —
+                가이드 p.4 설정 규칙은 트랜잭션/커넥션풀만 요구, egov 로깅 사용은 비요구)
+             ============================================================ -->
+        <dependency>
+            <groupId>org.egovframe.rte</groupId>
+            <artifactId>egovframe-rte-fdl-logging</artifactId>
+            <version>${egovframe.rte.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- ================================================================
+             3. Persistence (MyBatis + MariaDB)
+             ================================================================ -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>${mybatis-spring-boot.version}</version>
+        </dependency>
+
+        <!-- ================================================================
+             JDBC 드라이버 — 멀티 벤더 지원 (CLAUDE.md §1.1)
+             ================================================================
+             3종 모두 war 에 포함하여, application-{profile}.yml 의 driver-class-name
+             설정만으로 운영 벤더를 전환할 수 있도록 한다. PostgreSQL 은 아래
+             별도 블록에 이미 정의됨.
+             ================================================================ -->
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ================================================================
+             4. 고정 라이브러리 (변경 금지) — 설계서 §3.1
+             ================================================================ -->
+        <!-- Jasypt: application.yml 설정값 암호화 ENC(...) -->
+        <dependency>
+            <groupId>com.github.ulisesbocchio</groupId>
+            <artifactId>jasypt-spring-boot-starter</artifactId>
+            <version>${jasypt.version}</version>
+        </dependency>
+
+        <!-- Thumbnailator: 이미지 재인코딩(보안) + 썸네일 -->
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>${thumbnailator.version}</version>
+        </dependency>
+
+        <!-- Google OTP (관리자 2FA) -->
+        <dependency>
+            <groupId>com.warrenstrange</groupId>
+            <artifactId>googleauth</artifactId>
+            <version>${googleauth.version}</version>
+        </dependency>
+
+        <!-- ZXing (2FA otpauth URL → QR PNG 서버사이드 렌더) -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+
+        <!-- JODConverter (LibreOffice headless wrapper, PPTX → PDF 변환).
+             Spring Boot starter 가 jodconverter.local.* 프로퍼티 기반 자동 구성.
+             LibreOffice 별도 설치 필요 — application-local.yml 의 office-home 으로 경로 지정.
+             gopcms2026.file.converter.enabled=false 면 자동 구성 비활성, PPTX 는 preview-unsupported 로 폴백. -->
+        <dependency>
+            <groupId>org.jodconverter</groupId>
+            <artifactId>jodconverter-local</artifactId>
+            <version>${jodconverter.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jodconverter</groupId>
+            <artifactId>jodconverter-spring-boot-starter</artifactId>
+            <version>${jodconverter.version}</version>
+        </dependency>
+
+        <!-- Apache POI (Excel Export + DOCX 텍스트 추출) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <!-- Google GenAI Java SDK (Gemini Files API + generateContent) -->
+        <dependency>
+            <groupId>com.google.genai</groupId>
+            <artifactId>google-genai</artifactId>
+            <version>${google-genai.version}</version>
+        </dependency>
+
+        <!-- HWP 텍스트 추출 (Gemini RAG 문서 변환) -->
+        <dependency>
+            <groupId>kr.dogfoot</groupId>
+            <artifactId>hwplib</artifactId>
+            <version>${hwplib.version}</version>
+        </dependency>
+
+        <!-- HWPX 텍스트 추출 (Gemini RAG 문서 변환) -->
+        <dependency>
+            <groupId>kr.dogfoot</groupId>
+            <artifactId>hwpxlib</artifactId>
+            <version>${hwpxlib.version}</version>
+        </dependency>
+
+        <!-- CSV/DAT 파일 파싱 (선거인명부 대량 업로드) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.11.0</version>
+        </dependency>
+
+        <!-- Prometheus 지표 -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ================================================================
+             5. 보안/업로드 방어
+             ================================================================ -->
+        <!-- Apache Tika (매직바이트 검사) -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+
+        <!-- OWASP Java HTML Sanitizer (XSS 방어) -->
+        <dependency>
+            <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+            <artifactId>owasp-java-html-sanitizer</artifactId>
+            <version>${owasp-html-sanitizer.version}</version>
+        </dependency>
+
+        <!-- Lucene Nori — 한국어 형태소 토크나이저 (앱 사이드, DB 무관).
+             검색어를 명사 sub-token 으로 분해해 토큰 AND LIKE 매칭에 사용.
+             검색엔진 없이 토크나이저로만 사용 (인덱싱/스키마 변경 없음). -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analysis-nori</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
+
+        <!-- Bucket4j (Rate Limit) -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>${bucket4j.version}</version>
+        </dependency>
+
+        <!-- ShedLock — 분산 cron 락 (C-3 회귀 가드).
+             다중 인스턴스 배포 시 동일 시각 스케줄러 중복 실행 방지. logging DB 의
+             shedlock 테이블에 lock row 를 두어 인스턴스 간 단일 진입 보장. -->
+        <dependency>
+            <groupId>net.javacrumbs.shedlock</groupId>
+            <artifactId>shedlock-spring</artifactId>
+            <version>${shedlock.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.javacrumbs.shedlock</groupId>
+            <artifactId>shedlock-provider-jdbc-template</artifactId>
+            <version>${shedlock.version}</version>
+        </dependency>
+
+        <!-- ================================================================
+             6. 관측성 (경량)
+             ────────────────────────────────────────────────────────────
+             제거됨 (소규모 CMS 트래픽 대비 오버스펙):
+               · resilience4j-spring-boot3 — 서킷브레이커/재시도 (대규모 트래픽용)
+               · micrometer-tracing-bridge-otel — OTel 브리지 (~1MB)
+               · opentelemetry-exporter-otlp — OTel collector exporter (~5MB)
+             유지/추가:
+               · spring-boot-starter-actuator + micrometer-registry-prometheus (위 §4)
+               · micrometer-tracing-bridge-brave — Zipkin 진영의 경량 tracing 코어 (~250KB)
+                 - 매 요청 32자 hex traceId 생성 후 MDC 자동 주입
+                 - 외부 export 없이 로컬 MDC 만 채움 — log_*.trace_id / Logback 패턴
+                 - 분산 시스템 export 가 필요해지면 zipkin-reporter-brave 추가하면 됨
+             ================================================================ -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-brave</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash-logback.version}</version>
+        </dependency>
+
+        <!-- ================================================================
+             7. Caffeine L1 캐시 (SiteContext 등)
+             ================================================================ -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${caffeine.version}</version>
+        </dependency>
+
+        <!-- ================================================================
+             8. 일정(RRULE) — S4
+             ================================================================ -->
+        <dependency>
+            <groupId>org.mnode.ical4j</groupId>
+            <artifactId>ical4j</artifactId>
+            <version>${ical4j.version}</version>
+        </dependency>
+
+        <!-- ================================================================
+             9. API 문서 — SpringDoc OpenAPI 3 (Swagger UI)
+             ────────────────────────────────────────────────────────────
+             Spring Boot 3.5.4 호환: 2.8.x 라인. (3.x 라인은 Spring Boot 4 전용 —
+             3.0.3 도입 시 spring-boot-validation/4.0.5 등 4.x 모듈이 transitively
+             끌려와 ApplicationServletEnvironment NoClassDefFoundError 발생.)
+             기본 엔드포인트:
+               · /swagger-ui.html → /swagger-ui/index.html
+               · /v3/api-docs (JSON) / /v3/api-docs.yaml
+             URL access 는 별도 DDL 로 관리자 전용 노출.
+             ================================================================ -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc-openapi.version}</version>
+        </dependency>
+
+        <!-- ================================================================
+             10. Dev Tools
+             ────────────────────────────────────────────────────────────
+             spring-boot-devtools 제거 (2026-05-12).
+             Java 21 가상 스레드 + DevTools restartedMain 클래스 재로딩 +
+             HikariCP active connection race 로 Windows JVM native crash
+             (STATUS_ACCESS_VIOLATION 0xC0000005) 발생. 자동 재시작 가치 < 안정성.
+             코드 변경 시 IntelliJ 의 `Build > Rebuild Project` 또는 수동 재기동.
+             ================================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ================================================================
+             10. Test
+             ================================================================ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter-test</artifactId>
+            <version>${mybatis-spring-boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mariadb</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+
+
+
+        <!-- ================================================================
+             11. NICE CheckPlus 안심본인인증
+             ================================================================ -->
+        <dependency>
+            <groupId>nice</groupId>
+            <artifactId>niceID</artifactId>
+            <version>1.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/NiceID_v1.1.jar</systemPath>
+        </dependency>
+
+
+
+
+    </dependencies>
+
+
+    <build>
+        <finalName>gopcms5</finalName>
+        <plugins>
+            <!--
+              Spring Boot plugin — 외부 Tomcat 배포 모드.
+              · repackage 비활성화 — 표준 war 구조(WEB-INF/lib) 그대로 Tomcat 에 deploy.
+                (Spring Boot 의 repackage 는 BOOT-INF/* 중첩 구조라 외부 Tomcat 의 표준
+                 ClassLoader 와 비호환 — `Cannot load JDBC driver` 등 잠재 회귀 차단)
+              · spring-boot:run (IntelliJ 임베디드 실행) 은 repackage 없이도 정상 동작.
+              · 임베디드 실행 시 NICE 모듈 플래그 자동 부여.
+              · system scope NICE jar 는 maven-war-plugin 의 <webResources> 가 WEB-INF/lib 로 복사.
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <includeSystemScope>true</includeSystemScope>
+                    <jvmArguments>${nice.jvm.args}</jvmArguments>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                        </exclude>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!--
+              war 패키징 + NICE jar 포함.
+              system scope 의존성은 maven-war-plugin 이 기본으로 WEB-INF/lib 에 포함하지 않으므로
+              <webResources> 로 직접 lib/*.jar 를 복사한다.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <archive>
+                        <manifestEntries>
+                            <!-- 운영 Tomcat 로그에서 빌드 추적용 -->
+                            <Implementation-Title>${project.artifactId}</Implementation-Title>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                        </manifestEntries>
+                    </archive>
+                    <webResources>
+                        <resource>
+                            <directory>${project.basedir}/lib</directory>
+                            <targetPath>WEB-INF/lib</targetPath>
+                            <includes>
+                                <include>NiceID_*.jar</include>
+                            </includes>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
+
+            <!--
+              Java 21 컴파일 + Lombok 애노테이션 프로세서.
+              <release> 는 source/target 보다 안전 — JDK 21 만 인정.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                    <parameters>true</parameters>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <!--
+              Surefire — Java 21 + NICE 모듈 플래그.
+              테스트 클래스가 NiceID.Check.CPClient 를 인스턴스화하면 동일 플래그가 필요하므로
+              argLine 에 명시. 다른 surefire 설정 (jacoco agent 등) 은 Spring Boot parent 가
+              자동 주입하는 ${argLine} 변수를 보존하기 위해 끝에 concat.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine} ${nice.jvm.args}</argLine>
+                </configuration>
+            </plugin>
+
+            <!-- Spotless (코드 포맷터) - S0 Week 3 에 활성화 -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.22.0</version>
+                            <style>AOSP</style>
+                        </googleJavaFormat>
+                        <removeUnusedImports/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                    </java>
+                </configuration>
+            </plugin>
+
+            <!-- JaCoCo (커버리지) -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+              ============================================================
+              Tailwind CSS 빌드 (시스템 Node — 별도 node 다운로드 없음)
+              ============================================================
+              · CDN(@tailwindcss/browser) 제거 후 런타임 JIT 이 사라져, 정적 output.css 를
+                빌드 시점에 컴파일해야 한다(미빌드 시 화면 무스타일). 이를 Maven 에 묶어
+                war 산출물이 항상 최신 CSS 를 포함하도록 강제.
+              · generate-resources 바인딩 → 산출 output.css 가 곧이어 process-resources 에서
+                target/classes 로 복사됨(=war 포함). 순서: install → run css.
+              · npm 실행 파일은 OS 프로파일(npm-windows/npm-unix)에서 ${npm.executable} 주입.
+              · 오프라인/자바 전용 컴파일은 -Dtailwind.skip=true 로 건너뜀.
+              · 개발 중 빠른 반복은 `npm run css:watch` 를 별도 터미널에서 사용 권장.
+              ============================================================
+            -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>npm-install</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${npm.executable}</executable>
+                            <arguments>
+                                <argument>install</argument>
+                                <argument>--no-audit</argument>
+                                <argument>--no-fund</argument>
+                                <argument>--prefer-offline</argument>
+                            </arguments>
+                            <skip>${tailwind.skip}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-build-css</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${npm.executable}</executable>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>css</argument>
+                            </arguments>
+                            <skip>${tailwind.skip}</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <!-- Resources: mapper XML + 정적 리소스 (템플릿 로고·폰트 포함) -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.yml</include>
+                    <include>**/*.yaml</include>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
+                    <include>**/*.html</include>
+                    <include>**/*.css</include>
+                    <include>**/*.js</include>
+                    <!-- 이미지 (템플릿 로고·디자인 자산) -->
+                    <include>**/*.svg</include>
+                    <include>**/*.png</include>
+                    <include>**/*.jpg</include>
+                    <include>**/*.jpeg</include>
+                    <include>**/*.gif</include>
+                    <include>**/*.webp</include>
+                    <include>**/*.ico</include>
+                    <!-- 폰트 -->
+                    <include>**/*.woff</include>
+                    <include>**/*.woff2</include>
+                    <include>**/*.ttf</include>
+                    <include>**/*.otf</include>
+                    <include>**/*.eot</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+    <!-- ================================================================
+         Profiles — OS 별 npm 실행 파일 자동 선택 (exec-maven-plugin 용).
+         Windows 는 npm.cmd, Unix/Mac 은 npm. 두 프로파일 모두 OS 로 자동 활성.
+         ================================================================ -->
+    <profiles>
+        <profile>
+            <id>npm-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <npm.executable>npm.cmd</npm.executable>
+            </properties>
+        </profile>
+        <profile>
+            <id>npm-unix</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <npm.executable>npm</npm.executable>
+            </properties>
+        </profile>
+    </profiles>
+</project>

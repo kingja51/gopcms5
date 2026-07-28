@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 C안 — 게시판 2-pane 분할 뷰</title>
+<link rel="stylesheet" href="wireframe3.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>게시판 — 2-pane 분할 뷰 (목록 40% + 미리보기/상세 60%) <span class="wf-badge-c">C안</span></h1>
+  <p><span class="route">GET /bbs/{sc}/{bbsCode}</span><span class="route">GET /bbs/{sc}/{bbsCode}/{articleId}/pane</span>
+     — 목록 행 클릭 시 우측 pane 만 hx-get 부분갱신. 데스크톱 전용 패턴, 모바일은 목록→상세 페이지 전환.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/bbs/ai/notice</span></div>
+
+  <div class="wf-frame">
+    <div class="wf-side">
+      <div class="wf-side-logo">인공지능학과<span class="en">KONYANG UNIV.</span></div>
+      <div class="wf-side-search">🔍 통합검색 …</div>
+      <div class="wf-side-item">홈</div>
+      <div class="wf-side-item group">소개 ▸</div>
+      <div class="wf-side-item group">구성원 ▸</div>
+      <div class="wf-side-item group">교육 ▸</div>
+      <div class="wf-side-item group">연구 ▸</div>
+      <div class="wf-side-item group">커뮤니티 ▾</div>
+      <div class="wf-side-sub active">공지사항 ▾</div>
+      <div class="wf-side-sub2">학사</div>
+      <div class="wf-side-sub2">장학</div>
+      <div class="wf-side-sub2">취업</div>
+      <div class="wf-side-sub">학과소식</div>
+      <div class="wf-side-sub">세미나</div>
+      <div class="wf-side-sub">자료실 ▸</div>
+      <div class="wf-side-util"><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div>
+    </div>
+
+    <div class="wf-main">
+      <div class="wf-utilbar">홈 › 커뮤니티 › 공지사항 <span class="wf-grow"></span><span class="wf-chip">🔍</span></div>
+
+      <div class="wf-row stretch wf-grow" style="gap:0">
+        <!-- ◀ 목록 pane (40%) -->
+        <div style="flex:4;border-right:1px solid #8ba39d;display:flex;flex-direction:column">
+          <div class="wf-band wf-gray" style="padding:8px 12px">
+            <div class="wf-row"><b style="font-size:13px">공지사항</b><span style="font-size:11px;color:#4d605b">128건</span><span class="wf-grow"></span><span class="wf-btn teal sm">✏ 글쓰기</span></div>
+            <div class="wf-row mt-2"><span class="wf-input wf-grow" style="padding:3px 8px">🔍 제목+내용 검색</span><span class="wf-chip">최신순 ▾</span></div>
+            <div class="wf-row mt-2"><span class="wf-chip teal">전체</span><span class="wf-chip">학사</span><span class="wf-chip">장학</span><span class="wf-chip">취업</span></div>
+          </div>
+          <div class="wf-band" style="background:#eef4f2;padding:8px 12px">
+            <div class="wf-row"><span class="wf-chip teal">📌</span><b style="font-size:11.5px">[고정] ──────────</b></div>
+          </div>
+          <div class="wf-band" style="background:#e6f4f1;border-left:3px solid #0d9488;padding:8px 12px 8px 9px">
+            <div class="wf-row"><b style="font-size:11.5px">2026-2학기 수강신청 안내 ──</b><span class="wf-chip" style="font-size:10px">N</span></div>
+            <span style="font-size:10.5px;color:#4d605b">관리자 · 07-08 · 조회 45 · 📎</span>
+          </div>
+          <div class="wf-band" style="padding:8px 12px">
+            <div class="wf-row"><b style="font-size:11.5px;font-weight:400">게시글 제목 ────────</b></div>
+            <span style="font-size:10.5px;color:#9db3ae">관리자 · 07-05 · 조회 102</span>
+          </div>
+          <div class="wf-band" style="padding:8px 12px">
+            <div class="wf-row"><b style="font-size:11.5px;font-weight:400">게시글 제목 ──────────</b><span class="wf-chip" style="font-size:10px">📎</span></div>
+            <span style="font-size:10.5px;color:#9db3ae">관리자 · 07-01 · 조회 67</span>
+          </div>
+          <div class="wf-band" style="padding:8px 12px">
+            <div class="wf-row"><b style="font-size:11.5px;font-weight:400">게시글 제목 ─────</b></div>
+            <span style="font-size:10.5px;color:#9db3ae">관리자 · 06-27 · 조회 31</span>
+          </div>
+          <div class="wf-band" style="padding:6px 12px;text-align:center;border-bottom:none;margin-top:auto">
+            <span class="wf-chip">‹</span> <span class="wf-chip teal">1</span> <span class="wf-chip">2</span> <span class="wf-chip">3</span> <span class="wf-chip">›</span>
+          </div>
+        </div>
+
+        <!-- ▶ 미리보기/상세 pane (60%) -->
+        <div style="flex:6;display:flex;flex-direction:column">
+          <div class="wf-slot" style="border:none;border-bottom:1px dashed #0d9488;text-align:left;padding:12px 16px;flex:1">
+            <b style="font-size:14px;color:#122926">2026-2학기 수강신청 안내</b>
+            <div class="wf-row mt-2" style="font-size:11px;color:#4b6660">
+              <span>관리자</span><span>·</span><span>2026-07-08</span><span>·</span><span>조회 45</span>
+              <span class="wf-grow"></span><span class="wf-chip">URL 복사</span><span class="wf-chip">🖨</span><span class="wf-chip">↗ 전체화면</span>
+            </div>
+            <div class="wf-line mt-4"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+            <div class="wf-img mt-2" style="height:70px;max-width:260px"><span>본문 이미지</span></div>
+            <div class="wf-box mt-4" style="background:#eef4f2;padding:8px 12px;text-align:left">
+              <b style="font-size:11px">📎 첨부 2</b>
+              <div class="wf-row mt-2" style="font-size:11px"><span>수강신청_안내.pdf (1.2MB)</span><span class="wf-chip">미리보기</span><span class="wf-chip">다운로드</span></div>
+              <div class="wf-row mt-2" style="font-size:11px"><span>신청서_양식.hwp (240KB)</span><span class="wf-chip">다운로드</span></div>
+            </div>
+            <div class="wf-row mt-2" style="justify-content:center">
+              <span class="wf-btn ghost sm">👍 좋아요 12</span><span class="wf-btn ghost sm">🚩 신고</span>
+              <span class="wf-grow"></span><span class="wf-btn ghost sm">수정</span><span class="wf-btn ghost sm">삭제</span>
+            </div>
+
+            <!-- 댓글 -->
+            <div style="border-top:1px solid #c5d4d0;margin-top:12px;padding-top:8px;text-align:left">
+              <b style="font-size:12px">댓글 3</b>
+              <div class="wf-row stretch mt-2"><span class="wf-input wf-grow" style="min-height:34px">댓글 입력 (비로그인 시 로그인 유도 카드)</span><span class="wf-btn sm">등록</span></div>
+              <div class="wf-box wf-p mt-2" style="padding:10px;text-align:left">
+                <div class="wf-row"><b style="font-size:11.5px">홍**</b><span style="font-size:10.5px;color:#9db3ae">07-09 10:31</span><span class="wf-grow"></span><span class="wf-chip" style="font-size:10px">답글</span><span class="wf-chip" style="font-size:10px">신고</span></div>
+                <div class="wf-line thin w80"></div>
+                <div style="margin-left:20px;border-left:2px solid #c5d4d0;padding-left:10px" class="mt-2">
+                  <div class="wf-row"><b style="font-size:11.5px">↳ 김**</b><span style="font-size:10.5px;color:#9db3ae">07-09 11:02</span></div>
+                  <div class="wf-line thin w60"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-section" style="border-top:1px solid #c5d4d0">
+        <span class="wf-note">2-pane(C안 고유) — 목록 행 = 버튼: hx-get="/bbs/ai/notice/{articleId}/pane" hx-target="#preview-pane" hx-push-url="/bbs/ai/notice/{articleId}" — 우측만 부분갱신하면서 URL 은 상세 딥링크로 유지(새로고침/공유 시 서버가 같은 2-pane 을 SSR).
+        선택 행 = 청록 램프 강조. ↑↓ 키보드 이동(외부 .js 이벤트 위임, htmx:load 멱등). 초기 진입 시 우측 pane 은 "글을 선택하세요" 빈 상태(articleId 딥링크 진입이면 해당 글).</span>
+        <span class="wf-note">목록 pane — 검색(300ms debounce)·정렬·페이징 전부 hx-get 부분갱신(hx-target 목록만, hx-history="false"). 고정공지 상단 유지. 읽은 글은 제목 굵기 400 처리.
+        카테고리 칩(학사·장학·취업) = menuTree 3뎁스와 동일 항목 — 사이드바 3뎁스 클릭 = ?cat= 딥링크(같은 필터 프리셋). 연구성과(/bbs/{sc}/pub)의 논문·특허·기술이전도 같은 카테고리 문법.
+        ↗ 전체화면 = 1단 상세 페이지(/bbs/{sc}/{bbsCode}/{articleId}?view=full)로 전환 — 인쇄·긴 글 대응.</span>
+        <span class="wf-note">상세 pane — 본문 = OWASP Sanitizer 통과 HTML, 첨부 다운로드 = 6중 방어 자원. 댓글 등록/삭제 = hx-post → 댓글 블록만 갱신, 작성자 마스킹(MaskUtils). 좋아요/신고·수정/삭제 = CUD 규약(try-catch + log + HX-Redirect). 쓰기 권한은 tb_role_url_access + 게시판 권한(bbs_master) 2중 확인.</span>
+        <span class="wf-note">스킨 변형 — GALLERY: 목록 pane 이 썸네일 2열 그리드 / FAQ: pane 분할 없이 &lt;details&gt; 아코디언 1단 / QNA: 목록에 답변대기·완료 뱃지 / FILE: 미리보기 pane 에 첨부 목록 우선 / YOUTUBE·PDF: 우측 pane 이 플레이어/뷰어. 골격(목록 pane + 상세 pane) 공유.</span>
+      </div>
+
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#3d5a54"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 모바일 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">모바일 — 2-pane 해제, 목록 → 상세 페이지 전환</h1></div>
+<div class="wf-row" style="max-width:1080px;margin:0 auto;align-items:flex-start;gap:24px;flex-wrap:wrap">
+  <div class="wf-canvas" style="max-width:300px;margin:0">
+    <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="url">…/bbs/ai/notice</span></div>
+    <div class="wf-band"><div class="wf-row"><span class="wf-btn sm">☰</span><b style="font-size:12px">공지사항</b><span class="wf-grow"></span><span class="wf-chip">🔍</span></div></div>
+    <div class="wf-band" style="padding:8px 12px"><b style="font-size:11.5px">게시글 제목 ──────</b><br/><span style="font-size:10px;color:#9db3ae">07-08 · 조회 45</span></div>
+    <div class="wf-band" style="padding:8px 12px"><b style="font-size:11.5px;font-weight:400">게시글 제목 ────</b><br/><span style="font-size:10px;color:#9db3ae">07-05 · 조회 102</span></div>
+    <div class="wf-band" style="padding:8px 12px;border-bottom:none"><b style="font-size:11.5px;font-weight:400">게시글 제목 ───────</b><br/><span style="font-size:10px;color:#9db3ae">07-01</span></div>
+  </div>
+  <div class="wf-canvas" style="max-width:300px;margin:0">
+    <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="url">…/notice/{articleId}</span></div>
+    <div class="wf-band"><div class="wf-row"><span class="wf-chip">← 목록</span><span class="wf-grow"></span><span class="wf-chip">🖨</span></div></div>
+    <div class="wf-p"><b style="font-size:12.5px">게시글 제목</b><div class="wf-line mt-2"></div><div class="wf-line w80"></div><div class="wf-line w60"></div></div>
+  </div>
+  <div style="flex:1;min-width:280px">
+    <span class="wf-note">모바일(~767px) — 같은 URL 에서 pane 분할 CSS 해제: 목록 행 클릭이 일반 내비게이션(전체 페이지 상세)으로 동작하도록 hx-get 을 데스크톱 미디어쿼리 조건에서만 활성(htmx:configRequest 에서 판별, 외부 .js).
+    상세 → "← 목록" 은 검색·페이지 쿼리 보존 복귀. 서버는 view 파라미터/HX-Request 헤더로 pane 조각 vs 전체 페이지를 구분 렌더 — 컨트롤러 1개, 뷰 2벌.</span>
+  </div>
+</div>
+
+</body>
+</html>

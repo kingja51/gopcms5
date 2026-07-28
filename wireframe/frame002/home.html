@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 B안 — 사이트 홈</title>
+<link rel="stylesheet" href="wireframe2.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>사이트 홈 <span class="wf-badge-b">B안</span></h1>
+  <p><span class="route">GET /{sc}/home</span> — 스플릿 히어로 + 퀵링크 스트립 + 탭형 소식 위젯 + 통계 밴드. LNB 없는 1단 풀폭 페이지.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/me/home</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 16px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">기계공학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-chip">🔍</span><span class="wf-btn sm">☰</span></div></div>
+
+  <!-- 스플릿 히어로 -->
+  <div class="wf-band" style="padding:0">
+    <div class="wf-row stretch" style="gap:0">
+      <div style="flex:1;padding:28px 24px">
+        <span class="wf-chip">KY · Mechanical Engineering</span>
+        <div class="wf-h1 mt-2">Future Engineering,<br/>Global Innovation</div>
+        <div class="wf-line thin w80 mt-2"></div><div class="wf-line thin w60"></div>
+        <div class="wf-row mt-4">
+          <span class="wf-btn sm">포토앨범 →</span>
+          <span class="wf-btn ghost sm">연구실 소개</span>
+        </div>
+      </div>
+      <div class="wf-img" style="flex:1;min-height:190px;border:none;border-left:1.5px solid #78716c;border-radius:0"><span>MAIN_HERO 배너 이미지 (페이드 로테이션)</span></div>
+    </div>
+    <span class="wf-note" style="margin:0 16px 12px">스플릿 히어로 — 좌측 카피/CTA 는 정적(사이트명·소개문), 우측 이미지만 GET /api/v1/sites/{sc}/banners?location=MAIN_HERO 로테이션. A안(풀폭 캐러셀)과 달리 배너 0건이어도 레이아웃 붕괴 없음. 로테이션 일시정지 버튼 필수(접근성).</span>
+  </div>
+
+  <!-- 퀵링크 아이콘 스트립 -->
+  <div class="wf-band wf-gray">
+    <div class="wf-grid-6">
+      <div class="wf-box wf-p" style="text-align:center;padding:10px"><div style="font-size:18px">📷</div><b style="font-size:11px">포토앨범</b></div>
+      <div class="wf-box wf-p" style="text-align:center;padding:10px"><div style="font-size:18px">🧑‍💼</div><b style="font-size:11px">직원</b></div>
+      <div class="wf-box wf-p" style="text-align:center;padding:10px"><div style="font-size:18px">🔬</div><b style="font-size:11px">연구실</b></div>
+      <div class="wf-box wf-p" style="text-align:center;padding:10px"><div style="font-size:18px">📚</div><b style="font-size:11px">수업계획서</b></div>
+      <div class="wf-box wf-p" style="text-align:center;padding:10px"><div style="font-size:18px">📅</div><b style="font-size:11px">학사일정</b></div>
+      <div class="wf-box wf-p" style="text-align:center;padding:10px"><div style="font-size:18px">📍</div><b style="font-size:11px">오시는길</b></div>
+    </div>
+    <span class="wf-note">퀵링크 6종 — A안 타일 4종의 확장. 아이콘은 self-host SVG 스프라이트(이모지 자리표시). 모바일 3×2 그리드. <b>교수진은 홈 노출 제거(2026-07-10 요청)</b> — 메가메뉴 구성원 › 교수진(/prg/faculty/{sc})으로 접근, 자리는 포토앨범(/bbs/{sc}/photo)으로 교체.</span>
+  </div>
+
+  <!-- 탭형 소식 위젯 + 일정 -->
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div style="flex:2">
+        <div class="wf-row">
+          <span class="wf-btn sm">공지사항</span>
+          <span class="wf-btn ghost sm">학과소식</span>
+          <span class="wf-btn ghost sm">세미나</span>
+          <span class="wf-grow"></span><span class="wf-chip">+ 더보기</span>
+        </div>
+        <div class="wf-slot mt-2" style="text-align:left;padding:12px">
+          <div class="wf-row"><span class="wf-chip">공지</span><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#a8a29e">07-01</span></div>
+          <div class="wf-row mt-2"><div class="wf-line thin w60" style="margin:0;flex:1"></div><span style="font-size:11px;color:#a8a29e">06-30</span></div>
+          <div class="wf-row mt-2"><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#a8a29e">06-28</span></div>
+          <div class="wf-row mt-2"><div class="wf-line thin w60" style="margin:0;flex:1"></div><span style="font-size:11px;color:#a8a29e">06-24</span></div>
+          <span class="wf-note">탭 전환 = hx-get="/bbs/{sc}/{code}/widget" 부분갱신 — A안(공지/일정 병렬 2컬럼)과 달리 게시판 3종을 탭 하나로 통합. 첫 탭은 SSR, 나머지는 클릭 시 로드.</span>
+        </div>
+      </div>
+      <div style="flex:1">
+        <div class="wf-h2">학사일정</div>
+        <div class="wf-box mt-2 wf-p">
+          <div class="wf-row"><span class="wf-chip">07.15</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+          <div class="wf-row mt-2"><span class="wf-chip">07.21</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+          <div class="wf-row mt-2"><span class="wf-chip">08.01</span><div class="wf-line thin w40" style="margin:0;flex:1"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 통계 밴드 -->
+  <div class="wf-band wf-dark">
+    <div class="wf-grid-4" style="text-align:center">
+      <div><b style="font-size:18px">12</b><br/><span style="font-size:11px;color:#a8a29e">전임 교원</span></div>
+      <div><b style="font-size:18px">8</b><br/><span style="font-size:11px;color:#a8a29e">연구실</span></div>
+      <div><b style="font-size:18px">240+</b><br/><span style="font-size:11px;color:#a8a29e">재학생</span></div>
+      <div><b style="font-size:18px">95%</b><br/><span style="font-size:11px;color:#a8a29e">취업률</span></div>
+    </div>
+    <span class="wf-note">학과 통계 밴드(B안 신규) — 수치는 관리자 콘텐츠 또는 tb_site 확장 속성. 없으면 밴드 자체 미출력.</span>
+  </div>
+
+  <!-- 연구실 하이라이트 -->
+  <div class="wf-section">
+    <div class="wf-row"><span class="wf-h2">연구실 하이라이트</span><span class="wf-grow"></span><span class="wf-chip">전체보기 →</span></div>
+    <div class="wf-grid-3 mt-2">
+      <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1.5px solid #78716c;border-radius:0"><span>사진</span></div><div class="wf-p" style="padding:10px"><b style="font-size:12px">로봇공학 연구실</b><div class="wf-line thin w80"></div></div></div>
+      <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1.5px solid #78716c;border-radius:0"><span>사진</span></div><div class="wf-p" style="padding:10px"><b style="font-size:12px">열유체 연구실</b><div class="wf-line thin w60"></div></div></div>
+      <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1.5px solid #78716c;border-radius:0"><span>사진</span></div><div class="wf-p" style="padding:10px"><b style="font-size:12px">설계·생산 연구실</b><div class="wf-line thin w80"></div></div></div>
+    </div>
+    <span class="wf-note">tb_lab(secondary) 상위 3건 htmx 로드 — A안 홈에는 없던 섹션. /prg/lab/{sc} 유입 동선 강화.</span>
+  </div>
+
+  <!-- 포토앨범 -->
+  <div class="wf-section">
+    <div class="wf-row"><span class="wf-h2">포토앨범</span><span class="wf-grow"></span><span class="wf-chip">+ 더보기</span></div>
+    <div class="wf-grid-3 mt-2">
+      <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1.5px solid #78716c;border-radius:0"><span>썸네일</span></div><div class="wf-p" style="padding:10px"><b style="font-size:12px">졸업작품 전시회</b><div class="wf-line thin w80"></div></div></div>
+      <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1.5px solid #78716c;border-radius:0"><span>썸네일</span></div><div class="wf-p" style="padding:10px"><b style="font-size:12px">학과 MT</b><div class="wf-line thin w60"></div></div></div>
+      <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1.5px solid #78716c;border-radius:0"><span>썸네일</span></div><div class="wf-p" style="padding:10px"><b style="font-size:12px">경진대회 수상</b><div class="wf-line thin w80"></div></div></div>
+    </div>
+    <span class="wf-note">포토앨범 위젯(2026-07-10 신규) — GALLERY 타입 게시판 /bbs/{sc}/photo 최신 3건 썸네일, hx-trigger="revealed" 지연 로드. alt = 게시글 제목, 더보기 → /bbs/{sc}/photo. 위젯 조각 URL tb_role_url_access 등록 필수.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#78716c"></div></div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">홈 진입 오버레이 — A안 동일</h1></div>
+<div class="wf-canvas"><div class="wf-section">
+  <div class="wf-slot" style="min-height:70px;max-width:360px">레이어 팝업 (activePopups) — &lt;dialog&gt;, 오늘 하루 안 보기</div>
+</div></div>
+
+</body>
+</html>

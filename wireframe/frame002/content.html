@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 B안 — 콘텐츠 페이지</title>
+<link rel="stylesheet" href="wireframe2.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>콘텐츠 페이지 — 학과소개 · 오시는길 <span class="wf-badge-b">B안</span></h1>
+  <p><span class="route">GET /{sc}/about</span><span class="route">GET /{sc}/location</span> — 페이지 타이틀 밴드 + 좌측 LNB 2단 구조</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/me/about</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 16px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">기계공학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm" style="border-bottom:3px solid #44403c">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-chip">🔍</span><span class="wf-btn sm">☰</span></div></div>
+
+  <!-- 페이지 타이틀 밴드 -->
+  <div class="wf-band wf-dark">
+    <div class="wf-row">
+      <div><b style="font-size:15px">학과소개</b><br/><span style="font-size:11px;color:#a8a29e">홈 › 소개 › 학과소개</span></div>
+      <span class="wf-grow"></span>
+      <div class="wf-img" style="width:200px;height:44px;min-height:44px"><span>SUB_HERO</span></div>
+    </div>
+  </div>
+
+  <!-- LNB + 본문 -->
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>소개</b></div>
+        <div class="wf-band active">▾ 학과소개</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px;background:#f0ebe1"><b>└ 인사말</b></div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 비전·인재상</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 연혁</div>
+        <div class="wf-band" style="border-bottom:none">오시는길</div>
+      </div>
+
+      <div class="wf-grow">
+        <span class="wf-note" style="margin-top:0;margin-bottom:8px">LNB 3뎁스(인사말·비전·인재상·연혁) = 페이지 내 앵커/탭 — 클릭 시 본문 해당 섹션으로 스크롤, 현재 섹션 강조(소배경). tb_menu 뎁스3 이지만 별도 URL 없음. 4뎁스 없음.</span>
+        <!-- 인사말 -->
+        <div class="wf-row stretch">
+          <div class="wf-img" style="width:160px;min-height:120px"><span>학과장 사진</span></div>
+          <div class="wf-grow">
+            <div class="wf-h2">인사말</div>
+            <div class="wf-line"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+            <div class="wf-line thin"></div><div class="wf-line thin w80"></div>
+          </div>
+        </div>
+        <span class="wf-note">A안(우측 대표 이미지)과 달리 인물 중심 인사말 배치 — 학과장 사진 + 서명.</span>
+
+        <!-- 비전·인재상: 아코디언 -->
+        <div class="wf-h2 mt-4 mb-2">비전·인재상</div>
+        <div class="wf-box">
+          <div class="wf-band"><b style="font-size:12px">▸ 창의적 설계 역량</b></div>
+          <div class="wf-band" style="background:#f0ebe1"><b style="font-size:12px">▾ 산업 실무 역량</b><div class="wf-line thin w80"></div><div class="wf-line thin w60"></div></div>
+          <div class="wf-band" style="border-bottom:none"><b style="font-size:12px">▸ 글로벌 소통 역량</b></div>
+        </div>
+        <span class="wf-note">A안 카드 3열 → &lt;details&gt;/&lt;summary&gt; 아코디언(네이티브 요소 우선 규약).</span>
+
+        <!-- 연혁: 세로 타임라인 -->
+        <div class="wf-h2 mt-4 mb-2">연혁</div>
+        <div class="wf-row stretch">
+          <div style="width:3px;background:#a8a29e;border-radius:2px"></div>
+          <div class="wf-grow">
+            <div class="wf-row"><span class="wf-chip">2026</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+            <div class="wf-row mt-2"><span class="wf-chip">2020</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+            <div class="wf-row mt-2"><span class="wf-chip">2010</span><div class="wf-line thin w40" style="margin:0;flex:1"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">본문은 관리자 콘텐츠(HTML) — samples/_content-utility-safelist.html 클래스만 사용(A안 동일 제약). B안 서식(인사말·아코디언·타임라인)도 safelist 범위 내 클래스로 샘플 제공 필요.</span>
+  </div>
+
+  <div class="wf-band wf-gray" style="text-align:center"><span class="wf-btn ghost sm">👍 좋아요</span> <span class="wf-btn ghost sm">🚩 신고</span></div>
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#78716c"></div></div>
+</div>
+
+<!-- 오시는길 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">오시는길 변형 — /{sc}/location (LNB 동일, 본문만 교체)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>소개</b></div>
+        <div class="wf-band">▸ 학과소개</div>
+        <div class="wf-band active" style="border-bottom:none">오시는길</div>
+      </div>
+      <div class="wf-grow">
+        <div class="wf-row stretch">
+          <div class="wf-img wf-grow" style="min-height:170px"><span>지도 (self-host 정적 이미지 — CSP 외부요청 차단 정책 부합)</span></div>
+          <div style="width:230px">
+            <div class="wf-box wf-p" style="padding:10px"><b style="font-size:12px">주소</b><div class="wf-line thin w80"></div><div class="wf-line thin w60"></div></div>
+            <div class="wf-box wf-p mt-2" style="padding:10px"><b style="font-size:12px">연락처 / 팩스</b><div class="wf-line thin w60"></div></div>
+            <div class="wf-box wf-p mt-2" style="padding:10px"><b style="font-size:12px">교통편</b><div class="wf-line thin w80"></div><div class="wf-line thin w80"></div></div>
+          </div>
+        </div>
+        <span class="wf-note">A안(지도 위 / 정보 아래 2열)과 달리 지도+정보 사이드 패널 병렬 — 스크롤 없이 한 화면.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

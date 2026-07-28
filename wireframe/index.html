@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>PCMS 2026-001 와이어프레임 전체 목차 — 설계안 A~G</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+  background: #e8eaee; color: #334155;
+  font-size: 13px; line-height: 1.55; padding: 28px 24px 48px;
+}
+.hub { max-width: 1080px; margin: 0 auto; }
+.hub-header h1 { font-size: 22px; color: #0f172a; margin-bottom: 6px; }
+.hub-header p { color: #475569; }
+.hub-header .code { font-family: Consolas, monospace; font-size: 12px; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 0 5px; border-radius: 3px; color: #0f172a; }
+.hub-note {
+  margin-top: 10px; background: #fff; border: 1px solid #cbd5e1; border-left: 4px solid #64748b;
+  border-radius: 6px; padding: 10px 14px; color: #475569; font-size: 12.5px;
+}
+.hub-note b { color: #1e293b; }
+
+.frame-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+@media (max-width: 760px) { .frame-grid { grid-template-columns: 1fr; } }
+
+.frame-card {
+  display: block; background: #fff; border: 1.5px solid #94a3b8; border-radius: 10px;
+  padding: 16px 18px; text-decoration: none; color: inherit; position: relative;
+  transition: box-shadow .15s, transform .15s;
+}
+.frame-card:hover { box-shadow: 0 6px 18px rgba(15,23,42,.14); transform: translateY(-2px); }
+.frame-card .badge {
+  display: inline-block; color: #fff; font-size: 11px; font-weight: 700;
+  padding: 2px 10px; border-radius: 10px; margin-bottom: 8px;
+}
+.frame-card h2 { font-size: 15.5px; color: #0f172a; margin-bottom: 4px; }
+.frame-card .dir { font-family: Consolas, monospace; font-size: 11px; color: #64748b; }
+.frame-card p { margin-top: 6px; color: #475569; font-size: 12.5px; }
+.frame-card ul { margin: 8px 0 0 16px; color: #64748b; font-size: 12px; }
+.frame-card li { margin-top: 2px; }
+.swatch { position: absolute; top: 16px; right: 18px; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); }
+
+.a .badge, .a .swatch { background: #2563eb; }
+.b .badge, .b .swatch { background: #ea580c; }
+.c .badge, .c .swatch { background: #0d9488; }
+.d .badge, .d .swatch { background: #7c3aed; }
+.e .badge, .e .swatch { background: #e11d48; }
+.f .badge, .f .swatch { background: #0284c7; }
+.g .badge, .g .swatch { background: #1e3a8a; }
+
+.common { background: #fff; border: 1.5px solid #94a3b8; border-radius: 10px; padding: 16px 18px; margin-top: 20px; }
+.common h2 { font-size: 15px; color: #0f172a; margin-bottom: 8px; }
+.common table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.common th, .common td { border: 1px solid #cbd5e1; padding: 6px 10px; text-align: left; }
+.common th { background: #f1f5f9; color: #475569; white-space: nowrap; }
+.common td { color: #64748b; }
+.common .code { font-family: Consolas, monospace; font-size: 11px; background: #f1f5f9; padding: 0 4px; border-radius: 3px; color: #0f172a; }
+</style>
+</head>
+<body>
+
+<div class="hub">
+  <div class="hub-header">
+    <h1>PCMS 2026-001 사용자 사이트 와이어프레임 — 설계안 A~G</h1>
+    <p>KRDS 공용 레이아웃 기반 학과 사이트. 7개 안 모두 <b>IA·라우트·tb_menu 시드·보안·데이터 구조는 동일</b>하며,
+       달라지는 것은 프레젠테이션 계층뿐입니다. <span class="code">{sc}</span> = siteCode(학과코드 = 서브도메인, 예: ai·med·me).</p>
+    <div class="hub-note">
+      서버 없이 이 파일을 브라우저로 직접 열면 됩니다. 각 카드를 클릭하면 해당 안의 목차로 이동하며,
+      안마다 <b>layout · home · content · program · board · member · search-sitemap · common</b> 8개 화면을 담고 있습니다.
+      common은 공통 프로그램·보조 화면(학사일정 · 알림함 · 계정찾기 · 설문 · 민원 · 파일뷰어 · 오류 페이지) 묶음입니다.
+      메뉴 뎁스 원칙: <b>메뉴(GNB·LNB)는 3뎁스까지, 사이트맵은 4뎁스까지</b> 출력 — 동일한 menuTree(depth 1~4)를 렌더 뎁스만 달리해 재사용하며, 4뎁스는 메뉴 대신 3뎁스 페이지 내 탭/필터로 진입합니다.
+      모든 안은 KRDS 규약(시맨틱 토큰 · htmx+순수 JS · 네이티브 <span class="code">&lt;dialog&gt;/&lt;details&gt;</span> · CSP nonce) 범위 안에서 구현 가능합니다.
+    </div>
+  </div>
+
+  <div class="frame-grid">
+    <a class="frame-card a" href="frame001/index.html">
+      <span class="swatch"></span>
+      <span class="badge">A안 · frame001</span>
+      <h2>표준 GNB 밴드형 (기준안)</h2>
+      <div class="dir">wireframe/frame001/</div>
+      <p>상단 GNB 밴드 + 호버 드롭다운, 본문 1단 와이드. 현 구현과 가장 가까운 기준 설계.</p>
+      <ul>
+        <li>홈: 풀폭 배너 캐러셀 + 바로가기 타일 + 공지/일정 2컬럼</li>
+        <li>게시판: 테이블형 목록 / 검색: 독립 결과 페이지</li>
+      </ul>
+    </a>
+
+    <a class="frame-card b" href="frame002/index.html">
+      <span class="swatch"></span>
+      <span class="badge">B안 · frame002</span>
+      <h2>콤팩트 헤더 + 메가메뉴 + LNB 2단</h2>
+      <div class="dir">wireframe/frame002/</div>
+      <p>☰ 전체메뉴(메가메뉴 오버레이)와 좌측 LNB 2단 서브 구조. 손그림 스케치 스타일 표기.</p>
+      <ul>
+        <li>홈: 스플릿 히어로 + 퀵링크 스트립 + 탭형 소식 위젯 + 통계 밴드</li>
+        <li>게시판: 카드형 목록 / 검색: 전체화면 오버레이 + 필터 2단</li>
+      </ul>
+    </a>
+
+    <a class="frame-card c" href="frame003/index.html">
+      <span class="swatch"></span>
+      <span class="badge">C안 · frame003</span>
+      <h2>좌측 고정 사이드바 GNB</h2>
+      <div class="dir">wireframe/frame003/</div>
+      <p>상단 가로 GNB 없이 다크 세로 사이드바가 내비·유틸을 전담. 모바일은 오프캔버스 드로어.</p>
+      <ul>
+        <li>서브: 사이드바가 LNB 역할, 본문은 인페이지 앵커 탭</li>
+        <li>게시판: 2-pane 분할 뷰(좌 목록 + 우 미리보기)</li>
+      </ul>
+    </a>
+
+    <a class="frame-card d" href="frame004/index.html">
+      <span class="swatch"></span>
+      <span class="badge">D안 · frame004</span>
+      <h2>원페이지 풀블리드 매거진</h2>
+      <div class="dir">wireframe/frame004/</div>
+      <p>거대 타이포 에디토리얼. 오버레이 헤더 + 풀스크린 메뉴, 홈은 원페이지 스크롤 섹션 스택.</p>
+      <ul>
+        <li>서브: 거대 타이포 히어로 + 센터 협폭(720px) 본문</li>
+        <li>게시판: 매거진 그리드(대형 리드 + 카드) / 검색: 풀스크린 오버레이</li>
+      </ul>
+    </a>
+
+    <a class="frame-card e" href="frame005/index.html">
+      <span class="swatch"></span>
+      <span class="badge">E안 · frame005</span>
+      <h2>포털형 벤토(bento) 대시보드</h2>
+      <div class="dir">wireframe/frame005/</div>
+      <p>2단 헤더 + 모든 콘텐츠가 카드 패널 조합. 홈은 크기가 다른 위젯 카드 벤토 그리드.</p>
+      <ul>
+        <li>위젯별 htmx 개별 로드 — 한 위젯 실패가 페이지를 깨지 않음</li>
+        <li>마이페이지: 위젯 대시보드 / 사이트맵: 그룹별 카드</li>
+      </ul>
+    </a>
+
+    <a class="frame-card f" href="frame006/index.html">
+      <span class="swatch"></span>
+      <span class="badge">F안 · frame006</span>
+      <h2>모바일 퍼스트 앱형</h2>
+      <div class="dir">wireframe/frame006/</div>
+      <p>하단 고정 탭바 5개(홈·학과·게시판·검색·MY)의 앱 문법. 모바일이 정본, 데스크톱은 센터 협폭 확장.</p>
+      <ul>
+        <li>게시판: 피드형 카드 + 무한스크롤 + 글쓰기 FAB</li>
+        <li>교수진: 연락처 앱 스타일 리스트 + 바텀 시트 프로필</li>
+      </ul>
+    </a>
+
+    <a class="frame-card g" href="frame007/index.html">
+      <span class="swatch"></span>
+      <span class="badge">G안 · frame007</span>
+      <h2>공공기관 정석 3단 헤더 + 좌 LNB 3뎁스</h2>
+      <div class="dir">wireframe/frame007/</div>
+      <p>유틸바·로고/검색·풀폭 GNB(전체 펼침형) 3단 헤더 + 우측 플로팅 퀵메뉴 + 사이트맵형 푸터. KRDS·웹 접근성에 가장 보수적으로 충실한 안.</p>
+      <ul>
+        <li>글자크기 조절·고대비·캐러셀 정지 등 KWCAG 포인트 명시</li>
+        <li>게시판: 정석 테이블형(공지 고정행·숫자 페이징)</li>
+      </ul>
+    </a>
+  </div>
+
+  <div class="common">
+    <h2>공통 라우트 (전 설계안 동일)</h2>
+    <table>
+      <tr><th>라우트</th><th>화면</th></tr>
+      <tr><td><span class="code">/{sc}/home</span></td><td>사이트 홈 — 예: <span class="code">http://127.0.0.1:8080/ai/home</span> · <span class="code">/med/home</span></td></tr>
+      <tr><td><span class="code">/{sc}/about · /{sc}/location</span></td><td>콘텐츠 페이지(학과소개 · 오시는길)</td></tr>
+      <tr><td><span class="code">/prg/{faculty|staff|lab|syllabus}/{sc}</span></td><td>프로그램(교수진 · 직원 · 연구실 · 수업계획서) — secondary 조각, 다학과 공용</td></tr>
+      <tr><td><span class="code">/bbs/{sc}/{bbsCode}</span></td><td>게시판(NOTICE·FREE·QNA·FAQ·GALLERY·FILE·BODO·YOUTUBE·PDF 스킨)</td></tr>
+      <tr><td><span class="code">/member/**</span></td><td>로그인 · 가입(약관→입력→완료) · 아이디/비밀번호 찾기 · 마이페이지</td></tr>
+      <tr><td><span class="code">/search?siteCode={sc}&amp;keyword=</span></td><td>통합검색</td></tr>
+      <tr><td><span class="code">/{sc}/sitemap · /schedule/{master} · /notification</span></td><td>사이트맵 · 학사일정 · 알림함</td></tr>
+      <tr><td><span class="code">/api/v1/sites/{sc}/banners?location=…</span></td><td>배너 조각(MAIN_HERO / SUB_HERO / 팝업) · 날씨 위젯 <span class="code">/weather/widget</span></td></tr>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

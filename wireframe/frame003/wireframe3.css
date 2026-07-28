@@ -1,0 +1,188 @@
+/* ============================================================
+   PCMS 2026-001 와이어프레임 C안(frame003) 공용 스타일
+   - A안(회색 블루프린트)·B안(크라프트지 스케치)과 구분:
+     각진 미니멀(radius 0~4px, 얇은 1px 선) + 청록(teal) 주석
+   - 차가운 회백 = 화면 구조, 청록 점선 = htmx/JS 동적 슬롯
+   - 브라우저에서 각 html 을 직접 열어 참고 (서버 불필요)
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+  background: #eef2f1;              /* 차가운 회백 */
+  color: #2a3835;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 24px;
+}
+
+/* ── 페이지 머리말 ── */
+.wf-doc-header { max-width: 1080px; margin: 0 auto 20px; }
+.wf-doc-header h1 { font-size: 20px; color: #122926; margin-bottom: 4px; letter-spacing: -.2px; }
+.wf-doc-header p  { color: #4d605b; font-size: 13px; }
+.wf-doc-header .route { display:inline-block; font-family: Consolas, monospace; background:#122926; color:#d7ebe6; padding:2px 8px; border-radius:2px; font-size:12px; margin:4px 4px 0 0; }
+.wf-back { display:inline-block; margin-bottom:12px; color:#0d9488; text-decoration:none; font-size:12px; }
+.wf-back:hover { text-decoration:underline; }
+.wf-badge-c { display:inline-block; background:#0d9488; color:#fff; font-size:11px; padding:2px 8px; border-radius:2px; vertical-align:middle; margin-left:8px; font-weight:400; }
+
+/* ── 브라우저 프레임(캔버스) — 각진 미니멀 ── */
+.wf-canvas {
+  max-width: 1080px; margin: 0 auto 40px; background: #fbfdfc;
+  border: 1px solid #5f7570; border-radius: 0; overflow: hidden;
+  box-shadow: 0 2px 10px rgba(18,41,38,.10);
+}
+.wf-browserbar {
+  display: flex; align-items: center; gap: 8px;
+  background: #d8e2e0; padding: 8px 12px; border-bottom: 1px solid #5f7570;
+}
+.wf-browserbar .dot { width: 9px; height: 9px; border-radius: 50%; background: #9db3ae; }
+.wf-browserbar .url {
+  flex: 1; background: #f4f8f7; border: 1px solid #9db3ae; border-radius: 2px;
+  padding: 2px 12px; font-family: Consolas, monospace; font-size: 12px; color: #2a3835;
+}
+
+/* ── 기본 박스 — radius 0, 얇은 1px 선 ── */
+.wf-box  { border: 1px solid #8ba39d; background: #fff; border-radius: 0; }
+.wf-band { border-bottom: 1px solid #8ba39d; padding: 10px 16px; }
+.wf-gray { background: #eef4f2; }
+.wf-dark { background: #11312c; color: #cfe7e2; }
+
+/* 동적 슬롯(htmx/JS 렌더) — 청록 점선 */
+.wf-slot {
+  border: 1px dashed #0d9488; background: #f0faf7; color: #4b6660;
+  padding: 10px 14px; text-align: center; border-radius: 0;
+}
+
+/* 이미지 자리표시(X 박스) */
+.wf-img {
+  position: relative; background: #dde7e4; border: 1px solid #8ba39d;
+  display: flex; align-items: center; justify-content: center;
+  color: #5f7570; font-size: 11px; overflow: hidden; min-height: 60px;
+  border-radius: 0;
+}
+.wf-img::before, .wf-img::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to top right, transparent calc(50% - .5px), #9db3ae, transparent calc(50% + .5px));
+}
+.wf-img::after { transform: scaleX(-1); }
+.wf-img span { position: relative; z-index: 1; background: #dde7e4; padding: 1px 6px; }
+
+/* ── 컨트롤 목업 ── */
+.wf-btn {
+  display: inline-block; border: 1px solid #1e3f39; background: #1e3f39; color: #fff;
+  padding: 5px 14px; font-size: 12px; border-radius: 2px; white-space: nowrap;
+}
+.wf-btn.ghost { background: #fff; color: #1e3f39; }
+.wf-btn.teal  { background: #0d9488; border-color: #0d9488; color: #fff; }
+.wf-btn.sm { padding: 2px 8px; font-size: 11px; }
+.wf-input {
+  border: 1px solid #9db3ae; background: #fff; border-radius: 2px;
+  padding: 5px 10px; color: #9db3ae; font-size: 12px; display: inline-block;
+}
+.wf-chip { display:inline-block; border:1px solid #9db3ae; border-radius:2px; padding:1px 8px; font-size:11px; color:#4d605b; background:#f4f8f7; }
+.wf-chip.teal { background:#0d9488; border-color:#0d9488; color:#fff; }
+
+/* ── 텍스트 목업 ── */
+.wf-h1 { font-size: 20px; font-weight: 700; color: #122926; letter-spacing: -.2px; }
+.wf-h2 { font-size: 15px; font-weight: 700; color: #122926; }
+.wf-line { height: 8px; background: #c5d4d0; border-radius: 0; margin: 6px 0; }
+.wf-line.w40 { width: 40%; } .wf-line.w60 { width: 60%; } .wf-line.w80 { width: 80%; }
+.wf-line.thin { height: 5px; background: #dde7e4; }
+
+/* ── 주석(설명) — 청록색 ── */
+.wf-note {
+  color: #0f766e; font-size: 11px;
+  background: #e6f4f1; border-left: 3px solid #0d9488; padding: 3px 8px;
+  display: block; margin-top: 6px; border-radius: 0;
+}
+.wf-tag {
+  display: inline-block; background: #0d9488; color: #fff; font-size: 10px;
+  padding: 1px 6px; border-radius: 2px; vertical-align: middle; margin-left: 6px;
+  font-weight: 400;
+}
+.wf-code { font-family: Consolas, monospace; font-size: 11px; background:#e4ecea; padding:0 4px; border-radius:2px; color:#122926; }
+
+/* ── 레이아웃 유틸 ── */
+.wf-row  { display: flex; gap: 10px; align-items: center; }
+.wf-row.stretch { align-items: stretch; }
+.wf-grow { flex: 1; }
+.wf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.wf-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.wf-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.wf-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.wf-p { padding: 16px; }
+.wf-section { padding: 16px; border-bottom: 1px solid #c5d4d0; }
+.wf-section:last-child { border-bottom: none; }
+.mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mb-2 { margin-bottom: 8px; }
+
+/* ── 테이블 목업 ── */
+.wf-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.wf-table th, .wf-table td { border: 1px solid #c5d4d0; padding: 6px 10px; text-align: left; }
+.wf-table th { background: #eef4f2; color: #3d504b; }
+.wf-table td { color: #4d605b; }
+
+/* ── IA 트리(index·sitemap) ── */
+.wf-tree { font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.9; color: #2a3835; }
+.wf-tree a { color: #0d9488; text-decoration: none; }
+.wf-tree a:hover { text-decoration: underline; }
+.wf-tree .dim { color: #9db3ae; }
+
+/* ============================================================
+   C안 전용 — 좌측 고정 사이드바 GNB
+   ============================================================ */
+/* 사이드바 + 메인 2분할 프레임 */
+.wf-frame { display: flex; align-items: stretch; min-height: 420px; }
+
+/* 다크 세로 사이드바 (~220px) */
+.wf-side {
+  width: 220px; flex-shrink: 0; display: flex; flex-direction: column;
+  background: #11312c; color: #cfe7e2; border-right: 1px solid #0a1f1b;
+}
+.wf-side-logo {
+  padding: 14px; border-bottom: 1px solid rgba(255,255,255,.14);
+  font-weight: 700; color: #fff; font-size: 14px; letter-spacing: -.2px;
+}
+.wf-side-logo .en { display:block; font-weight:400; font-size:10px; color:#7fa39b; }
+.wf-side-search {
+  margin: 10px 12px 4px; padding: 4px 10px; font-size: 11px;
+  border: 1px solid #3d5a54; background: #0c2622; color: #7fa39b; border-radius: 2px;
+}
+.wf-side-item {
+  padding: 8px 14px; font-size: 12.5px; color: #cfe7e2;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.wf-side-item.group { font-weight: 700; }
+.wf-side-sub {
+  padding: 6px 14px 6px 28px; font-size: 11.5px; color: #9fc4bc;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+/* 3뎁스 — 2차 들여쓰기 (메뉴는 1~3뎁스까지만 노출, 4뎁스는 페이지 내 탭/필터) */
+.wf-side-sub2 {
+  padding: 5px 14px 5px 42px; font-size: 11px; color: #7fa39b;
+  border-bottom: 1px solid rgba(255,255,255,.03);
+}
+.wf-side .active {
+  background: #0d9488; color: #fff;
+  border-left: 3px solid #5eead4; padding-left: 25px;
+}
+.wf-side-item.active { padding-left: 11px; }
+.wf-side-sub2.active { padding-left: 39px; }
+.wf-side-util {
+  margin-top: auto; border-top: 1px solid rgba(255,255,255,.14);
+  padding: 10px 14px; font-size: 11px; color: #9fc4bc;
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+}
+.wf-side-util .wf-chip { background: transparent; border-color: #3d5a54; color: #9fc4bc; }
+
+/* 메인(콘텐츠) 영역 */
+.wf-main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #fbfdfc; }
+.wf-utilbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-bottom: 1px solid #8ba39d;
+  background: #eef4f2; font-size: 11px; color: #4d605b;
+}
+
+/* 가로 스크롤 카드 레일 (홈) */
+.wf-rail { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+.wf-rail > * { flex: 0 0 170px; }

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 D안 — 사이트 홈</title>
+<link rel="stylesheet" href="wireframe4.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>사이트 홈 — 원페이지 스크롤 <span class="wf-badge-d">D안</span></h1>
+  <p><span class="route">GET /{sc}/home</span> — 풀스크린 히어로 → 매니페스토 → 숫자 → 소식 매거진 → 포토앨범 → 연구실 쇼케이스 → CTA 의 7섹션 원페이지. 우측 도트 내비(스크롤스파이).</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/home</span></div>
+
+  <!-- 우측 고정 도트 섹션 내비 -->
+  <div class="wf-dotnav" title="섹션 내비">
+    <i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i>
+  </div>
+
+  <!-- ① 풀스크린 히어로 -->
+  <div class="wf-hero" style="min-height:340px">
+    <div class="wf-img flat bg"><span>MAIN_HERO 배경 이미지(페이드 로테이션)</span></div>
+    <div class="wf-ghostbar">
+      <b style="font-size:16px">AI 인공지능학과</b><span style="font-size:10px;opacity:.7">KONYANG UNIV.</span>
+      <span class="wf-grow"></span>
+      <span class="wf-chip">🔔</span><span class="wf-chip">🔍</span><span class="wf-chip">◐</span><span class="wf-btn onimg sm">☰ 메뉴</span>
+    </div>
+    <div class="fg">
+      <span class="wf-kicker" style="color:#d9ccf7">Department of Artificial Intelligence</span>
+      <div class="wf-display xl onimg" style="margin-top:8px">인공지능학과</div>
+      <div style="color:#efe9fb;font-size:14px;margin-top:10px;text-shadow:0 1px 8px rgba(34,28,53,.6)">사람을 향한 지능, 세상을 바꾸는 기술</div>
+      <div class="wf-row mt-4" style="justify-content:center">
+        <span class="wf-btn violet sm">학과소개 →</span><span class="wf-btn onimg sm">입학안내</span>
+      </div>
+      <div style="margin-top:26px;color:#efe9fb;font-size:11px">스크롤 ↓</div>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 12px">
+    <span class="wf-note">① 풀스크린 히어로(100svh) — 거대 학과명은 <span class="wf-code">text-display-1</span> 토큰(굵기 700)으로 구현, KRDS 타이포 토큰 범위에서 거대 타이포 가능(raw text-9xl 금지).
+    배경은 <span class="wf-code">GET /api/v1/sites/{sc}/banners?location=MAIN_HERO</span> 페이드 로테이션 — 0건이면 브랜드 그라디언트(--brand-*) 폴백. 로테이션 일시정지 버튼 필수(접근성), prefers-reduced-motion 시 로테이션·페이드 정지.
+    "스크롤 ↓" 유도는 순수 CSS 애니메이션. 오버레이 헤더는 히어로 이탈 시 축소 고정 전환(layout.html ①′).</span>
+  </div>
+
+  <!-- ② 매니페스토 -->
+  <div class="wf-band" style="padding:36px 24px">
+    <div class="wf-narrow" style="text-align:center">
+      <span class="wf-kicker">Our Manifesto</span>
+      <div class="wf-quote mt-2">지능은 도구가 아니라 태도입니다. 우리는 묻고, 만들고, 검증하는 공학자를 기릅니다.</div>
+      <div class="wf-line thin w40 center mt-4"></div>
+    </div>
+    <span class="wf-note">② 매니페스토 — 관리자 콘텐츠 조각(정적 SSR, Sanitizer 통과 HTML). 큰 인용 타이포는 <span class="wf-code">text-display-sm</span> + 굵기 500. 사이트별 문구는 콘텐츠 관리에서 교체 — 코드 수정 불필요.</span>
+  </div>
+
+  <!-- ③ 숫자 하이라이트 -->
+  <div class="wf-band wf-gray" style="padding:28px 24px">
+    <div class="wf-grid-4" style="text-align:center">
+      <div class="wf-stat"><b>18</b><span>전임 교원</span></div>
+      <div class="wf-stat"><b>9</b><span>연구실</span></div>
+      <div class="wf-stat"><b>310+</b><span>재학생</span></div>
+      <div class="wf-stat"><b>92%</b><span>취업률</span></div>
+    </div>
+    <span class="wf-note">③ 숫자 하이라이트 — 뷰포트 진입 시 카운트업: IntersectionObserver 1회 트리거, 외부 <span class="wf-code">countup.js</span> + CSP nonce, <span class="wf-code">htmx:load</span> 멱등 초기화(data-initialized 가드).
+    prefers-reduced-motion 시 애니메이션 없이 즉시 최종값. 수치는 tb_site 확장 속성/관리자 콘텐츠 — 없으면 섹션 미출력(도트 내비 항목도 함께 제거).</span>
+  </div>
+
+  <!-- ④ 최신 소식 매거진 3열 -->
+  <div class="wf-band" style="padding:28px 24px">
+    <div class="wf-row">
+      <div><span class="wf-kicker">News</span><div class="wf-display sm">최신 소식</div></div>
+      <span class="wf-grow"></span>
+      <span class="wf-chip">공지</span><span class="wf-chip on">소식</span><span class="wf-chip">세미나</span>
+      <span class="wf-chip vi">전체보기 →</span>
+    </div>
+    <div class="wf-slot mt-4" style="text-align:left;padding:14px">
+      <div class="wf-grid-3">
+        <div class="wf-box"><div class="wf-img flat" style="height:100px"><span>썸네일</span></div><div class="wf-p" style="padding:12px"><span style="font-size:10px;color:#8b84a3">학과소식 · 07-01</span><br/><b style="font-size:13px">큰 썸네일 카드 제목 ─────</b><div class="wf-line thin w80"></div></div></div>
+        <div class="wf-box"><div class="wf-img flat" style="height:100px"><span>썸네일</span></div><div class="wf-p" style="padding:12px"><span style="font-size:10px;color:#8b84a3">공지 · 06-28</span><br/><b style="font-size:13px">카드 제목 ───────</b><div class="wf-line thin w60"></div></div></div>
+        <div class="wf-box"><div class="wf-img flat" style="height:100px"><span>썸네일</span></div><div class="wf-p" style="padding:12px"><span style="font-size:10px;color:#8b84a3">세미나 · 06-24</span><br/><b style="font-size:13px">카드 제목 ─────────</b><div class="wf-line thin w80"></div></div></div>
+      </div>
+    </div>
+    <span class="wf-note">④ 소식 매거진 — 게시판 3종 통합 최신글 위젯. 칩 전환 = <span class="wf-code">hx-get="/bbs/{sc}/{code}/widget?skin=magazine"</span> 부분갱신(첫 칩은 SSR, hx-history="false").
+    썸네일 없는 글은 브랜드 패턴 면 폴백. 전체보기 → /bbs/{sc}/news. 이미지 전부 self-host(6중 방어 통과 자원).</span>
+  </div>
+
+  <!-- ⑤ 포토앨범 — 풀블리드 포토 스트립 (2026-07-10 신규) -->
+  <div class="wf-band" style="padding:28px 0 8px">
+    <div style="text-align:center"><span class="wf-kicker">Moments</span><div class="wf-display sm">포토앨범</div></div>
+    <div class="wf-row stretch mt-4" style="gap:2px">
+      <div class="wf-img flat" style="flex:2;min-height:110px"><span>졸업작품 전시회</span></div>
+      <div class="wf-img flat" style="flex:1;min-height:110px"><span>학과 MT</span></div>
+      <div class="wf-img flat" style="flex:1;min-height:110px"><span>경진대회 수상</span></div>
+      <div class="wf-img flat" style="flex:1.5;min-height:110px"><span>현장 견학</span></div>
+    </div>
+    <div style="text-align:center;padding:12px 0 4px"><span class="wf-btn ghost sm">포토앨범 전체보기 →</span></div>
+    <div style="padding:0 20px 12px">
+      <span class="wf-note">⑤ 포토앨범(2026-07-10 신규) — GALLERY 타입 게시판 /bbs/{sc}/photo 최신 4건을 폭이 다른 풀블리드 포토 스트립으로(에디토리얼 리듬). hx-trigger="revealed" 지연 로드, 이미지 alt = 게시글 제목, 클릭 → 게시글 상세. 썸네일 없으면 브랜드 패턴 면 폴백, 0건이면 섹션·도트 미출력.</span>
+    </div>
+  </div>
+
+  <!-- ⑥ 연구실 쇼케이스 — 교차 풀블리드 밴드 -->
+  <div class="wf-band wf-gray" style="padding:28px 0 8px">
+    <div style="text-align:center"><span class="wf-kicker">Labs</span><div class="wf-display sm">연구실 쇼케이스</div></div>
+    <div class="wf-row stretch mt-4" style="gap:0">
+      <div class="wf-img flat" style="flex:1;min-height:130px"><span>연구실 사진</span></div>
+      <div style="flex:1;padding:22px 26px;background:#fff">
+        <span class="wf-kicker">LAB 01</span>
+        <b style="font-size:16px;display:block;margin-top:4px">지능형 로보틱스 연구실</b>
+        <div class="wf-line thin w80"></div><div class="wf-line thin w60"></div>
+        <span class="wf-btn ghost sm mt-2" style="display:inline-block">자세히 →</span>
+      </div>
+    </div>
+    <div class="wf-row stretch" style="gap:0">
+      <div style="flex:1;padding:22px 26px;background:#221c35;color:#dcd6ee">
+        <span class="wf-kicker" style="color:#b7a8e3">LAB 02</span>
+        <b style="font-size:16px;display:block;margin-top:4px">자연어처리 연구실</b>
+        <div class="wf-line thin w80" style="background:#3a3153"></div><div class="wf-line thin w60" style="background:#3a3153"></div>
+        <span class="wf-btn onimg sm mt-2" style="display:inline-block">자세히 →</span>
+      </div>
+      <div class="wf-img flat" style="flex:1;min-height:130px"><span>연구실 사진</span></div>
+    </div>
+    <div style="padding:8px 20px 12px">
+      <span class="wf-note">⑥ 연구실 쇼케이스 — 이미지/텍스트 좌우 교차 풀블리드 밴드(홀수 좌·짝수 우, 면 색 교차로 리듬). tb_lab(secondary) 상위 2~3건 htmx 로드(<span class="wf-code">hx-get="/prg/lab/{sc}/showcase"</span>) — R5 격리 원칙(primary 쉘 + secondary 조각) 준수. 자세히 → /prg/lab/{sc}. 교수진은 홈 미노출(풀스크린 메뉴 구성원 › 교수진으로 접근).</span>
+    </div>
+  </div>
+
+  <!-- ⑥ CTA 밴드 -->
+  <div class="wf-band wf-dark" style="padding:34px 24px;text-align:center;border-bottom:none">
+    <div class="wf-display sm" style="color:#fff">함께 만들 미래가 궁금하다면</div>
+    <div style="font-size:12px;color:#b7abd8;margin-top:6px">입학 상담 · 학과 문의 · 오시는길</div>
+    <div class="wf-row mt-4" style="justify-content:center">
+      <span class="wf-btn violet">입학안내 보기</span><span class="wf-btn onimg">오시는길 →</span>
+    </div>
+    <span class="wf-note" style="text-align:left">⑦ CTA 밴드 — 정적 링크(입학안내 콘텐츠 페이지·/{sc}/location). 이하 대형 워터마크 푸터(layout.html ⑥). 홈은 SUB_HERO 미출력(A안 규칙 동일).</span>
+  </div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">우측 도트 내비 + 진입 팝업</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div class="wf-box wf-p wf-grow">
+        <b style="font-size:12.5px">도트 섹션 내비(스크롤스파이)</b>
+        <div class="wf-row mt-2"><span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block"></span><span style="font-size:11px;color:#8b84a3">현재 섹션 = 채운 도트, 클릭 = 해당 앵커로 스크롤</span></div>
+        <span class="wf-note">각 섹션 <span class="wf-code">id="sec-hero…sec-cta"</span> 앵커 + IntersectionObserver 스크롤스파이(외부 .js + nonce, 순수 JS — 프레임워크 금지).
+        클릭 이동은 이벤트 위임 <span class="wf-code">closest('[data-action="dotnav"]')</span>, smooth 스크롤은 prefers-reduced-motion 시 instant. 모바일은 도트 내비 숨김.</span>
+      </div>
+      <div class="wf-grow">
+        <div class="wf-slot" style="min-height:80px;max-width:360px">레이어 팝업 (activePopups) — &lt;dialog&gt;, 오늘 하루 안 보기</div>
+        <span class="wf-note">진입 팝업 — A안 동일(네이티브 &lt;dialog&gt;, 쿠키로 "오늘 하루 안 보기"). 풀스크린 히어로와 겹치므로 D안은 화면 중앙이 아닌 우하단 코너 배치 권장.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

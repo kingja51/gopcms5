@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 E안 — 사이트 홈 (벤토 그리드)</title>
+<link rel="stylesheet" href="wireframe5.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>사이트 홈 — 벤토 그리드 <span class="wf-badge-e">E안</span></h1>
+  <p><span class="route">GET /{sc}/home</span> — 크기가 다른 위젯 카드의 벤토 조합. 히어로(2×2) + 공지 + 학사일정 + 날씨 + 바로가기 4개 + 포토앨범 + 연구실 스포트라이트. 위젯별 htmx 개별 로드.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/home</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 20px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔 알림</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">인공지능학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-input" style="width:150px">🔍 통합검색</span></div></div>
+
+  <div class="wf-section">
+    <div class="wf-bento">
+
+      <!-- 대형 히어로 카드 2×2 -->
+      <div class="wf-card c2 r2" style="padding:0">
+        <div class="wf-img" style="flex:1;border:none;border-radius:0;min-height:150px"><span>MAIN_HERO 배너 캐러셀 (16:9)</span></div>
+        <div class="wf-card-body">
+          <span class="wf-chip">KY · Artificial Intelligence</span>
+          <div class="wf-h1 mt-2" style="font-size:17px">AI가 여는 미래,<br/>인공지능학과</div>
+          <div class="wf-row mt-2"><span class="wf-btn sm">학과소개 →</span><span class="wf-btn ghost sm">연구실</span><span class="wf-grow"></span><span class="wf-chip">‹ ⏸ ›  1/3</span></div>
+        </div>
+      </div>
+
+      <!-- 공지 위젯 카드 -->
+      <div class="wf-card c2">
+        <div class="wf-card-head">공지사항 <span class="wf-tag">hx-trigger="load"</span><span class="wf-grow"></span><span class="wf-chip">+ 더보기</span></div>
+        <div class="wf-slot" style="margin:10px 14px;text-align:left;border-radius:8px">
+          <div class="wf-row"><span class="wf-chip on" style="font-size:10px">공지</span><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#a8a29e">07-08</span></div>
+          <div class="wf-row mt-2"><div class="wf-line thin w60" style="margin:0;flex:1"></div><span style="font-size:11px;color:#a8a29e">07-05</span></div>
+          <div class="wf-row mt-2"><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#a8a29e">07-01</span></div>
+        </div>
+      </div>
+
+      <!-- 학사일정 카드 -->
+      <div class="wf-card">
+        <div class="wf-card-head">학사일정 <span class="wf-tag">load</span></div>
+        <div class="wf-slot" style="margin:10px 14px;text-align:left;border-radius:8px;font-size:11px">
+          <div class="wf-row"><span class="wf-chip">07.15</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+          <div class="wf-row mt-2"><span class="wf-chip">08.01</span><div class="wf-line thin w40" style="margin:0;flex:1"></div></div>
+        </div>
+      </div>
+
+      <!-- 날씨 위젯 카드 -->
+      <div class="wf-card">
+        <div class="wf-card-head">캠퍼스 날씨 <span class="wf-tag">load</span></div>
+        <div class="wf-slot" style="margin:10px 14px;border-radius:8px">☀ 28℃<br/><span style="font-size:10px">GET /weather/widget</span></div>
+      </div>
+
+      <!-- 바로가기 아이콘 카드 4개 (1×1) -->
+      <div class="wf-card"><div class="wf-card-body" style="text-align:center"><div style="font-size:20px">📷</div><b style="font-size:12px">포토앨범</b><br/><span style="font-size:10px;color:#a8a29e">/bbs/ai/photo</span></div></div>
+      <div class="wf-card"><div class="wf-card-body" style="text-align:center"><div style="font-size:20px">🔬</div><b style="font-size:12px">연구실</b><br/><span style="font-size:10px;color:#a8a29e">/prg/lab/ai</span></div></div>
+      <div class="wf-card"><div class="wf-card-body" style="text-align:center"><div style="font-size:20px">📚</div><b style="font-size:12px">수업계획서</b><br/><span style="font-size:10px;color:#a8a29e">/prg/syllabus/ai</span></div></div>
+      <div class="wf-card"><div class="wf-card-body" style="text-align:center"><div style="font-size:20px">📍</div><b style="font-size:12px">오시는길</b><br/><span style="font-size:10px;color:#a8a29e">/ai/location</span></div></div>
+
+      <!-- 포토앨범 카드 (구 학과 갤러리) -->
+      <div class="wf-card c2">
+        <div class="wf-card-head">포토앨범 <span class="wf-tag">hx-trigger="revealed"</span><span class="wf-grow"></span><span class="wf-chip">+ 더보기</span></div>
+        <div class="wf-slot" style="margin:10px 14px;border-radius:8px">
+          <div class="wf-grid-3" style="gap:8px">
+            <div class="wf-img" style="height:52px;min-height:52px"><span>썸네일</span></div>
+            <div class="wf-img" style="height:52px;min-height:52px"><span>썸네일</span></div>
+            <div class="wf-img" style="height:52px;min-height:52px"><span>썸네일</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 연구실 스포트라이트 카드 -->
+      <div class="wf-card c2">
+        <div class="wf-card-head">연구실 스포트라이트 <span class="wf-tag">revealed</span><span class="wf-grow"></span><span class="wf-chip">전체보기 →</span></div>
+        <div class="wf-slot" style="margin:10px 14px;text-align:left;border-radius:8px">
+          <div class="wf-row"><div class="wf-img" style="width:64px;height:44px;min-height:44px"><span>사진</span></div>
+            <div class="wf-grow"><b style="font-size:12px">지능형 로봇 연구실</b><div class="wf-line thin w60" style="margin:4px 0 0"></div></div></div>
+        </div>
+      </div>
+
+    </div>
+    <span class="wf-note"><b>벤토 그리드 4컬럼(모바일 1컬럼 순차 적층, 태블릿 2컬럼).</b> 히어로 카드만 SSR(LCP 보호), 나머지 위젯은 카드 껍데기만 SSR 하고 내용을 htmx 개별 로드 — 상단 위젯 hx-trigger="load", 폴드 아래(포토앨범·연구실)는 hx-trigger="revealed"(뷰포트 진입 시). 위젯 5개(공지·학사일정·날씨·포토앨범·연구실)가 각각 독립 요청이라 <b>하나의 실패(타임아웃·5xx)는 그 카드의 "불러오지 못했습니다 ↻ 재시도" 폴백으로만 격리</b> — 페이지 전체가 깨지지 않음(htmx:responseError 위임 핸들러 1개, 외부 .js + CSP nonce).</span>
+    <span class="wf-note">데이터 소스 — 히어로: GET /api/v1/sites/{sc}/banners?location=MAIN_HERO(로테이션+⏸ 일시정지 필수, 접근성) / 공지: /bbs/ai/notice 위젯 조각 / 학사일정: /schedule/{master} 상위 N건 / 날씨: GET /weather/widget(외부 API 캐시 조각) / 포토앨범: GALLERY 게시판 /bbs/ai/photo 최신 3건 / 연구실: tb_lab(secondary) 랜덤 1건. 위젯 조각 URL 전부 tb_role_url_access 등록 필수(무매칭 DENY — 빠뜨리면 카드가 영원히 빈 폴백). <b>교수진은 홈 노출 제거(2026-07-10 요청)</b> — GNB 구성원 › 교수진(/prg/faculty/ai)으로 접근, 바로가기 카드는 포토앨범으로 교체.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#57534e"></div></div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">홈 진입 레이어 팝업 — A안 동일</h1></div>
+<div class="wf-canvas"><div class="wf-section">
+  <div class="wf-slot" style="min-height:70px;max-width:360px">레이어 팝업 (activePopups) — 네이티브 &lt;dialog&gt;, "오늘 하루 안 보기" 쿠키</div>
+  <span class="wf-note">팝업도 카드 스타일(radius 12px)로 통일. dialog::backdrop 딤 처리, ESC 닫기 기본 제공 — 커스텀 오버레이 JS 불필요.</span>
+</div></div>
+
+</body>
+</html>

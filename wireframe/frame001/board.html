@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 — 게시판 목록/상세</title>
+<link rel="stylesheet" href="wireframe.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>게시판 — 목록 · 상세</h1>
+  <p><span class="route">GET /bbs/{sc}/{bbsCode}</span><span class="route">GET /bbs/{sc}/{bbsCode}/{articleId}</span> — BoardUsrController · front/board/{TYPE}/</p>
+  <p>스킨 9종(NOTICE·FREE·QNA·FAQ·GALLERY·FILE·BODO·YOUTUBE·PDF) — 목록 스킨만 다르고 골격 동일.</p>
+</div>
+
+<!-- 목록 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/bbs/me/notice</span></div>
+
+  <div class="wf-band wf-dark"><div class="wf-row"><b>기계공학과</b><span class="wf-grow"></span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span><span class="wf-chip">☰</span></div></div>
+  <div class="wf-band"><div class="wf-row"><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm" style="border-bottom:3px solid #475569">커뮤니티</span><span class="wf-grow"></span><span class="wf-input">🔍 검색</span></div></div>
+  <div class="wf-band wf-gray" style="padding:6px 16px;font-size:12px;color:#64748b">홈 › 커뮤니티 › 공지사항</div>
+
+  <div class="wf-section">
+    <div class="wf-h1">공지사항</div>
+
+    <!-- 검색폼 -->
+    <div class="wf-row mt-4">
+      <span style="font-size:12px;color:#64748b">전체 128건</span>
+      <span class="wf-grow"></span>
+      <span class="wf-input">제목+내용 ▾</span>
+      <span class="wf-input">검색어</span>
+      <span class="wf-btn sm">검색</span>
+    </div>
+
+    <!-- 목록 테이블 -->
+    <table class="wf-table mt-2">
+      <tr><th style="width:60px">번호</th><th>제목</th><th style="width:90px">작성자</th><th style="width:80px">등록일</th><th style="width:60px">조회</th></tr>
+      <tr><td><span class="wf-chip">공지</span></td><td>[고정 공지] ─────────── 📎</td><td>관리자</td><td>07-01</td><td>231</td></tr>
+      <tr><td>128</td><td>──────────────── <span class="wf-chip">N</span></td><td>관리자</td><td>06-30</td><td>45</td></tr>
+      <tr><td>127</td><td>─────────── 📎</td><td>관리자</td><td>06-28</td><td>102</td></tr>
+      <tr><td>126</td><td>──────────</td><td>관리자</td><td>06-24</td><td>67</td></tr>
+    </table>
+
+    <div class="wf-row mt-2">
+      <span class="wf-grow"></span>
+      <span class="wf-chip">‹</span><span class="wf-chip" style="background:#475569;color:#fff">1</span><span class="wf-chip">2</span><span class="wf-chip">3</span><span class="wf-chip">›</span>
+      <span class="wf-grow"></span>
+      <span class="wf-btn sm">글쓰기</span>
+    </div>
+    <span class="wf-note">고정공지 상단 분리, 새글 N 뱃지, 첨부 아이콘. 검색/페이징 htmx 부분갱신. 글쓰기 버튼은 권한(tb_role_url_access + 게시판 설정)에 따라 노출. 뒤로가기 민감 → hx-history="false".</span>
+    <span class="wf-note">GALLERY 스킨 = 썸네일 카드 그리드 / FAQ = &lt;details&gt;&lt;summary&gt; 아코디언 / QNA = 답변상태 뱃지 / YOUTUBE = 영상 썸네일 / PDF = 뷰어 링크.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#64748b"></div></div>
+</div>
+
+<!-- 상세 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">게시글 상세 — /bbs/{sc}/{bbsCode}/{articleId}</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-box">
+      <div class="wf-band">
+        <div class="wf-h2">게시글 제목 ─────────────</div>
+        <div class="wf-row mt-2" style="font-size:11px;color:#64748b">
+          <span>작성자 관리자</span><span>·</span><span>2026-07-01</span><span>·</span><span>조회 231</span>
+        </div>
+      </div>
+      <div class="wf-band wf-gray" style="padding:6px 16px">
+        <span style="font-size:12px">📎 첨부파일 2 — 파일명.pdf <span class="wf-chip">미리보기</span> <span class="wf-chip">다운로드</span></span>
+      </div>
+      <div class="wf-band" style="min-height:160px">
+        <div class="wf-line"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+        <div class="wf-img mt-4" style="height:100px;max-width:320px"><span>본문 삽입 이미지</span></div>
+        <div class="wf-line thin mt-4"></div><div class="wf-line thin w80"></div>
+      </div>
+      <div class="wf-band" style="text-align:center;border-bottom:none">
+        <span class="wf-btn ghost sm">👍 좋아요 12</span> <span class="wf-btn ghost sm">🚩 신고</span>
+      </div>
+    </div>
+    <span class="wf-note">본문 = 에디터 HTML(OWASP Sanitizer 통과분). 미리보기 = file-viewer-popup, 다운로드 = 파일 6중 방어 통과 자원만.</span>
+
+    <!-- 댓글 -->
+    <div class="wf-h2 mt-4 mb-2">댓글 3</div>
+    <div class="wf-box wf-p">
+      <div class="wf-row"><b style="font-size:12px">홍**</b><span style="font-size:11px;color:#94a3b8">07-02 10:31</span><span class="wf-grow"></span><span class="wf-chip">답글</span><span class="wf-chip">신고</span></div>
+      <div class="wf-line thin w80"></div>
+      <div style="margin-left:24px;border-left:2px solid #cbd5e1;padding-left:10px" class="mt-2">
+        <div class="wf-row"><b style="font-size:12px">↳ 김**</b><span style="font-size:11px;color:#94a3b8">07-02 11:02</span></div>
+        <div class="wf-line thin w60"></div>
+      </div>
+    </div>
+    <div class="wf-row mt-2 stretch">
+      <span class="wf-input wf-grow" style="min-height:44px">댓글 입력 (로그인 필요 시 안내)</span>
+      <span class="wf-btn">등록</span>
+    </div>
+    <span class="wf-note">BoardCommentUsrController — htmx 로 댓글 블록만 갱신. 작성자명 마스킹. CUD 는 try-catch + log + HX-Redirect 규약.</span>
+
+    <div class="wf-row mt-4">
+      <span class="wf-btn ghost sm">목록</span>
+      <span class="wf-grow"></span>
+      <span class="wf-btn ghost sm">수정</span><span class="wf-btn ghost sm">삭제</span>
+    </div>
+    <div class="wf-box mt-2">
+      <div class="wf-band" style="padding:6px 12px;font-size:12px;color:#64748b">▲ 이전글 ──────────</div>
+      <div class="wf-band" style="padding:6px 12px;font-size:12px;color:#64748b;border-bottom:none">▼ 다음글 ──────────</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

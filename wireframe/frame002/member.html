@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 B안 — 회원(로그인/가입/마이페이지)</title>
+<link rel="stylesheet" href="wireframe2.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>회원 — 로그인 · 가입 위저드 · 탭형 마이페이지 <span class="wf-badge-b">B안</span></h1>
+  <p><span class="route">/member/login</span><span class="route">/member/join</span><span class="route">/member/mypage</span> — 보안 체계(Order 20 체인·PCMS_SID·잠금·PII)는 A안과 완전 동일, 화면 구성만 변경</p>
+</div>
+
+<!-- 로그인: 스플릿형 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/login?siteCode=me</span></div>
+  <div class="wf-section" style="padding:0">
+    <div class="wf-row stretch" style="gap:0">
+      <div class="wf-img" style="flex:1;min-height:260px;border:none;border-right:1.5px solid #78716c;border-radius:0">
+        <span>사이트 브랜드 비주얼 (템플릿 CSS --brand-* 톤)</span>
+      </div>
+      <div style="flex:1;padding:28px">
+        <div class="wf-h1">로그인</div>
+        <div class="mt-4"><span class="wf-input" style="display:block">아이디</span></div>
+        <div class="mt-2"><span class="wf-input" style="display:block">비밀번호 👁</span></div>
+        <div class="wf-row mt-2" style="font-size:12px"><span>☐ 아이디 저장</span><span class="wf-grow"></span><a href="#" style="color:#78716c">아이디/비밀번호 찾기</a></div>
+        <div class="mt-2"><span class="wf-btn" style="display:block;text-align:center">로그인</span></div>
+        <div class="wf-row mt-2"><span class="wf-btn ghost sm wf-grow" style="text-align:center">소셜 로그인 (OAuth2)</span></div>
+        <div class="mt-2" style="text-align:center;font-size:12px">아직 회원이 아니신가요? <a href="#" style="color:#ea580c"><b>회원가입 →</b></a></div>
+      </div>
+    </div>
+  </div>
+  <div class="wf-section">
+    <span class="wf-note">A안(센터 카드) → 스플릿형(좌 브랜드 비주얼 / 우 폼). 비밀번호 보기 토글 추가. 실패 잔여 횟수 안내(5회/30분 잠금), 휴면 → /dormant-restore, OAuth2 신규 → /member/oauth2-join — 플로우 A안 동일.</span>
+  </div>
+</div>
+
+<!-- 가입 위저드 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">회원가입 — 단일 페이지 세로 위저드 (A안: 단계별 페이지 이동)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/join</span></div>
+  <div class="wf-section" style="display:flex;justify-content:center">
+    <div style="width:520px">
+      <!-- 진행 표시 -->
+      <div class="wf-row mb-2" style="justify-content:center">
+        <span class="wf-chip" style="background:#44403c;color:#fffdf9">1 약관</span>
+        <div style="width:30px;height:2px;background:#78716c"></div>
+        <span class="wf-chip" style="background:#44403c;color:#fffdf9">2 본인인증</span>
+        <div style="width:30px;height:2px;background:#d6d3d1"></div>
+        <span class="wf-chip">3 정보입력</span>
+        <div style="width:30px;height:2px;background:#d6d3d1"></div>
+        <span class="wf-chip">4 완료</span>
+      </div>
+
+      <!-- 단계 1: 완료 접힘 -->
+      <div class="wf-box" style="background:#f0ebe1;padding:10px 14px">
+        <div class="wf-row"><b style="font-size:12px">✓ 1. 약관 동의</b><span class="wf-grow"></span><span class="wf-chip">수정</span></div>
+      </div>
+      <!-- 단계 2: 완료 접힘 -->
+      <div class="wf-box mt-2" style="background:#f0ebe1;padding:10px 14px">
+        <div class="wf-row"><b style="font-size:12px">✓ 2. 본인인증 (NICE) — 홍*동 인증됨</b></div>
+      </div>
+      <!-- 단계 3: 현재 펼침 -->
+      <div class="wf-box mt-2 wf-p">
+        <b>3. 정보 입력</b>
+        <div class="mt-2"><span class="wf-input" style="display:block">아이디 <span class="wf-chip">중복확인</span></span></div>
+        <div class="mt-2"><span class="wf-input" style="display:block">비밀번호</span><div class="wf-row mt-2" style="gap:4px"><span class="wf-chip" style="background:#44403c;color:#fffdf9">●</span><span class="wf-chip">●</span><span class="wf-chip">●</span><span style="font-size:11px;color:#78716c">강도 표시</span></div></div>
+        <div class="mt-2"><span class="wf-input" style="display:block">이메일 · 휴대폰 (인증값 자동 채움)</span></div>
+        <div class="mt-2"><span class="wf-btn" style="display:block;text-align:center">가입하기</span></div>
+      </div>
+      <!-- 단계 4 -->
+      <div class="wf-box mt-2" style="padding:10px 14px;color:#a8a29e">
+        <b style="font-size:12px">4. 완료</b>
+      </div>
+    </div>
+  </div>
+  <div class="wf-section">
+    <span class="wf-note">단일 페이지 아코디언 위저드 — 완료 단계는 접혀서 요약 표시, htmx 로 단계 블록 교체(서버 세션에 단계 상태 보관, 새로고침 복원). 약관 전문·PII 암호화(@Encrypt {AG})·log_privacy·CSRF 는 A안 동일.</span>
+  </div>
+</div>
+
+<!-- 마이페이지: 상단 탭 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">마이페이지 — 상단 탭 + 카드 대시보드 (A안: 좌측 메뉴)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/mypage</span></div>
+
+  <!-- 프로필 헤더 -->
+  <div class="wf-band wf-dark">
+    <div class="wf-row">
+      <div class="wf-img" style="width:52px;height:52px;min-height:52px;border-radius:50%"><span></span></div>
+      <div><b>홍길동</b> <span class="wf-chip">MEMBER</span><br/><span style="font-size:11px;color:#a8a29e">ho**@**.com · 최근 로그인 07-07 21:40</span></div>
+      <span class="wf-grow"></span>
+      <span class="wf-btn ghost sm">로그아웃</span>
+    </div>
+  </div>
+  <!-- 탭 -->
+  <div class="wf-band" style="padding:0 16px">
+    <div class="wf-row" style="gap:0">
+      <span style="padding:10px 14px;border-bottom:3px solid #44403c"><b style="font-size:12.5px">대시보드</b></span>
+      <span style="padding:10px 14px;font-size:12.5px;color:#78716c">프로필</span>
+      <span style="padding:10px 14px;font-size:12.5px;color:#78716c">비밀번호</span>
+      <span style="padding:10px 14px;font-size:12.5px;color:#78716c">내 글/댓글</span>
+      <span style="padding:10px 14px;font-size:12.5px;color:#a8a29e">탈퇴</span>
+    </div>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-grid-3">
+      <div class="wf-box wf-p" style="text-align:center"><b style="font-size:16px">3</b><br/><span style="font-size:11px;color:#78716c">내 글</span></div>
+      <div class="wf-box wf-p" style="text-align:center"><b style="font-size:16px">12</b><br/><span style="font-size:11px;color:#78716c">댓글</span></div>
+      <div class="wf-box wf-p" style="text-align:center"><b style="font-size:16px">2</b><br/><span style="font-size:11px;color:#78716c">읽지 않은 알림</span></div>
+    </div>
+    <div class="wf-grid-2 mt-2">
+      <div>
+        <div class="wf-h2 mb-2">최근 내 글</div>
+        <div class="wf-slot" style="min-height:70px;text-align:left;padding:10px">
+          <div class="wf-line thin w80"></div><div class="wf-line thin w60"></div><div class="wf-line thin w80"></div>
+        </div>
+      </div>
+      <div>
+        <div class="wf-h2 mb-2">최근 알림</div>
+        <div class="wf-slot" style="min-height:70px;text-align:left;padding:10px">
+          <div class="wf-line thin w60"></div><div class="wf-line thin w80"></div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">프로필·비밀번호·탈퇴 탭 진입 시 재인증 모달(&lt;dialog&gt; 비밀번호 확인) — A안의 재인증 페이지 이동을 모달로 대체(재인증 후 탭 콘텐츠 htmx 로드). PII 마스킹·no-store·탈퇴 퍼지 배치 흐름 동일.</span>
+  </div>
+</div>
+
+</body>
+</html>

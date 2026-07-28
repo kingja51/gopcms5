@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 C안 — 콘텐츠 페이지</title>
+<link rel="stylesheet" href="wireframe3.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>콘텐츠 페이지 — 인페이지 앵커 탭(스크롤스파이) <span class="wf-badge-c">C안</span></h1>
+  <p><span class="route">GET /{sc}/about</span><span class="route">GET /{sc}/location</span> — LNB 없이 사이드바가 그 역할.
+     긴 콘텐츠는 상단 앵커 탭으로 문서 내 이동.</p>
+</div>
+
+<!-- ── 학과소개 ── -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/about</span></div>
+
+  <div class="wf-frame">
+    <div class="wf-side">
+      <div class="wf-side-logo">인공지능학과<span class="en">KONYANG UNIV.</span></div>
+      <div class="wf-side-search">🔍 통합검색 …</div>
+      <div class="wf-side-item">홈</div>
+      <div class="wf-side-item group">소개 ▾</div>
+      <div class="wf-side-sub active">학과소개 ▾</div>
+      <div class="wf-side-sub2">인사말</div>
+      <div class="wf-side-sub2">비전·인재상</div>
+      <div class="wf-side-sub2">연혁</div>
+      <div class="wf-side-sub">오시는길</div>
+      <div class="wf-side-item group">구성원 ▸</div>
+      <div class="wf-side-item group">교육 ▸</div>
+      <div class="wf-side-item group">연구 ▸</div>
+      <div class="wf-side-item group">커뮤니티 ▸</div>
+      <div class="wf-side-util"><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div>
+    </div>
+
+    <div class="wf-main">
+      <div class="wf-utilbar">홈 › 소개 › 학과소개 <span class="wf-grow"></span><span class="wf-chip">🔍</span></div>
+      <div class="wf-slot" style="border-left:none;border-right:none;padding:4px">SUB_HERO 슬림 밴드 (배너 0건이면 미출력)</div>
+
+      <div class="wf-p">
+        <div class="wf-h1">학과소개</div>
+
+        <!-- 인페이지 앵커 탭 -->
+        <div class="wf-row mt-2" style="gap:0;border-bottom:1px solid #8ba39d">
+          <span class="wf-btn ghost sm" style="border:none;border-bottom:2px solid #0d9488;color:#0d9488;border-radius:0">인사말</span>
+          <span class="wf-btn ghost sm" style="border:none;border-radius:0">비전·인재상</span>
+          <span class="wf-btn ghost sm" style="border:none;border-radius:0">연혁</span>
+        </div>
+        <span class="wf-note">인페이지 앵커 탭(C안 고유) — 탭 = 문서 내 &lt;a href="#인사말"&gt; 앵커 링크(페이지 전환 아님). position:sticky 로 스크롤 시 상단 고정.
+        탭 항목 = menuTree 3뎁스(인사말·비전·인재상·연혁)와 동일 — 사이드바 3뎁스 클릭 시 이 앵커로 진입(메뉴는 3뎁스까지 노출 규칙).
+        스크롤스파이(현재 섹션 강조) = IntersectionObserver 외부 .js + CSP nonce, htmx:load 멱등 초기화(data-initialized 가드). JS 실패 시에도 앵커 점프는 동작(점진적 향상). 섹션 구분은 관리자 콘텐츠의 h2 앵커 자동 추출 또는 콘텐츠 분할 저장.</span>
+
+        <!-- 섹션 1 -->
+        <div class="wf-h2 mt-4" id="s1">인사말</div>
+        <div class="wf-row stretch mt-2">
+          <div class="wf-img" style="width:180px;min-height:120px"><span>학과장 사진</span></div>
+          <div class="wf-grow"><div class="wf-line"></div><div class="wf-line w80"></div><div class="wf-line w60"></div><div class="wf-line w80"></div></div>
+        </div>
+
+        <!-- 섹션 2 -->
+        <div class="wf-h2 mt-4">비전·인재상</div>
+        <div class="wf-grid-3 mt-2">
+          <div class="wf-box wf-p" style="text-align:center"><b style="font-size:12px">창의</b><div class="wf-line thin w80"></div></div>
+          <div class="wf-box wf-p" style="text-align:center"><b style="font-size:12px">실무</b><div class="wf-line thin w60"></div></div>
+          <div class="wf-box wf-p" style="text-align:center"><b style="font-size:12px">융합</b><div class="wf-line thin w80"></div></div>
+        </div>
+
+        <!-- 섹션 3 -->
+        <div class="wf-h2 mt-4">연혁</div>
+        <table class="wf-table mt-2">
+          <tr><th style="width:90px">2026</th><td>AI 융합교육 인증 · ○○○○○○○○</td></tr>
+          <tr><th>2024</th><td>인공지능학과 개설 · ○○○○○</td></tr>
+          <tr><th>2021</th><td>○○○○○○○○○○○○</td></tr>
+        </table>
+        <span class="wf-note">본문 = 관리자 WYSIWYG 콘텐츠(OWASP Sanitizer 통과 HTML). 콘텐츠 안 유틸 클래스는 safelist(samples/_content-utility-safelist.html) 범위만 사용 — 스캔 밖 클래스는 미적용.</span>
+
+        <div class="wf-row mt-4" style="justify-content:center">
+          <span class="wf-btn ghost sm">👍 좋아요 8</span><span class="wf-btn ghost sm">🚩 신고</span>
+        </div>
+        <span class="wf-note">좋아요/신고 — contentId 기준 hx-post, 응답은 카운트 조각 부분갱신. 비로그인 신고는 로그인 유도 &lt;dialog&gt;. 라우트 /{sc}/about 은 tb_role_url_access 에 ANONYMOUS 허용 등록(무매칭 DENY — 빠뜨리면 화면이 안 열림).</span>
+      </div>
+
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#3d5a54"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 오시는길 ── -->
+<div class="wf-doc-header"><h1 style="font-size:15px">오시는길 — /{sc}/location (같은 골격, 캔버스만 교체)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/med/location</span></div>
+
+  <div class="wf-frame" style="min-height:360px">
+    <div class="wf-side">
+      <div class="wf-side-logo">의학과<span class="en">KONYANG UNIV.</span></div>
+      <div class="wf-side-search">🔍 통합검색 …</div>
+      <div class="wf-side-item">홈</div>
+      <div class="wf-side-item group">소개 ▾</div>
+      <div class="wf-side-sub">학과소개 ▸</div>
+      <div class="wf-side-sub active">오시는길</div>
+      <div class="wf-side-item group">구성원 ▸</div>
+      <div class="wf-side-item group">교육 ▸</div>
+      <div class="wf-side-util"><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div>
+    </div>
+
+    <div class="wf-main">
+      <div class="wf-utilbar">홈 › 소개 › 오시는길 <span class="wf-grow"></span><span class="wf-chip">🔍</span></div>
+      <div class="wf-p">
+        <div class="wf-h1">오시는길</div>
+        <div class="wf-img mt-2" style="height:150px"><span>지도 (정적 이미지 자리표시)</span></div>
+        <span class="wf-note">지도 — CSP self-host 원칙과 외부 지도 SDK 충돌: 1) 정적 지도 이미지 + "카카오맵에서 보기" 새창 링크(권장, CSP 무변경) 또는 2) 지도 도메인만 connect-src/script-src 허용(보안 검토 필요). 사이트 공통 결정 사항 — 페이지별 예외 금지.</span>
+        <div class="wf-grid-2 mt-2">
+          <div class="wf-box wf-p">
+            <b style="font-size:12px">주소·연락처</b>
+            <div class="wf-row mt-2"><span class="wf-chip">주소</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+            <div class="wf-row mt-2"><span class="wf-chip">전화</span><div class="wf-line thin w40" style="margin:0;flex:1"></div></div>
+            <div class="wf-row mt-2"><span class="wf-chip">메일</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+          </div>
+          <div class="wf-box wf-p">
+            <b style="font-size:12px">교통편</b>
+            <div class="wf-row mt-2"><span class="wf-chip teal">버스</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+            <div class="wf-row mt-2"><span class="wf-chip teal">자가용</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+            <div class="wf-row mt-2"><span class="wf-chip teal">기차</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+          </div>
+        </div>
+        <span class="wf-note">주소·연락처는 tb_site 확장 속성 재사용(푸터와 동일 소스) — 콘텐츠 본문에 중복 입력 금지. 짧은 페이지라 앵커 탭 미출력(섹션 2개 이하일 때 탭 생략 규칙).</span>
+      </div>
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#3d5a54"></div></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 G안 — 공용 레이아웃</title>
+<link rel="stylesheet" href="wireframe7.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>공용 레이아웃 G — 3단 헤더 + 좌 LNB 3뎁스 + 플로팅 퀵메뉴 <span class="wf-badge-g">G안</span></h1>
+  <p>A·B안과 동일하게 <span class="wf-code">front/layouts/KRDS/krds.html</span> 1개 파일 체계 유지 — 전 페이지 공통 프레임.
+     공공기관 정석 구성: 헤더 3단(유틸바·로고+검색·풀폭 GNB) → SUB_HERO 타이틀 밴드 → breadcrumb 유틸 → LNB+본문 2단 → 풀 사이트맵 푸터.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/…  (모든 페이지 공통 프레임 — {sc}=ai 예시)</span></div>
+
+  <!-- 스킵 링크 -->
+  <div class="wf-band wf-gray" style="padding:4px 16px">
+    <span class="wf-chip">본문 바로가기</span> <span class="wf-chip">주메뉴 바로가기</span>
+    <span class="wf-tag">sr-only, Tab 포커스 시에만 노출 — KWCAG 필수. G안은 본문/주메뉴 2개 제공</span>
+  </div>
+
+  <!-- ① 최상단 유틸바 -->
+  <div class="wf-band wf-util">
+    <div class="wf-row" style="font-size:11px">
+      <span class="wf-chip">건양대학교</span><span class="wf-chip">관련 사이트 ▾</span>
+      <span class="wf-grow"></span>
+      <span class="wf-chip">가⁻</span><span class="wf-chip">가⁺</span>
+      <span class="wf-chip">◐ 고대비</span>
+      <span class="wf-chip">한국어 ▾</span>
+    </div>
+    <span class="wf-note">① 유틸바 — 관련 사이트(타 학과·본교) 점프는 네이티브 <b>&lt;select&gt;</b>+이동 버튼(멀티사이트 CMS 활용, JS 없이도 동작).
+    <b>글자크기 가⁻/가⁺</b> = html 루트 font-size 3단계 토글(localStorage 저장), <b>고대비</b> = &lt;html&gt; 에 <span class="wf-code">hc</span> 클래스 토글 — 템플릿 CSS는 .hc 램프반전 필수.
+    외부 .js + CSP nonce, document 이벤트 위임(closest('[data-action]')) 1회 등록.</span>
+  </div>
+
+  <!-- ② 로고 + 통합검색 + 로그인/알림 -->
+  <div class="wf-band">
+    <div class="wf-row">
+      <div style="width:260px"><b style="font-size:17px">인공지능학과</b> <span style="font-size:10px;color:#9ca3af">KONYANG UNIV.</span></div>
+      <span class="wf-grow"></span>
+      <span class="wf-input" style="width:320px">검색어를 입력하세요</span><span class="wf-btn navy sm">🔍 검색</span>
+      <span class="wf-grow"></span>
+      <span class="wf-chip">🔔 알림</span><span class="wf-chip">로그인</span><span class="wf-chip">회원가입</span>
+    </div>
+    <span class="wf-note">② 로고 밴드 — 로고(tb_site 사이트명) + <b>중앙 통합검색 인풋</b>(GET /search?siteCode={sc}&keyword= 로 submit — 순수 &lt;form&gt;, JS 불필요)
+    + 로그인/알림. 로그인 시 "홍길동님 · 로그아웃 · 마이페이지" 로 스왑(서버 렌더). 알림 종 = /notification, 미읽음 뱃지는 htmx 폴링 조각.</span>
+  </div>
+
+  <!-- ③ 풀폭 GNB 바 -->
+  <div class="wf-gnbbar">
+    <span class="gnb-item on">소개</span><span class="gnb-item">구성원</span><span class="gnb-item">교육</span><span class="gnb-item">연구</span><span class="gnb-item">커뮤니티</span>
+  </div>
+
+  <!-- GNB 전체 펼침 패널 -->
+  <div class="wf-gnb-panel">
+    <div class="col"><b>소개</b>
+      <span>학과소개</span>
+      <span class="s3">인사말</span><span class="s3">비전·인재상</span><span class="s3">연혁</span>
+      <span>오시는길</span></div>
+    <div class="col"><b>구성원</b>
+      <span>교수진</span>
+      <span class="s3">전임교원</span><span class="s3">겸임·초빙교원</span><span class="s3">명예교수</span>
+      <span>직원</span></div>
+    <div class="col"><b>교육</b>
+      <span>교과과정</span>
+      <span class="s3">학부</span><span class="s3">대학원</span>
+      <span>수업계획서</span><span>학사일정</span></div>
+    <div class="col"><b>연구</b>
+      <span>연구실</span><span>연구성과</span>
+      <span class="s3">논문</span><span class="s3">특허·기술이전</span></div>
+    <div class="col"><b>커뮤니티</b>
+      <span>공지사항</span>
+      <span class="s3">학사</span><span class="s3">장학</span><span class="s3">취업</span>
+      <span>학과소식</span><span>세미나</span><span>자료실</span>
+      <span class="s3">학사서식</span><span class="s3">강의자료</span></div>
+  </div>
+  <div class="wf-band" style="padding:6px 16px;border-top:none">
+    <span class="wf-note" style="margin-top:0">③ 풀폭 GNB — 1뎁스 5그룹 상시 노출, <b>호버/포커스 시 모든 그룹의 하위메뉴가 한 번에 펼쳐지는 전체 펼침형 패널</b>(공공 표준 패턴).
+    패널 안은 2뎁스 리스트 + 3뎁스 들여쓰기(· 표기)로 표현. 개별 드롭다운이 아니라 패널 1장이라 키보드 탐색이 단순(Tab 순차 이동, ESC 닫기) —
+    1뎁스 트리거에 <b>aria-expanded 상태 반영</b>, 마우스 없는 사용자를 위해 포커스 진입 시에도 열림(KWCAG 2.1 키보드 접근성).
+    데이터 = siteContext.menuTree(tb_menu, site_code 스코프) — 푸터 사이트맵·사이트맵 페이지와 동일 소스. 현재 그룹 = on(흰 밑줄). 모바일은 아코디언 &lt;details&gt; 전환.</span>
+    <span class="wf-note"><b>메뉴 뎁스 출력 규칙(전 안 공통)</b> — 메뉴(GNB 패널·LNB)는 <b>1~3뎁스까지만 노출</b>. 4뎁스(전공필수/전공선택·석사/박사과정·휴복학/졸업 서식)는
+    메뉴에 넣지 않고 <b>3뎁스 페이지 내 탭/필터로 처리</b>. 사이트맵 페이지만 1~4뎁스 전체 전개, 푸터 사이트맵은 1~2뎁스 요약 —
+    전부 siteContext.menuTree 하나(depth 1~4 저장)를 렌더 뎁스만 달리해 재사용.</span>
+  </div>
+
+  <!-- SUB_HERO 타이틀 밴드 -->
+  <div class="wf-hero-band">
+    <b>교수진</b>
+    <span class="sub">SUB_HERO 배경 이미지 밴드 (배너 없으면 네이비 단색 폴백)</span>
+  </div>
+  <div class="wf-band" style="padding:6px 16px">
+    <span class="wf-note" style="margin-top:0">타이틀 밴드 — 페이지 제목(h2) + SUB_HERO 배경. 배경 이미지 = GET /api/v1/sites/{sc}/banners?location=SUB_HERO (htmx 조각, 0건이면 단색 밴드 — 레이아웃 붕괴 없음).
+    홈(/{sc}/home)은 이 밴드 대신 MAIN_HERO 캐러셀이 담당 — SUB_HERO 미출력.</span>
+  </div>
+
+  <!-- breadcrumb + 본문 유틸 -->
+  <div class="wf-crumb">
+    <div class="wf-row">
+      <span class="path">🏠 홈 › 구성원 › <b>교수진</b></span>
+      <span class="wf-grow"></span>
+      <span class="wf-chip">🖨 인쇄</span><span class="wf-chip">🔗 URL 복사</span><span class="wf-chip">📤 공유</span>
+    </div>
+    <span class="wf-note">breadcrumb·유틸 행 — menuTree 경로 자동 생성. 인쇄 = window.print()(@media print 스타일 별도), URL 복사 = Clipboard API + "복사됨" 토스트,
+    공유 = SNS 링크(새 창, rel="noopener"). 전부 data-action 위임 — 인라인 onclick 금지.</span>
+  </div>
+
+  <!-- LNB + 본문 2단 -->
+  <div class="wf-band" style="padding:16px">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="lnb-title">구성원</div>
+        <div class="d2 active">교수진 <span class="fold" style="color:#e0e7ff">▾</span></div>
+        <div class="d3 active">전임교원</div>
+        <div class="d3">겸임·초빙교원</div>
+        <div class="d3">명예교수</div>
+        <div class="d2" style="border-bottom:none">직원 <span class="fold">▸</span></div>
+      </div>
+      <div class="wf-grow">
+        <div class="wf-slot" style="min-height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+          <b style="font-size:15px">본문 — layout:fragment="content"</b>
+          <span>서브페이지 = LNB(2~3뎁스) + 본문 2단</span>
+          <span style="font-size:11px">홈·로그인·검색 등 LNB 없는 페이지는 1단 풀폭 렌더</span>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">LNB 3뎁스 — menuTree에서 현재 그룹 서브트리만 추출(fragments/lnb). 1뎁스 = 네이비 타이틀, 2뎁스 = 행,
+    <b>현재 2뎁스만 3뎁스 펼침·나머지 상위는 접기(▸)</b> — 접기/펼치기는 네이티브 &lt;details&gt;/&lt;summary&gt;로 JS 없이 구현(&lt;summary&gt;가 aria-expanded 상태를 자동 전달).
+    현재 위치 = active(네이비 배경/좌측 인디케이터) + aria-current="page". 모바일은 본문 위 가로 스크롤 칩으로 변환.
+    <b>LNB도 3뎁스까지만</b> — 4뎁스는 3뎁스 페이지 내 탭/필터(예: 교육 › 교과과정 › 학부 페이지의 전공필수/전공선택 탭 — content.html 참조).</span>
+  </div>
+
+  <!-- 플로팅 퀵메뉴 (해부도용 정적 배치) -->
+  <div class="wf-band wf-gray">
+    <div class="wf-row" style="align-items:flex-start">
+      <div class="wf-quick inline">
+        <div class="q-title">퀵메뉴</div>
+        <div class="q-item"><span class="ico">📢</span>공지사항</div>
+        <div class="q-item"><span class="ico">👨‍🏫</span>교수진</div>
+        <div class="q-item"><span class="ico">📚</span>수업계획서</div>
+        <div class="q-item"><span class="ico">📅</span>학사일정</div>
+        <div class="q-item"><span class="ico">📍</span>오시는길</div>
+        <div class="q-top">TOP ↑</div>
+      </div>
+      <div class="wf-grow">
+        <span class="wf-note" style="margin-top:0">우측 플로팅 퀵메뉴 — <b>position:fixed, 우측 중단 고정</b>(이 와이어프레임에선 각 페이지 캔버스 우측에 겹쳐 표시).
+        자주 찾는 메뉴 5개(tb_menu 의 quick_yn 플래그 또는 사이트 설정) + TOP 버튼(스크롤 상단 이동, 스크롤 300px 이후 표시).
+        1024px 미만에서는 숨김(모바일은 하단 TOP 버튼만). 본문과 겹치지 않게 max-width 캔버스 밖 여백에 배치.
+        포커스 순서는 본문 뒤(푸터 앞) — 키보드 사용자의 본문 도달을 방해하지 않는다.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 좋아요/신고 밴드 -->
+  <div class="wf-band" style="text-align:center">
+    <span class="wf-btn ghost sm">👍 좋아요 12</span> <span class="wf-btn ghost sm">🚩 신고</span>
+    <span class="wf-note" style="text-align:left">좋아요/신고 밴드 — contentId 있는 콘텐츠 페이지에서만(A안 동일). htmx POST 후 카운트 블록 부분갱신, 신고 사유 입력은 네이티브 &lt;dialog&gt;.</span>
+  </div>
+
+  <!-- 푸터: 배너존 + 풀 사이트맵 + 저작권 -->
+  <div class="wf-band wf-gray">
+    <div class="wf-row">
+      <span class="wf-chip">◂</span>
+      <div class="wf-img" style="flex:1;height:40px;min-height:40px"><span>배너존 (유관기관 로고 롤링 4~6개)</span></div>
+      <span class="wf-chip">▸</span><span class="wf-chip">⏸</span>
+    </div>
+    <span class="wf-note">배너존 — GET /api/v1/sites/{sc}/banners?location=FOOTER_BANNER 롤링. <b>자동 롤링에는 반드시 일시정지(⏸) 버튼</b> — KWCAG 정지 기능 제공.</span>
+  </div>
+  <div class="wf-band wf-dark" style="padding:0">
+    <div class="wf-footmap">
+      <div class="col"><b>소개</b><span>학과소개</span><span>오시는길</span></div>
+      <div class="col"><b>구성원</b><span>교수진</span><span>직원</span></div>
+      <div class="col"><b>교육</b><span>교과과정</span><span>수업계획서</span><span>학사일정</span></div>
+      <div class="col"><b>연구</b><span>연구실</span><span>연구성과</span></div>
+      <div class="col"><b>커뮤니티</b><span>공지사항</span><span>학과소식</span><span>세미나</span><span>자료실</span></div>
+    </div>
+  </div>
+  <div class="wf-band wf-dark" style="border-bottom:none">
+    <div class="wf-row">
+      <div class="wf-grow"><div class="wf-line w40" style="background:#4b5563"></div><div class="wf-line thin w60" style="background:#374151"></div></div>
+      <span class="wf-chip"><b>개인정보처리방침</b></span><span class="wf-chip">이메일무단수집거부</span><span class="wf-chip">저작권정책</span>
+    </div>
+    <span class="wf-note">푸터 — <b>풀 사이트맵형(5그룹 컬럼 전개), 단 1~2뎁스 요약</b>(3~4뎁스 미노출 — 4뎁스 전체 전개는 사이트맵 페이지 전담):
+    GNB 패널·사이트맵 페이지와 동일한 menuTree 렌더(fragments/site-footer), 렌더 뎁스만 다름.
+    개인정보처리방침은 굵게(법정 표기 관례). 주소·연락처·저작권 = tb_site 설정.</span>
+  </div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">A안 → G안 구현 시 바뀌는 것</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <table class="wf-table">
+      <tr><th style="width:200px">변경 지점</th><th>내용</th></tr>
+      <tr><td>krds.html 헤더부</td><td>마스트헤드+GNB 밴드 → <b>유틸바 + 로고/검색 밴드 + 풀폭 GNB(전체 펼침 패널)</b> 3단. 패널은 CSS :hover/:focus-within 우선, 보조 JS 최소</td></tr>
+      <tr><td>fragments/lnb (신설)</td><td>menuTree 현재 그룹 서브트리 3뎁스 렌더 — &lt;details&gt; 접기/펼치기, aria-current</td></tr>
+      <tr><td>fragments/quickmenu (신설)</td><td>플로팅 퀵메뉴 + TOP — quick_yn 메뉴 5개, position:fixed</td></tr>
+      <tr><td>breadcrumb 조각</td><td>독립 밴드 유지 + 우측에 인쇄·URL복사·공유 유틸 추가</td></tr>
+      <tr><td>fragments/site-footer</td><td>1줄 푸터 → 풀 사이트맵형(menuTree 5컬럼) + 배너존 롤링</td></tr>
+      <tr><td>변경 없음</td><td>라우트·컨트롤러·tb_menu·tb_role_url_access·팝업/좋아요 조각·CSP/htmx 규약·글자크기/고대비 토글 스크립트 계층</td></tr>
+    </table>
+    <span class="wf-note">스크립트 계층은 A·B안과 동일 규약 — 외부 .js + CSP nonce, self-host(CDN 금지), 이벤트 위임 1회 등록, htmx:load 멱등 초기화(data-initialized 가드), 인라인 스크립트/핸들러 금지.</span>
+  </div>
+</div>
+
+</body>
+</html>

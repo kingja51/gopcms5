@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>PCMS 2026 와이어프레임 C안 — 목차 & A/B/C 비교</title>
+<link rel="stylesheet" href="wireframe3.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="../index.html">← 전체 목차</a>
+  <h1>PCMS 2026-001 사용자 사이트 와이어프레임 <span class="wf-badge-c">C안 (frame003)</span></h1>
+  <p>동일한 KRDS 공용 레이아웃 체계·라우트를 유지하되 <b>글로벌 내비를 좌측 고정 다크 사이드바로 옮긴 대안 설계</b>.
+     상단 가로 GNB 가 없고, 콘텐츠 영역 상단에는 얇은 유틸바(breadcrumb + 검색)만 남는다.</p>
+  <p style="margin-top:6px"><b>{sc}</b> = siteCode(학과코드 = 서브도메인, 예: ai·med·me). 라우트·보안·데이터 구조는 A안과 동일 — 달라지는 것은 프레젠테이션 계층뿐.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">① C안 핵심 차이 (vs A안·B안)</div>
+    <table class="wf-table">
+      <tr><th style="width:110px">항목</th><th>A안 (frame001)</th><th>B안 (frame002)</th><th>C안 (frame003)</th></tr>
+      <tr><td>글로벌 내비</td><td>상단 GNB 밴드 + 호버 드롭다운</td><td>콤팩트 헤더 + ☰ 메가메뉴 오버레이</td><td><b>좌측 고정 다크 사이드바(~220px)</b> — 5그룹 아코디언, 상단 가로 GNB 없음. 모바일은 오프캔버스 드로어</td></tr>
+      <tr><td>서브페이지 구조</td><td>본문 1단(와이드) + breadcrumb 밴드</td><td>페이지 타이틀 밴드 + 좌측 LNB 2단</td><td><b>사이드바가 LNB 겸임</b> — 본문 상단 얇은 유틸바(breadcrumb+🔍)만, 콘텐츠는 인페이지 앵커 탭(스크롤스파이)</td></tr>
+      <tr><td>홈 히어로</td><td>풀폭 배너 캐러셀</td><td>스플릿 히어로(좌 카피·우 이미지)</td><td><b>와이드 히어로(이미지+오버레이 카피)</b> → 공지/일정 2컬럼 → 교수진·연구실 <b>가로 스크롤 카드 레일</b></td></tr>
+      <tr><td>게시판</td><td>테이블형 목록 → 상세 페이지</td><td>카드형 리스트 → 상세 페이지</td><td><b>2-pane 분할 뷰</b>(좌 목록 40% + 우 미리보기/상세 60%, 클릭 시 hx-get 부분갱신). 모바일은 목록→상세 페이지 전환</td></tr>
+      <tr><td>통합검색</td><td>독립 결과 페이지</td><td>전체화면 검색 오버레이 + 필터 2단</td><td><b>사이드바 상단 인풋 상시 노출</b> + 결과는 콘텐츠 영역 <b>무한스크롤</b>(htmx revealed)</td></tr>
+      <tr><td>마이페이지</td><td>좌측 메뉴 + 대시보드</td><td>상단 탭 + 카드 대시보드</td><td><b>콘텐츠 영역 카드 대시보드</b>(사이드바 프레임 유지, 별도 메뉴·탭 없음)</td></tr>
+    </table>
+    <span class="wf-note">세 안 모두 KRDS 규약(시맨틱 토큰·htmx+순수JS·네이티브 &lt;dialog&gt;/&lt;details&gt;·CSP nonce·이벤트 위임) 안에서 구현 가능.
+    사이드바 아코디언·사이트맵·모바일 드로어는 전부 siteContext.menuTree 재사용 — 추가 데이터 불필요.</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">② 와이어프레임 목차</div>
+    <table class="wf-table">
+      <tr><th style="width:220px">파일</th><th>화면</th><th>대표 라우트</th></tr>
+      <tr><td><a href="layout.html" style="color:#0d9488">layout.html</a></td><td>공용 레이아웃 C — 다크 사이드바 해부도 + 모바일 오프캔버스 드로어</td><td><span class="wf-code">전 페이지 공통 프레임</span></td></tr>
+      <tr><td><a href="home.html" style="color:#0d9488">home.html</a></td><td>홈 — 와이드 히어로·공지/일정 2컬럼·포토앨범/연구실 카드 레일</td><td><span class="wf-code">/{sc}/home</span></td></tr>
+      <tr><td><a href="content.html" style="color:#0d9488">content.html</a></td><td>콘텐츠 — 인페이지 앵커 탭(스크롤스파이) 학과소개·오시는길</td><td><span class="wf-code">/{sc}/about · /{sc}/location</span></td></tr>
+      <tr><td><a href="program.html" style="color:#0d9488">program.html</a></td><td>프로그램 — 좌측 필터 패널 + 카드 그리드 교수진 (직원·연구실·수업계획서 변형)</td><td><span class="wf-code">/prg/{program}/{sc}</span></td></tr>
+      <tr><td><a href="board.html" style="color:#0d9488">board.html</a></td><td>게시판 — 2-pane 분할 뷰(목록+미리보기, 댓글·좋아요/신고 포함)</td><td><span class="wf-code">/bbs/{sc}/{bbsCode}</span></td></tr>
+      <tr><td><a href="member.html" style="color:#0d9488">member.html</a></td><td>회원 — 센터 카드 로그인·세로 스텝퍼 가입·카드 대시보드 마이페이지</td><td><span class="wf-code">/member/**</span></td></tr>
+      <tr><td><a href="search-sitemap.html" style="color:#0d9488">search-sitemap.html</a></td><td>검색(무한스크롤 결과) · 사이트맵(사이드바 트리 풀 확장 뷰 — 4뎁스 전체)</td><td><span class="wf-code">/search · /{sc}/sitemap</span></td></tr>
+      <tr><td><a href="common.html" style="color:#0d9488">common.html</a></td><td>공통 프로그램·보조 화면 (학사일정·알림함·계정찾기·설문·민원·파일뷰어·오류)</td><td><span class="wf-code">/schedule · /notification · /member/find-* · /survey · /complaint</span></td></tr>
+    </table>
+    <span class="wf-note">표기 규칙: 회백 실선 = 정적 마크업, 청록 점선 = htmx/JS 동적 슬롯, 청록 주석 = 구현 메모. (A안 파랑·B안 주황과 구분)
+    브라우저바 URL 은 개발 서버 형식(<span class="wf-code">http://127.0.0.1:8080/{sc}/…</span>) — 운영은 서브도메인이 {sc} 로 해석됨.</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">③ 정보구조(IA) — A안과 동일 (메뉴 5그룹 · 최대 4뎁스)</div>
+    <div class="wf-tree">
+/{sc}/home <span class="dim">· 소개(학과소개 /{sc}/about · 오시는길 /{sc}/location) · 구성원(교수진 /prg/faculty/{sc} · 직원 /prg/staff/{sc})</span><br/>
+<span class="dim">· 교육(교과과정 /{sc}/curriculum · 수업계획서 /prg/syllabus/{sc} · 학사일정 /schedule/{master}) · 연구(연구실 /prg/lab/{sc} · 연구성과 /bbs/{sc}/pub)</span><br/>
+<span class="dim">· 커뮤니티(공지 /bbs/{sc}/notice · 학과소식 /bbs/{sc}/news · 세미나 · 자료실 /bbs/{sc}/archive) · 회원(/member/**) · /search</span><br/>
+<span class="dim">· 3뎁스 예: 교과과정 › 학부·대학원, 공지 카테고리(학사·장학·취업) — 4뎁스 예: 학부 › 전공필수·전공선택, 학사서식 › 휴·복학/졸업 서식</span>
+    </div>
+    <span class="wf-note"><b>메뉴 뎁스 출력 규칙(전 안 공통)</b> — 사이드바 메뉴(아코디언)는 <b>1~3뎁스까지만 노출</b>, 4뎁스는 메뉴에 노출하지 않고 3뎁스 페이지 내 탭/필터로 처리.
+    <b>사이트맵(/{sc}/sitemap)만 1~4뎁스 전체 전개</b>. 데이터는 siteContext.menuTree 하나(depth 1~4 저장) — 사이드바·사이트맵이 렌더 뎁스만 달리한다.</span>
+    <span class="wf-note">IA·라우트·tb_menu 시드는 A안과 동일 — 달라지는 것은 프레젠테이션 계층뿐. C안은 같은 메뉴 트리를 사이드바 아코디언으로 렌더한다.
+    상세 트리는 <a href="../frame001/index.html" style="color:#0f766e">frame001/index.html</a> ② 참조. 새 URL 은 tb_role_url_access 등록 필수(무매칭 DENY) — 규칙도 세 안 공통.</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 D안 — 통합검색 · 사이트맵</title>
+<link rel="stylesheet" href="wireframe4.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>통합검색 · 사이트맵 <span class="wf-badge-d">D안</span></h1>
+  <p><span class="route">GET /search?siteCode={sc}&amp;keyword=</span><span class="route">GET /{sc}/sitemap</span> — 검색 = 풀스크린 오버레이(거대 인풋) + 협폭 에디토리얼 결과, 사이트맵 = 풀스크린 메뉴와 동일한 거대 타이포 페이지.</p>
+</div>
+
+<!-- 검색 오버레이 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/me/home  (헤더 🔍 클릭 시 오버레이)</span></div>
+
+  <div class="wf-overlay">
+    <div class="wf-row"><b style="color:#b7a8e3">검색 오버레이 (&lt;dialog&gt; 전체화면)</b><span class="wf-grow"></span><span class="wf-chip" style="background:rgba(255,255,255,.14);color:#fff">✕ 닫기 (ESC)</span></div>
+    <div style="padding:30px 8px 18px">
+      <div class="wf-display xl" style="color:#4b4468">무엇을 찾으시나요<span style="color:#7c3aed">|</span></div>
+      <div style="height:2px;background:#3a3153;margin-top:10px"></div>
+      <div class="wf-row mt-4" style="font-size:11px;color:#b7abd8">
+        <span>인기 검색어</span>
+        <span class="wf-chip" style="background:#2c2547;color:#dcd6ee">수강신청</span>
+        <span class="wf-chip" style="background:#2c2547;color:#dcd6ee">장학금</span>
+        <span class="wf-chip" style="background:#2c2547;color:#dcd6ee">졸업요건</span>
+        <span class="wf-grow"></span><span>Enter ↵ = 결과 페이지로 이동</span>
+      </div>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 14px">
+    <span class="wf-note">검색 오버레이 — 거대 인풋 타이포(placeholder 가 그대로 display 크기, <span class="wf-code">text-display-1</span> 토큰 범위). 네이티브 <span class="wf-code">&lt;dialog&gt;</span> + 자동 포커스 + ESC 닫기.
+    풀스크린 메뉴와 같은 다크 면 — 열기/닫기는 이벤트 위임 <span class="wf-code">closest('[data-action="search-open"]')</span>, 외부 .js + CSP nonce. Enter 시 <span class="wf-code">GET /search?siteCode={sc}&amp;keyword=</span> 일반 내비게이션(오버레이 안에서 결과 렌더하지 않음 — URL 공유 가능성 우선).</span>
+  </div>
+</div>
+
+<!-- 검색 결과 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">검색 결과 — /search?siteCode=me&amp;keyword=수강 (협폭 에디토리얼 리스트)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/search?siteCode=me&amp;keyword=수강</span></div>
+
+  <div class="wf-shrinkbar">
+    <b style="font-size:13px">기계공학과</b>
+    <span class="wf-grow"></span>
+    <span class="wf-chip">🔔</span><span class="wf-chip">🔍</span><span class="wf-chip">◐</span><span class="wf-btn sm">☰ 메뉴</span>
+  </div>
+
+  <div class="wf-band" style="padding:28px 24px">
+    <div class="wf-narrow">
+      <span class="wf-kicker">Search</span>
+      <div class="wf-display sm mt-2">“수강” <span style="color:#8b84a3;font-weight:400;font-size:20px">검색 결과 24건</span></div>
+
+      <!-- 범위 탭 -->
+      <div class="wf-row mt-4">
+        <span class="wf-chip on">전체 24</span><span class="wf-chip">게시글 18</span><span class="wf-chip">콘텐츠 4</span><span class="wf-chip">첨부 2</span>
+        <span class="wf-grow"></span><span class="wf-chip">정확도순 ▾</span>
+      </div>
+
+      <!-- 결과 리스트 -->
+      <div class="wf-slot mt-2" style="text-align:left;padding:14px">
+        <div style="padding:10px 4px;border-bottom:1px solid #e9e4f4">
+          <span style="font-size:10px;color:#7c3aed">공지사항</span>
+          <b style="font-size:14px;display:block;margin-top:2px">2026-2학기 <mark style="background:#ede6fd;color:#6d28d9">수강</mark>신청 안내 ─────</b>
+          <div class="wf-line thin w80"></div>
+          <span style="font-size:11px;color:#8b84a3">/bbs/me/notice · 2026-07-01</span>
+        </div>
+        <div style="padding:10px 4px;border-bottom:1px solid #e9e4f4">
+          <span style="font-size:10px;color:#7c3aed">콘텐츠</span>
+          <b style="font-size:14px;display:block;margin-top:2px">교과과정 — <mark style="background:#ede6fd;color:#6d28d9">수강</mark> 로드맵 ──</b>
+          <div class="wf-line thin w60"></div>
+          <span style="font-size:11px;color:#8b84a3">/me/curriculum</span>
+        </div>
+        <div style="padding:10px 4px">
+          <span style="font-size:10px;color:#7c3aed">수업계획서</span>
+          <b style="font-size:14px;display:block;margin-top:2px">기계설계 — <mark style="background:#ede6fd;color:#6d28d9">수강</mark> 안내 첨부 ────</b>
+          <div class="wf-line thin w80"></div>
+          <span style="font-size:11px;color:#8b84a3">/prg/syllabus/me</span>
+        </div>
+      </div>
+      <div class="wf-row mt-2" style="justify-content:center">
+        <span class="wf-chip">‹</span><span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">›</span>
+      </div>
+    </div>
+    <span class="wf-note">결과 = 협폭 에디토리얼 리스트(카드 아님 — 타이포 위계 큰 제목 + 출처 경로 + 날짜, 행 구분은 옅은 선 하나만 허용). 키워드 하이라이트 = <span class="wf-code">&lt;mark&gt;</span>(보라 면).
+    범위 탭·페이징 = htmx 부분갱신(<span class="wf-code">hx-get="/search?…&amp;scope="</span>), URL 쿼리 동기화(hx-push-url)로 결과 공유 가능. 검색 입력 Sanitize + <span class="wf-code">#{}</span> 바인딩(SQLi 금지), siteCode 는 URL 이 진실.</span>
+  </div>
+</div>
+
+<!-- 사이트맵 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">사이트맵 — /{sc}/sitemap (거대 타이포 페이지)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/me/sitemap</span></div>
+
+  <div class="wf-overlay" style="padding:30px 34px">
+    <span class="wf-kicker" style="color:#b7a8e3">Sitemap — 1~4뎁스 전체 전개</span>
+    <div class="wf-row stretch mt-4" style="gap:30px">
+      <div style="flex:1">
+        <div class="item">소개</div>
+        <div class="d2">학과소개 → /{sc}/about</div>
+        <div class="d3">인사말 · 비전·인재상 · 연혁 <span class="hint">(페이지 내 앵커/탭)</span></div>
+        <div class="d2">오시는길 → /{sc}/location</div>
+        <div class="item mt-4">구성원</div>
+        <div class="d2">교수진 → /prg/faculty/{sc}</div>
+        <div class="d3">전임교원 · 겸임·초빙 · 명예교수</div>
+        <div class="d2">직원 → /prg/staff/{sc}</div>
+        <div class="item mt-4">교육</div>
+        <div class="d2">교과과정 → /{sc}/curriculum</div>
+        <div class="d3">학부</div>
+        <div class="d4">전공필수 · 전공선택</div>
+        <div class="d3">대학원</div>
+        <div class="d4">석사과정 · 박사과정</div>
+        <div class="d2">수업계획서 → /prg/syllabus/{sc}</div>
+        <div class="d2">학사일정 → /schedule/{master}</div>
+      </div>
+      <div style="flex:1">
+        <div class="item">연구</div>
+        <div class="d2">연구실 → /prg/lab/{sc}</div>
+        <div class="d2">연구성과 → /bbs/{sc}/pub</div>
+        <div class="d3">논문 · 특허·기술이전 <span class="hint">(게시판 카테고리)</span></div>
+        <div class="item mt-4">커뮤니티</div>
+        <div class="d2">공지사항 → /bbs/{sc}/notice</div>
+        <div class="d3">학사 · 장학 · 취업 <span class="hint">(카테고리 필터)</span></div>
+        <div class="d2">학과소식 → /bbs/{sc}/news</div>
+        <div class="d2">세미나 → /bbs/{sc}/seminar</div>
+        <div class="d2">자료실 → /bbs/{sc}/archive</div>
+        <div class="d3">학사서식</div>
+        <div class="d4">휴·복학 서식 · 졸업 서식</div>
+        <div class="d3">강의자료</div>
+        <div class="item mt-4" style="font-size:20px;color:#b7abd8">회원 · 검색</div>
+        <div class="d2" style="color:#b7abd8">로그인 · 회원가입 · 마이페이지 · 통합검색</div>
+      </div>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 14px">
+    <span class="wf-note">사이트맵 = 풀스크린 오버레이 메뉴와 동일한 거대 타이포 문법의 <b>일반 페이지</b>(URL 존재 — 접근성·SEO).
+    <b>출력 규칙: 메뉴(풀스크린 오버레이)는 3뎁스까지, 사이트맵만 4뎁스 전체 전개 — 동일 menuTree 재사용</b>(siteContext.menuTree 하나에 depth 1~4 저장, 렌더 뎁스만 달리함).
+    1뎁스 = <span class="wf-code">text-display-md</span> 링크(그룹 첫 메뉴로 이동), 2뎁스 = 일반 링크, 3·4뎁스 = 위계 축소·들여쓰기(4뎁스는 3뎁스 페이지 내 탭/필터 앵커로 연결). /{sc}/sitemap 도 tb_role_url_access 등록 필수(무매칭 DENY).</span>
+  </div>
+</div>
+
+</body>
+</html>

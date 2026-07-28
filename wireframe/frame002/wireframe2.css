@@ -1,0 +1,135 @@
+/* ============================================================
+   PCMS 2026-001 와이어프레임 B안(frame002) 공용 스타일
+   - A안(frame001)과 구분: 손그림 스케치 풍 + 주황 주석
+   - 그레이스케일 = 화면 구조, 주황 = 주석/설명, 점 배경 = 동적 슬롯
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+  background: #f5f0e8;            /* 크라프트지 느낌 */
+  color: #44403c;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 24px;
+}
+
+/* ── 페이지 머리말 ── */
+.wf-doc-header { max-width: 1080px; margin: 0 auto 20px; }
+.wf-doc-header h1 { font-family: "Segoe Print", "Malgun Gothic", cursive; font-size: 20px; color: #292524; margin-bottom: 4px; }
+.wf-doc-header p  { color: #57534e; font-size: 13px; }
+.wf-doc-header .route { display:inline-block; font-family: Consolas, monospace; background:#292524; color:#f5f0e8; padding:2px 8px; border-radius:4px; font-size:12px; margin:4px 4px 0 0; }
+.wf-back { display:inline-block; margin-bottom:12px; color:#ea580c; text-decoration:none; font-size:12px; }
+.wf-back:hover { text-decoration:underline; }
+.wf-badge-b { display:inline-block; background:#ea580c; color:#fff; font-size:11px; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:8px; font-family:"Segoe UI",sans-serif; }
+
+/* ── 브라우저 프레임(캔버스) — 손그림 테두리 ── */
+.wf-canvas {
+  max-width: 1080px; margin: 0 auto 40px; background: #fffdf9;
+  border: 2px solid #57534e; overflow: hidden;
+  border-radius: 12px 6px 14px 6px / 6px 14px 6px 12px;   /* 삐뚤한 스케치 느낌 */
+  box-shadow: 4px 4px 0 rgba(68,64,60,.18);
+}
+.wf-browserbar {
+  display: flex; align-items: center; gap: 8px;
+  background: #e7e0d5; padding: 8px 12px; border-bottom: 2px solid #57534e;
+}
+.wf-browserbar .dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #78716c; background: transparent; }
+.wf-browserbar .url {
+  flex: 1; background: #fffdf9; border: 1.5px solid #a8a29e; border-radius: 12px;
+  padding: 2px 12px; font-family: Consolas, monospace; font-size: 12px; color: #44403c;
+}
+
+/* ── 기본 박스 — 모서리가 살짝 삐뚤한 스케치 박스 ── */
+.wf-box  {
+  border: 1.5px solid #78716c; background: #fffdf9;
+  border-radius: 8px 3px 9px 3px / 3px 9px 3px 8px;
+}
+.wf-band { border-bottom: 1.5px solid #78716c; padding: 10px 16px; }
+.wf-gray { background: #f0ebe1; }
+.wf-dark { background: #44403c; color: #e7e0d5; }
+
+/* 동적 슬롯(htmx/JS 렌더) — 점 배경 */
+.wf-slot {
+  border: 2px dashed #a8a29e; color: #78716c;
+  background: radial-gradient(#d6d3d1 1px, #faf7f0 1px);
+  background-size: 10px 10px;
+  padding: 10px 14px; text-align: center;
+  border-radius: 8px 3px 9px 3px / 3px 9px 3px 8px;
+}
+
+/* 이미지 자리표시(빗금 박스) */
+.wf-img {
+  position: relative; border: 1.5px solid #78716c;
+  background: repeating-linear-gradient(45deg, #efe9de, #efe9de 6px, #e2dccf 6px, #e2dccf 12px);
+  display: flex; align-items: center; justify-content: center;
+  color: #78716c; font-size: 11px; overflow: hidden; min-height: 60px;
+  border-radius: 8px 3px 9px 3px / 3px 9px 3px 8px;
+}
+.wf-img span { position: relative; z-index: 1; background: #fffdf9; padding: 1px 8px; border-radius: 8px; border: 1px solid #d6d3d1; }
+
+/* ── 컨트롤 목업 ── */
+.wf-btn {
+  display: inline-block; border: 1.5px solid #44403c; background: #44403c; color: #fffdf9;
+  padding: 5px 14px; font-size: 12px; white-space: nowrap;
+  border-radius: 10px 4px 10px 4px / 4px 10px 4px 10px;
+}
+.wf-btn.ghost { background: #fffdf9; color: #44403c; }
+.wf-btn.sm { padding: 2px 8px; font-size: 11px; }
+.wf-input {
+  border: 1.5px solid #a8a29e; background: #fffdf9;
+  padding: 5px 10px; color: #a8a29e; font-size: 12px; display: inline-block;
+  border-radius: 8px 3px 8px 3px / 3px 8px 3px 8px;
+}
+.wf-chip { display:inline-block; border:1px solid #a8a29e; border-radius:10px; padding:1px 8px; font-size:11px; color:#78716c; background:#faf7f0; }
+
+/* ── 텍스트 목업 ── */
+.wf-h1 { font-family: "Segoe Print", "Malgun Gothic", cursive; font-size: 19px; font-weight: 700; color: #292524; }
+.wf-h2 { font-size: 15px; font-weight: 700; color: #292524; }
+.wf-line { height: 8px; background: #d6d3d1; border-radius: 4px; margin: 6px 0; }
+.wf-line.w40 { width: 40%; } .wf-line.w60 { width: 60%; } .wf-line.w80 { width: 80%; }
+.wf-line.thin { height: 5px; background: #e7e0d5; }
+
+/* ── 주석(설명) — 주황색 ── */
+.wf-note {
+  color: #c2410c; font-size: 11px;
+  background: #fff4ec; border-left: 3px solid #ea580c; padding: 3px 8px;
+  display: block; margin-top: 6px;
+  border-radius: 0 6px 6px 0;
+}
+.wf-tag {
+  display: inline-block; background: #ea580c; color: #fff; font-size: 10px;
+  padding: 1px 6px; border-radius: 3px; vertical-align: middle; margin-left: 6px;
+  font-weight: 400;
+}
+.wf-code { font-family: Consolas, monospace; font-size: 11px; background:#f0ebe1; padding:0 4px; border-radius:3px; color:#292524; }
+
+/* ── 레이아웃 유틸 ── */
+.wf-row  { display: flex; gap: 10px; align-items: center; }
+.wf-row.stretch { align-items: stretch; }
+.wf-grow { flex: 1; }
+.wf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.wf-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.wf-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.wf-p { padding: 16px; }
+.wf-section { padding: 16px; border-bottom: 1.5px solid #d6d3d1; }
+.wf-section:last-child { border-bottom: none; }
+.mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mb-2 { margin-bottom: 8px; }
+
+/* ── LNB(좌측 로컬 내비) — B안 핵심 패턴 ── */
+.wf-lnb { width: 200px; flex-shrink: 0; }
+.wf-lnb .wf-band { padding: 8px 12px; font-size: 12.5px; }
+.wf-lnb .active { background: #44403c; color: #fffdf9; font-weight: 700; }
+
+/* ── 테이블 목업 ── */
+.wf-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.wf-table th, .wf-table td { border: 1px solid #d6d3d1; padding: 6px 10px; text-align: left; }
+.wf-table th { background: #f0ebe1; color: #57534e; }
+.wf-table td { color: #78716c; }
+
+/* ── 비교표/트리(index 전용) ── */
+.wf-tree { font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.9; color: #44403c; }
+.wf-tree a { color: #ea580c; text-decoration: none; }
+.wf-tree a:hover { text-decoration: underline; }
+.wf-tree .dim { color: #a8a29e; }

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 E안 — 공용 레이아웃</title>
+<link rel="stylesheet" href="wireframe5.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>공용 레이아웃 E — 2단 헤더 + 카드 패널 본문 + 카드형 푸터 <span class="wf-badge-e">E안</span></h1>
+  <p>A안과 동일하게 <span class="wf-code">front/layouts/KRDS/krds.html</span> 1개 파일 체계 유지.
+     차이는 <b>2단 헤더</b>(유틸바 + 로고·가로 GNB·검색인풋 상시)와 본문이 항상 <b>웜그레이 배경 위 카드 패널 조합</b>이라는 것 — 템플릿 CSS 1장으로 흡수.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/{sc}/…  (모든 페이지 공통 프레임)</span></div>
+
+  <!-- 스킵 링크 -->
+  <div class="wf-band wf-gray" style="padding:4px 20px">
+    <span class="wf-chip">본문으로 건너뛰기</span>
+    <span class="wf-tag">sr-only, 포커스 시에만 노출 (A안 동일)</span>
+  </div>
+
+  <!-- ① 헤더 1단: 유틸바 -->
+  <div class="wf-band wf-gray" style="padding:4px 20px">
+    <div class="wf-row" style="font-size:11px">
+      <span class="wf-chip">건양대학교</span><span class="wf-chip">관련 사이트 ▾</span>
+      <span class="wf-grow"></span>
+      <span class="wf-chip">🔔 알림</span><span class="wf-chip">로그인</span><span class="wf-chip">회원가입</span><span class="wf-chip">◐ 고대비</span>
+    </div>
+    <span class="wf-note">① 유틸바(헤더 1단) — 관련 사이트 = 타 학과 점프 메뉴(멀티사이트 CMS, tb_site 목록). 🔔 = /notification 알림함(로그인 시 미읽음 뱃지). ◐ = &lt;html&gt; hc 클래스 토글(고대비 테마, 이벤트 위임). 얇은 웜그레이 밴드로 본문 카드와 톤 구분.</span>
+  </div>
+
+  <!-- ② 헤더 2단: 로고 + 가로 GNB + 검색인풋 상시 -->
+  <div class="wf-band" style="padding:12px 20px">
+    <div class="wf-row">
+      <b style="font-size:17px">인공지능학과 <span style="font-size:10px;color:#a8a29e">KONYANG UNIV.</span></b>
+      <span class="wf-grow"></span>
+      <span class="wf-btn ghost sm">소개</span>
+      <span class="wf-btn ghost sm">구성원</span>
+      <span class="wf-btn ghost sm">교육</span>
+      <span class="wf-btn ghost sm">연구</span>
+      <span class="wf-btn ghost sm">커뮤니티</span>
+      <span class="wf-input" style="width:170px">🔍 통합검색</span>
+      <span class="wf-btn sm">☰</span>
+    </div>
+    <span class="wf-note">② 헤더 2단 — 로고 + 가로 GNB(1뎁스 5그룹) + <b>검색인풋 상시 노출</b>(B안 오버레이·A안 아이콘과 다른 점 — 포털형 문법). 검색 제출 = GET /search?siteCode={sc}&amp;keyword=. GNB 호버/포커스 시 <b>2~3뎁스</b>가 radius 12px <b>드롭다운 카드</b>로 뜸(siteContext.menuTree 렌더 — 뎁스 규칙은 아래 출력 규칙 참조). ☰ = 모바일 전체메뉴 &lt;dialog&gt;. 스크롤 시 2단만 sticky.</span>
+  </div>
+
+  <!-- GNB 드롭다운 카드 예시 -->
+  <div class="wf-band" style="background:transparent;border-bottom:none;padding:12px 20px 0">
+    <div class="wf-row" style="align-items:flex-start;justify-content:flex-end">
+      <div class="wf-card" style="width:230px">
+        <div class="wf-card-head" style="font-size:12px">구성원 <span class="wf-tag">2뎁스+3뎁스</span></div>
+        <div class="wf-card-body" style="font-size:12px;padding:10px 14px">
+          <div><b>교수진</b> <span style="font-size:10px;color:#a8a29e">/prg/faculty/{sc}</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 전임교원 · 겸임·초빙 · 명예교수</div>
+          <div class="mt-2" style="border-top:1px solid #f0eeeb;padding-top:8px"><b>직원</b> <span style="font-size:10px;color:#a8a29e">/prg/staff/{sc}</span></div>
+        </div>
+      </div>
+      <div class="wf-card" style="width:290px;border-color:#e11d48">
+        <div class="wf-card-head" style="font-size:12px">교육 <span class="wf-tag">3뎁스 펼침 예시</span></div>
+        <div class="wf-card-body" style="font-size:12px;padding:10px 14px">
+          <div><b>교과과정</b> <span style="font-size:10px;color:#a8a29e">/{sc}/curriculum</span></div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 학부</div>
+          <div style="margin-left:14px;font-size:11px;color:#78716c" class="mt-2">└ 대학원</div>
+          <div class="mt-2" style="border-top:1px solid #f0eeeb;padding-top:8px"><b>수업계획서</b> <span style="font-size:10px;color:#a8a29e">/prg/syllabus/{sc}</span></div>
+          <div class="mt-2"><b>학사일정</b> <span style="font-size:10px;color:#a8a29e">/schedule/{master}</span></div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note"><b>출력 규칙(전 안 공통): GNB 드롭 카드는 1~3뎁스까지만 노출</b> — 2뎁스 = 굵은 링크 행, 3뎁스 = 들여쓰기 소항목(전임교원·학부·대학원…). <b>4뎁스(전공필수·석사과정·휴·복학 서식 등)는 메뉴에 노출하지 않고 3뎁스 페이지 내 탭/필터로 처리.</b> 사이트맵(/{sc}/sitemap)만 1~4뎁스 전체 전개. 데이터는 siteContext.menuTree 하나(depth 1~4 저장) — GNB 드롭 카드·푸터·사이트맵이 <b>렌더 뎁스만 달리함</b>.</span>
+    <span class="wf-note">드롭다운도 카드 문법(radius 12px + 그림자) — 그룹별 개별 카드로 뜨며 전폭 메가메뉴 아님. 키보드 접근: 포커스 진입 시 열림, ESC 닫힘(외부 .js + CSP nonce, 인라인 핸들러 금지).</span>
+  </div>
+
+  <!-- ③ 페이지 타이틀 카드 -->
+  <div class="wf-band" style="background:transparent;border-bottom:none;padding:16px 20px 0">
+    <div class="wf-card">
+      <div class="wf-card-body" style="display:flex;align-items:center;gap:12px">
+        <div class="wf-grow">
+          <span style="font-size:11px;color:#a8a29e">홈 › 구성원 › 교수진</span>
+          <div class="wf-h1">교수진</div>
+        </div>
+        <div class="wf-img" style="width:220px;height:56px;min-height:56px"><span>SUB_HERO 배너</span></div>
+      </div>
+    </div>
+    <span class="wf-note">③ 페이지 타이틀 카드 — breadcrumb(위) + 제목(아래) + SUB_HERO 배너(우측 슬롯, GET /api/v1/sites/{sc}/banners?location=SUB_HERO). 배너 0건이면 우측 슬롯만 사라지고 카드는 유지 — 폴백 자연스러움. 홈은 이 카드 미출력(캐러셀 카드가 대신).</span>
+  </div>
+
+  <!-- ④ 본문 = 카드 패널 조합 -->
+  <div class="wf-band" style="background:transparent;border-bottom:none;padding:16px 20px">
+    <div class="wf-row stretch">
+      <div class="wf-grow">
+        <div class="wf-slot" style="min-height:170px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+          <b style="font-size:15px;color:#be123c">④ 본문 — layout:fragment="content"</b>
+          <span>페이지 배경(웜그레이) 위에 카드 패널을 그리드로 조합</span>
+          <span style="font-size:11px">홈 = 벤토 그리드 / 서브 = 본문 카드 + 보조 카드 컬럼 / 게시판 = 카드 스택</span>
+        </div>
+      </div>
+      <div style="width:240px;flex-shrink:0">
+        <div class="wf-card"><div class="wf-card-head" style="font-size:12px">보조 카드 컬럼</div><div class="wf-card-body"><div class="wf-line thin w80"></div><div class="wf-line thin w60"></div></div></div>
+      </div>
+    </div>
+    <span class="wf-note">④ E안에는 LNB 없음 — 같은 그룹 내 이동은 타이틀 카드 하단 칩 또는 우측 "연관 바로가기" 보조 카드가 담당. 위젯 카드는 각각 hx-get 개별 로드(hx-trigger="load"/"revealed") — <b>한 위젯의 htmx 실패는 해당 카드의 폴백 문구로만 격리</b>되고 페이지 전체를 깨지 않음.</span>
+  </div>
+
+  <!-- ⑤ 좋아요/신고 카드 -->
+  <div class="wf-band" style="background:transparent;border-bottom:none;padding:0 20px 16px">
+    <div class="wf-card"><div class="wf-card-body" style="text-align:center">
+      <span class="wf-btn ghost sm">👍 좋아요 12</span> <span class="wf-btn ghost sm">🚩 신고</span>
+    </div></div>
+    <span class="wf-note">⑤ 좋아요/신고 — A안 동일 조각(contentId 있는 콘텐츠 페이지에서만). 카드 1장으로 출력, htmx POST 후 블록 갱신.</span>
+  </div>
+
+  <!-- ⑥ 카드형 푸터 사이트맵 -->
+  <div class="wf-band wf-dark" style="padding:16px 20px">
+    <div class="wf-grid-5">
+      <div class="wf-box wf-p" style="background:#3b3634;border-color:#57534e;padding:10px"><b style="font-size:12px;color:#fafaf9">소개</b><div class="wf-line thin w60" style="background:#57534e"></div><div class="wf-line thin w40" style="background:#57534e"></div></div>
+      <div class="wf-box wf-p" style="background:#3b3634;border-color:#57534e;padding:10px"><b style="font-size:12px;color:#fafaf9">구성원</b><div class="wf-line thin w40" style="background:#57534e"></div><div class="wf-line thin w60" style="background:#57534e"></div></div>
+      <div class="wf-box wf-p" style="background:#3b3634;border-color:#57534e;padding:10px"><b style="font-size:12px;color:#fafaf9">교육</b><div class="wf-line thin w60" style="background:#57534e"></div><div class="wf-line thin w60" style="background:#57534e"></div></div>
+      <div class="wf-box wf-p" style="background:#3b3634;border-color:#57534e;padding:10px"><b style="font-size:12px;color:#fafaf9">연구</b><div class="wf-line thin w40" style="background:#57534e"></div><div class="wf-line thin w60" style="background:#57534e"></div></div>
+      <div class="wf-box wf-p" style="background:#3b3634;border-color:#57534e;padding:10px"><b style="font-size:12px;color:#fafaf9">커뮤니티</b><div class="wf-line thin w60" style="background:#57534e"></div><div class="wf-line thin w40" style="background:#57534e"></div></div>
+    </div>
+    <div class="wf-row mt-2">
+      <div class="wf-grow"><div class="wf-line w40" style="background:#57534e"></div></div>
+      <span class="wf-chip">개인정보처리방침</span><span class="wf-chip">이메일무단수집거부</span><span class="wf-chip">TOP ↑</span>
+    </div>
+    <span class="wf-note">⑥ 카드형 푸터 — menuTree 5그룹을 미니 사이트맵 카드로 렌더(사이트맵 페이지와 동일 데이터, fragments/site-footer 확장 — 푸터는 <b>2뎁스까지만</b> 출력, 전체 전개는 /{sc}/sitemap). 하단에 학과 주소·전화 + 정책 링크. 다크 배경 위 카드 톤 반전 — hc 모드에서 램프 반전 필수(템플릿 CSS 규약).</span>
+  </div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">A안 → E안 구현 시 바뀌는 것</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <table class="wf-table">
+      <tr><th style="width:200px">변경 지점</th><th>내용</th></tr>
+      <tr><td>krds.html 헤더부</td><td>마스트헤드+GNB 밴드 → 유틸바 + 로고·GNB·검색인풋 2단. 드롭다운은 그룹별 카드(전폭 메가메뉴 아님). 조각 교체 수준(메뉴 데이터 동일)</td></tr>
+      <tr><td>본문 래퍼</td><td>흰 배경 1단 → 웜그레이 페이지 배경 + 카드 패널 그리드(.panel-grid 유틸). 템플릿 CSS 1장에서 카드 토큰(radius 12px·그림자) 정의</td></tr>
+      <tr><td>breadcrumb·SUB_HERO</td><td>독립 밴드 2개 → 페이지 타이틀 카드 1장으로 통합(sub-hero.js 삽입 타깃만 변경)</td></tr>
+      <tr><td>홈 위젯화</td><td>섹션 연속 → 벤토 그리드 + 위젯별 hx-get 개별 로드(fragments/widgets/* 신설)</td></tr>
+      <tr><td>푸터</td><td>텍스트 링크 나열 → menuTree 미니 사이트맵 카드 5장</td></tr>
+      <tr><td>변경 없음</td><td>라우트·컨트롤러·tb_menu·tb_role_url_access·팝업/좋아요 조각·CSP nonce/htmx 규약·외부 .js + 이벤트 위임 + htmx:load 멱등 초기화</td></tr>
+    </table>
+    <span class="wf-note">카드 radius 12px = KRDS radius 상한과 정확히 일치 — 초과 금지. 색은 시맨틱 토큰(bg-surface·border-line)으로만, raw hex 금지. 그림자는 템플릿 CSS 1장에서 관리.</span>
+  </div>
+</div>
+
+</body>
+</html>

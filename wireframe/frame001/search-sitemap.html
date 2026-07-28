@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 — 통합검색 · 사이트맵</title>
+<link rel="stylesheet" href="wireframe.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>통합검색 · 사이트맵</h1>
+  <p><span class="route">GET /search?siteCode={sc}&amp;keyword=</span><span class="route">GET /{sc}/sitemap</span></p>
+</div>
+
+<!-- 통합검색 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/search?siteCode=me&amp;keyword=장학</span></div>
+
+  <div class="wf-band wf-dark"><div class="wf-row"><b>기계공학과</b><span class="wf-grow"></span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span><span class="wf-chip">☰</span></div></div>
+  <div class="wf-band"><div class="wf-row"><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-grow"></span><span class="wf-input">🔍 검색</span></div></div>
+
+  <div class="wf-section" style="text-align:center;padding:24px">
+    <div class="wf-row" style="justify-content:center">
+      <span class="wf-input" style="width:380px;text-align:left">장학</span>
+      <span class="wf-btn">검색</span>
+    </div>
+    <span class="wf-note" style="text-align:left;max-width:520px;margin:8px auto 0">GNB 검색창과 동일 엔드포인트. 입력 중 자동완성 드롭다운(search-autocomplete.js — htmx/fetch).</span>
+  </div>
+
+  <div class="wf-section">
+    <!-- 결과 탭 -->
+    <div class="wf-row">
+      <span class="wf-chip" style="background:#475569;color:#fff">전체 24</span>
+      <span class="wf-chip">게시글 18</span>
+      <span class="wf-chip">콘텐츠 4</span>
+      <span class="wf-chip">첨부파일 2</span>
+    </div>
+
+    <!-- 결과 리스트 -->
+    <div class="wf-box mt-2">
+      <div class="wf-band">
+        <span class="wf-chip">공지사항</span>
+        <div class="wf-line w60 mt-2" style="background:#94a3b8"></div>
+        <div class="wf-line thin w80"></div>
+        <span style="font-size:11px;color:#94a3b8">/bbs/me/notice/… · 2026-07-01</span>
+      </div>
+      <div class="wf-band">
+        <span class="wf-chip">콘텐츠</span>
+        <div class="wf-line w40 mt-2" style="background:#94a3b8"></div>
+        <div class="wf-line thin w60"></div>
+        <span style="font-size:11px;color:#94a3b8">/me/about</span>
+      </div>
+      <div class="wf-band" style="border-bottom:none">
+        <span class="wf-chip">자료실</span>
+        <div class="wf-line w60 mt-2" style="background:#94a3b8"></div>
+        <span style="font-size:11px;color:#94a3b8">📎 파일명.pdf</span>
+      </div>
+    </div>
+    <div class="wf-row mt-2" style="justify-content:center">
+      <span class="wf-chip">‹</span><span class="wf-chip" style="background:#475569;color:#fff">1</span><span class="wf-chip">2</span><span class="wf-chip">›</span>
+    </div>
+    <span class="wf-note">키워드 하이라이트 표시. siteCode 스코프 검색(현재 사이트 우선). 탭 전환·페이징 = htmx 부분갱신.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#64748b"></div></div>
+</div>
+
+<!-- 사이트맵 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">사이트맵 — /{sc}/sitemap (마스트헤드 ☰ 진입)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/me/sitemap</span></div>
+  <div class="wf-section">
+    <div class="wf-h1 mb-2">사이트맵</div>
+    <div class="wf-grid-3">
+      <div class="wf-box wf-p">
+        <b>소개</b><hr style="border:none;border-top:1.5px solid #cbd5e1;margin:6px 0"/>
+        <div style="font-size:12px;line-height:1.9">
+          <div style="color:#334155">학과소개</div>
+          <div style="color:#64748b;padding-left:12px">인사말</div>
+          <div style="color:#64748b;padding-left:12px">비전·인재상</div>
+          <div style="color:#64748b;padding-left:12px">연혁</div>
+          <div style="color:#334155">오시는길</div>
+        </div>
+      </div>
+      <div class="wf-box wf-p">
+        <b>구성원</b><hr style="border:none;border-top:1.5px solid #cbd5e1;margin:6px 0"/>
+        <div style="font-size:12px;line-height:1.9">
+          <div style="color:#334155">교수진</div>
+          <div style="color:#64748b;padding-left:12px">전임교원</div>
+          <div style="color:#64748b;padding-left:12px">겸임·초빙</div>
+          <div style="color:#64748b;padding-left:12px">명예교수</div>
+          <div style="color:#334155">직원</div>
+        </div>
+      </div>
+      <div class="wf-box wf-p">
+        <b>교육</b><hr style="border:none;border-top:1.5px solid #cbd5e1;margin:6px 0"/>
+        <div style="font-size:12px;line-height:1.9">
+          <div style="color:#334155">교과과정</div>
+          <div style="color:#64748b;padding-left:12px">학부</div>
+          <div style="color:#94a3b8;padding-left:24px;font-size:11px">전공필수</div>
+          <div style="color:#94a3b8;padding-left:24px;font-size:11px">전공선택</div>
+          <div style="color:#64748b;padding-left:12px">대학원</div>
+          <div style="color:#94a3b8;padding-left:24px;font-size:11px">석사과정</div>
+          <div style="color:#94a3b8;padding-left:24px;font-size:11px">박사과정</div>
+          <div style="color:#334155">수업계획서</div>
+          <div style="color:#334155">학사일정</div>
+        </div>
+      </div>
+      <div class="wf-box wf-p">
+        <b>연구</b><hr style="border:none;border-top:1.5px solid #cbd5e1;margin:6px 0"/>
+        <div style="font-size:12px;line-height:1.9">
+          <div style="color:#334155">연구실</div>
+          <div style="color:#334155">연구성과</div>
+          <div style="color:#64748b;padding-left:12px">논문</div>
+          <div style="color:#64748b;padding-left:12px">특허·기술이전</div>
+        </div>
+      </div>
+      <div class="wf-box wf-p">
+        <b>커뮤니티</b><hr style="border:none;border-top:1.5px solid #cbd5e1;margin:6px 0"/>
+        <div style="font-size:12px;line-height:1.9">
+          <div style="color:#334155">공지사항</div>
+          <div style="color:#64748b;padding-left:12px">학사</div>
+          <div style="color:#64748b;padding-left:12px">장학</div>
+          <div style="color:#64748b;padding-left:12px">취업</div>
+          <div style="color:#334155">학과소식</div>
+          <div style="color:#334155">세미나</div>
+          <div style="color:#334155">자료실</div>
+          <div style="color:#64748b;padding-left:12px">학사서식</div>
+          <div style="color:#94a3b8;padding-left:24px;font-size:11px">휴·복학 서식</div>
+          <div style="color:#94a3b8;padding-left:24px;font-size:11px">졸업 서식</div>
+          <div style="color:#64748b;padding-left:12px">강의자료</div>
+        </div>
+      </div>
+      <div class="wf-box wf-p wf-gray">
+        <b>회원</b><hr style="border:none;border-top:1.5px solid #cbd5e1;margin:6px 0"/>
+        <div style="font-size:12px;color:#64748b;line-height:1.9">로그인 / 회원가입<br/>마이페이지</div>
+        <span style="font-size:11px;color:#94a3b8">※ 메뉴 트리 밖 공통 라우트 — 사이트맵에만 별도 그룹으로 노출</span>
+      </div>
+    </div>
+    <span class="wf-note"><b>뎁스 출력 규칙(전 안 공통)</b> — 메뉴(GNB·드롭다운)는 3뎁스까지, <b>사이트맵만 1~4뎁스 전체 전개</b> — 동일 siteContext.menuTree 재사용(렌더 뎁스만 다름). 들여쓰기 0/12/24px + 글꼴 위계 = 2/3/4뎁스. 메뉴 시드 변경 시 자동 반영. 좋아요/신고 밴드 미출력 대상.</span>
+  </div>
+</div>
+
+</body>
+</html>

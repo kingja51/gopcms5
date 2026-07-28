@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 D안 — 프로그램 페이지</title>
+<link rel="stylesheet" href="wireframe4.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>프로그램 — 교수진·직원·연구실·수업계획서 <span class="wf-badge-d">D안</span></h1>
+  <p><span class="route">GET /prg/{faculty|staff|lab|syllabus}/{sc}</span> — 교수진 = 매거진 피처, 직원 = 협폭 리스트, 연구실 = 교차 풀블리드 밴드, 수업계획서 = 협폭 테이블. 제네릭 /prg 라 전 학과 공용(복사 불필요).</p>
+</div>
+
+<!-- 교수진 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/prg/faculty/med</span></div>
+
+  <div class="wf-shrinkbar">
+    <b style="font-size:13px">의학과</b>
+    <span class="wf-grow"></span>
+    <span class="wf-chip">🔔</span><span class="wf-chip">🔍</span><span class="wf-chip">◐</span><span class="wf-btn sm">☰ 메뉴</span>
+  </div>
+
+  <div class="wf-hero wf-dark" style="min-height:150px;padding:42px 24px 28px">
+    <div class="fg">
+      <span class="wf-kicker" style="color:#b7a8e3">구성원</span>
+      <div class="wf-display" style="color:#fff">교수진</div>
+      <div style="font-size:11px;color:#8b84a3;margin-top:8px">홈 › 구성원 › 교수진</div>
+    </div>
+  </div>
+
+  <div class="wf-band" style="padding:20px 24px">
+    <!-- 필터/검색 -->
+    <div class="wf-row">
+      <span class="wf-chip on">전체</span><span class="wf-chip">전임교원</span><span class="wf-chip">겸임·초빙</span><span class="wf-chip">명예교수</span>
+      <span class="wf-grow"></span>
+      <span class="wf-input" style="width:180px">🔍 이름·연구분야 검색</span>
+    </div>
+    <span class="wf-note">구분 탭(전임교원·겸임·초빙·명예교수) = menuTree 3뎁스를 <b>목록 내 탭/필터</b>로 렌더(별도 라우트 아님 — <span class="wf-code">?cat=</span> 쿼리) — 메뉴 뎁스 규칙과 동일 원천.
+    탭·검색 = <span class="wf-code">hx-get="/prg/faculty/{sc}?cat=…&amp;q=…"</span> 목록 블록 부분갱신(300ms debounce, hx-history="false"). 데이터 = tb_faculty(secondary, site_code 스코프 — 다학과 공용 도메인 com.gonet.secondary.dept).</span>
+
+    <!-- 대형 피처 카드 1명 -->
+    <div class="wf-slot mt-4" style="text-align:left;padding:14px">
+      <div class="wf-box">
+        <div class="wf-row stretch" style="gap:0">
+          <div class="wf-img flat" style="flex:1;min-height:170px"><span>인물 사진 (대형)</span></div>
+          <div style="flex:1.4;padding:22px 26px">
+            <span class="wf-kicker">Featured · 학과장</span>
+            <div class="wf-display sm" style="margin-top:4px">김지능 교수</div>
+            <div style="font-size:12px;color:#8b84a3;margin-top:2px">인공지능 · 기계학습</div>
+            <div class="wf-line thin w80 mt-2"></div><div class="wf-line thin w60"></div>
+            <div class="wf-row mt-2"><span class="wf-chip">✉ 이메일</span><span class="wf-chip">☎ 041-***-****</span><span class="wf-chip vi">프로필 →</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 이하 3열 카드 -->
+      <div class="wf-grid-3 mt-2">
+        <div class="wf-box"><div class="wf-img flat" style="height:110px"><span>인물 사진</span></div><div class="wf-p" style="padding:12px"><b style="font-size:13px">이연구 교수</b><br/><span style="font-size:11px;color:#8b84a3">컴퓨터비전</span><div class="wf-line thin w60"></div></div></div>
+        <div class="wf-box"><div class="wf-img flat" style="height:110px"><span>인물 사진</span></div><div class="wf-p" style="padding:12px"><b style="font-size:13px">박자연 교수</b><br/><span style="font-size:11px;color:#8b84a3">자연어처리</span><div class="wf-line thin w80"></div></div></div>
+        <div class="wf-box"><div class="wf-img flat" style="height:110px"><span>인물 사진</span></div><div class="wf-p" style="padding:12px"><b style="font-size:13px">최데이터 교수</b><br/><span style="font-size:11px;color:#8b84a3">데이터마이닝</span><div class="wf-line thin w60"></div></div></div>
+      </div>
+    </div>
+    <span class="wf-note">매거진 피처 — 첫 행 = 대표 교원(정렬 1순위) 대형 가로 카드, 이하 3열 세로 카드. 인물 사진 크게(3:4) — 사진 없으면 이니셜 면 폴백.
+    연락처는 MaskUtils 마스킹 정책 적용(전화 뒷자리). 프로필 → 상세는 협폭 에디토리얼(content.html 골격 재사용). 페이징 = htmx 부분갱신.</span>
+  </div>
+</div>
+
+<!-- 직원 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">직원 — /prg/staff/{sc} (협폭 리스트)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-band" style="padding:20px 24px">
+    <div class="wf-narrow">
+      <div class="wf-box">
+        <div class="wf-band" style="border-bottom:1px solid #efecf6">
+          <div class="wf-row"><div class="wf-img" style="width:44px;height:44px;min-height:44px;border-radius:50%"><span></span></div><div class="wf-grow"><b style="font-size:12.5px">홍행정 팀장</b><br/><span style="font-size:11px;color:#8b84a3">학사 · 장학 담당</span></div><span class="wf-chip">☎</span><span class="wf-chip">✉</span></div>
+        </div>
+        <div class="wf-band" style="border-bottom:1px solid #efecf6">
+          <div class="wf-row"><div class="wf-img" style="width:44px;height:44px;min-height:44px;border-radius:50%"><span></span></div><div class="wf-grow"><b style="font-size:12.5px">김서무 주임</b><br/><span style="font-size:11px;color:#8b84a3">예산 · 시설 담당</span></div><span class="wf-chip">☎</span><span class="wf-chip">✉</span></div>
+        </div>
+        <div class="wf-band">
+          <div class="wf-row"><div class="wf-img" style="width:44px;height:44px;min-height:44px;border-radius:50%"><span></span></div><div class="wf-grow"><b style="font-size:12.5px">박조교</b><br/><span style="font-size:11px;color:#8b84a3">실습실 · 기자재 담당</span></div><span class="wf-chip">☎</span><span class="wf-chip">✉</span></div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">직원 = 협폭(720px) 심플 리스트 — 원형 미니 사진 + 담당 업무. tb_staff(secondary). 인원이 적어 필터 없음, 전체 SSR. 연락처 마스킹 동일.</span>
+  </div>
+</div>
+
+<!-- 연구실 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">연구실 — /prg/lab/{sc} (교차 풀블리드 밴드)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-band" style="padding:0">
+    <div class="wf-row stretch" style="gap:0">
+      <div class="wf-img flat" style="flex:1;min-height:140px"><span>연구실 사진</span></div>
+      <div style="flex:1;padding:22px 26px;background:#fff">
+        <span class="wf-kicker">LAB 01</span>
+        <b style="font-size:16px;display:block;margin-top:4px">지능형 로보틱스 연구실</b>
+        <span style="font-size:11px;color:#8b84a3">지도교수: 김지능 · 위치: 공학관 501</span>
+        <div class="wf-line thin w80 mt-2"></div><div class="wf-line thin w60"></div>
+        <span class="wf-btn ghost sm mt-2" style="display:inline-block">연구실 상세 →</span>
+      </div>
+    </div>
+    <div class="wf-row stretch" style="gap:0">
+      <div style="flex:1;padding:22px 26px;background:#efecf6">
+        <span class="wf-kicker">LAB 02</span>
+        <b style="font-size:16px;display:block;margin-top:4px">자연어처리 연구실</b>
+        <span style="font-size:11px;color:#8b84a3">지도교수: 박자연 · 위치: 공학관 502</span>
+        <div class="wf-line thin w80 mt-2"></div><div class="wf-line thin w60"></div>
+        <span class="wf-btn ghost sm mt-2" style="display:inline-block">연구실 상세 →</span>
+      </div>
+      <div class="wf-img flat" style="flex:1;min-height:140px"><span>연구실 사진</span></div>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 16px">
+    <span class="wf-note">연구실 목록 자체가 교차 풀블리드 밴드(홈 쇼케이스와 동일 조각 — 홈은 상위 2~3건, 여기는 전체). 면 색 교차(흰/라벤더)로 행 구분 — 선 없음.
+    tb_lab(secondary, LAB_ 접두사 UUID). 상세 = 협폭 에디토리얼 + 구성원·논문 목록. 페이징보다 전체 로드(학과당 10개 미만) 우선.</span>
+  </div>
+</div>
+
+<!-- 수업계획서 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">수업계획서 — /prg/syllabus/{sc} (협폭 테이블)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-band" style="padding:20px 24px">
+    <div class="wf-narrow">
+      <div class="wf-row">
+        <span class="wf-chip on">2026-1학기</span><span class="wf-chip">2025-2학기</span>
+        <span class="wf-grow"></span>
+        <span class="wf-input" style="width:170px">🔍 과목명·교수명</span>
+      </div>
+      <div class="wf-box mt-2" style="border-radius:12px;overflow:hidden">
+        <table class="wf-table" style="border:none">
+          <tr><th>과목명</th><th style="width:90px">담당교수</th><th style="width:70px">학년</th><th style="width:80px">계획서</th></tr>
+          <tr><td>인공지능개론</td><td>김지능</td><td>1</td><td><span class="wf-chip vi">PDF 보기</span></td></tr>
+          <tr><td>기계학습</td><td>이연구</td><td>3</td><td><span class="wf-chip vi">PDF 보기</span></td></tr>
+          <tr><td>자연어처리</td><td>박자연</td><td>4</td><td><span class="wf-chip vi">PDF 보기</span></td></tr>
+        </table>
+      </div>
+      <div class="wf-row mt-2" style="justify-content:center">
+        <span class="wf-chip">‹</span><span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">›</span>
+      </div>
+    </div>
+    <span class="wf-note">수업계획서 = 협폭 테이블(기능형 데이터라 매거진화하지 않음 — D안에서도 표는 표). 학기 칩·검색 = htmx 부분갱신, PageRequest 공통 페이징.
+    PDF 보기 = 업로드 6중 방어 통과 자원 + 뷰어(다운로드 로그). tb_syllabus(secondary, SYL_ 접두사). /prg/** 전 라우트 tb_role_url_access 등록 필수.</span>
+  </div>
+</div>
+
+</body>
+</html>

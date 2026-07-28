@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 B안 — 게시판 목록/상세</title>
+<link rel="stylesheet" href="wireframe2.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>게시판 — 카드형 목록 · 상세 <span class="wf-badge-b">B안</span></h1>
+  <p><span class="route">GET /bbs/{sc}/{bbsCode}</span><span class="route">GET /bbs/{sc}/{bbsCode}/{articleId}</span> — A안 테이블형 → 카드형(데스크톱/모바일 동일 구조)</p>
+</div>
+
+<!-- 목록 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/bbs/me/notice</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 16px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">기계공학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm" style="border-bottom:3px solid #44403c">커뮤니티</span><span class="wf-chip">🔍</span><span class="wf-btn sm">☰</span></div></div>
+  <div class="wf-band wf-dark"><div class="wf-row"><div><b style="font-size:15px">공지사항</b><br/><span style="font-size:11px;color:#a8a29e">홈 › 커뮤니티 › 공지사항</span></div><span class="wf-grow"></span><div class="wf-img" style="width:200px;height:44px;min-height:44px"><span>SUB_HERO</span></div></div></div>
+
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <!-- LNB -->
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>커뮤니티</b></div>
+        <div class="wf-band active">▾ 공지사항</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 학사</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 장학</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 취업</div>
+        <div class="wf-band">학과소식</div>
+        <div class="wf-band">세미나</div>
+        <div class="wf-band" style="border-bottom:none">▸ 자료실</div>
+      </div>
+
+      <div class="wf-grow">
+        <span class="wf-note" style="margin-top:0;margin-bottom:8px">LNB 3뎁스(학사·장학·취업) = 게시판 카테고리 필터 — 클릭 시 목록만 htmx 갱신(선택 시 해당 3뎁스 강조), 현재는 "전체". 자료실은 3뎁스(학사서식·강의자료) 보유 — 현재 경로 아니라 접힘(▸). 4뎁스(휴·복학 서식 등)는 LNB 미노출, 자료실 3뎁스 페이지 내 탭으로 처리.</span>
+        <!-- 고정 공지 -->
+        <div class="wf-box" style="background:#f0ebe1;padding:10px 14px">
+          <div class="wf-row"><span class="wf-chip" style="background:#44403c;color:#fffdf9">📌 고정</span><b style="font-size:12.5px">[고정 공지] ───────────</b><span class="wf-grow"></span><span style="font-size:11px;color:#a8a29e">07-01</span></div>
+        </div>
+        <span class="wf-note">고정공지 = 배경 구분 카드로 목록 위 상단 고정(A안: 테이블 첫 행 분리).</span>
+
+        <!-- 툴바 -->
+        <div class="wf-row mt-2">
+          <span style="font-size:12px;color:#78716c">전체 128건</span>
+          <span class="wf-grow"></span>
+          <span class="wf-chip" style="background:#44403c;color:#fffdf9">최신순</span><span class="wf-chip">조회순</span>
+          <span class="wf-input" style="width:160px">🔍 제목+내용 검색</span>
+        </div>
+
+        <!-- 카드 리스트 -->
+        <div class="wf-box mt-2">
+          <div class="wf-band">
+            <div class="wf-row"><b style="font-size:12.5px">게시글 제목 ──────────</b><span class="wf-chip">N</span><span class="wf-chip">📎</span></div>
+            <div class="wf-line thin w80" style="margin:4px 0"></div>
+            <span style="font-size:11px;color:#a8a29e">관리자 · 06-30 · 조회 45 · 👍 3</span>
+          </div>
+          <div class="wf-band">
+            <div class="wf-row"><b style="font-size:12.5px">게시글 제목 ────────</b></div>
+            <div class="wf-line thin w60" style="margin:4px 0"></div>
+            <span style="font-size:11px;color:#a8a29e">관리자 · 06-28 · 조회 102</span>
+          </div>
+          <div class="wf-band" style="border-bottom:none">
+            <div class="wf-row"><b style="font-size:12.5px">게시글 제목 ───────────</b><span class="wf-chip">📎</span></div>
+            <div class="wf-line thin w80" style="margin:4px 0"></div>
+            <span style="font-size:11px;color:#a8a29e">관리자 · 06-24 · 조회 67</span>
+          </div>
+        </div>
+        <span class="wf-note">카드형 = 제목 + 본문 요약 1줄 + 메타(작성자·날짜·조회·좋아요). 정렬 토글·검색 = htmx 부분갱신(300ms debounce), hx-history="false".</span>
+
+        <!-- 페이징 + 글쓰기 -->
+        <div class="wf-row mt-2">
+          <span class="wf-grow"></span>
+          <span class="wf-chip">‹</span><span class="wf-chip" style="background:#44403c;color:#fffdf9">1</span><span class="wf-chip">2</span><span class="wf-chip">3</span><span class="wf-chip">›</span>
+          <span class="wf-grow"></span>
+          <span class="wf-btn sm">✏ 글쓰기</span>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">스킨 변형 — GALLERY: 카드에 썸네일 상단 부착 / FAQ: 카드 자체가 &lt;details&gt; / QNA: 답변대기·완료 뱃지 / FILE: 첨부 목록 노출 / YOUTUBE: 16:9 썸네일 / PDF: 뷰어 버튼. 카드 골격 공유로 스킨 CSS 최소화.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#78716c"></div></div>
+</div>
+
+<!-- 상세 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">게시글 상세 — /bbs/{sc}/{bbsCode}/{articleId} (LNB 유지)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>커뮤니티</b></div>
+        <div class="wf-band active">▾ 공지사항</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px;background:#f0ebe1"><b>└ 학사</b></div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 장학</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 취업</div>
+        <div class="wf-band" style="border-bottom:none">학과소식</div>
+      </div>
+
+      <div class="wf-grow">
+        <div class="wf-box">
+          <div class="wf-band">
+            <div class="wf-h2">게시글 제목 ─────────────</div>
+            <div class="wf-row mt-2" style="font-size:11px;color:#78716c">
+              <span>관리자</span><span>·</span><span>2026-07-01</span><span>·</span><span>조회 231</span>
+              <span class="wf-grow"></span><span class="wf-chip">URL 복사</span><span class="wf-chip">🖨 인쇄</span>
+            </div>
+          </div>
+          <div class="wf-band" style="min-height:140px">
+            <div class="wf-line"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+            <div class="wf-img mt-4" style="height:90px;max-width:300px"><span>본문 이미지</span></div>
+          </div>
+          <!-- 첨부: 본문 하단 배치 (A안은 상단) -->
+          <div class="wf-band wf-gray" style="padding:8px 16px">
+            <b style="font-size:12px">📎 첨부 2</b>
+            <div class="wf-row mt-2"><span style="font-size:12px">파일명.pdf (1.2MB)</span><span class="wf-chip">미리보기</span><span class="wf-chip">다운로드</span></div>
+            <div class="wf-row mt-2"><span style="font-size:12px">양식.hwp (240KB)</span><span class="wf-chip">다운로드</span></div>
+          </div>
+          <div class="wf-band" style="text-align:center;border-bottom:none">
+            <span class="wf-btn ghost sm">👍 좋아요 12</span> <span class="wf-btn ghost sm">🚩 신고</span>
+          </div>
+        </div>
+        <span class="wf-note">첨부를 본문 아래로(읽기 흐름 우선, A안은 제목 아래). URL 복사·인쇄 유틸 추가. 본문 = Sanitizer 통과 HTML, 다운로드 = 6중 방어 자원(A안 동일). LNB 는 현재 글의 카테고리(학사)를 3뎁스 강조로 표시.</span>
+
+        <!-- 댓글 -->
+        <div class="wf-h2 mt-4 mb-2">댓글 3</div>
+        <div class="wf-row stretch mb-2">
+          <span class="wf-input wf-grow" style="min-height:40px">댓글 입력 (로그인 필요 시 로그인 유도 카드)</span>
+          <span class="wf-btn">등록</span>
+        </div>
+        <div class="wf-box wf-p">
+          <div class="wf-row"><b style="font-size:12px">홍**</b><span style="font-size:11px;color:#a8a29e">07-02 10:31</span><span class="wf-grow"></span><span class="wf-chip">답글</span><span class="wf-chip">신고</span></div>
+          <div class="wf-line thin w80"></div>
+          <div style="margin-left:24px;border-left:2px solid #d6d3d1;padding-left:10px" class="mt-2">
+            <div class="wf-row"><b style="font-size:12px">↳ 김**</b><span style="font-size:11px;color:#a8a29e">07-02 11:02</span></div>
+            <div class="wf-line thin w60"></div>
+          </div>
+        </div>
+        <span class="wf-note">입력창을 댓글 목록 위로(참여 우선, A안은 아래). htmx 블록 갱신·마스킹·HX-Redirect 규약 동일.</span>
+
+        <div class="wf-row mt-4">
+          <span class="wf-btn ghost sm">← 목록</span>
+          <span class="wf-grow"></span>
+          <span class="wf-chip">◂ 이전글</span><span class="wf-chip">다음글 ▸</span>
+          <span class="wf-grow"></span>
+          <span class="wf-btn ghost sm">수정</span><span class="wf-btn ghost sm">삭제</span>
+        </div>
+        <span class="wf-note">이전/다음글 = 하단 내비 칩(A안: 제목 노출 2행 박스). 목록 복귀 시 검색·페이지 상태 유지(쿼리 보존).</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

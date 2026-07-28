@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 D안 — 회원</title>
+<link rel="stylesheet" href="wireframe4.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>회원 — 풀스크린 2분할 로그인 · 진행바 가입 · 협폭 마이페이지 <span class="wf-badge-d">D안</span></h1>
+  <p><span class="route">GET /member/login</span><span class="route">GET /member/join</span><span class="route">GET /member/mypage</span> — 로그인/가입 = 좌 브랜드 패널 + 우 폼 풀스크린 2분할, 마이페이지 = 협폭 센터 + 상단 탭.</p>
+</div>
+
+<!-- 로그인 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/login</span></div>
+
+  <div class="wf-row stretch" style="gap:0;min-height:300px">
+    <!-- 좌: 브랜드 패널 -->
+    <div class="wf-img flat" style="flex:1;min-height:300px">
+      <div style="position:absolute;z-index:2;text-align:center">
+        <span class="wf-kicker" style="color:#6d28d9">KONYANG UNIV.</span>
+        <div class="wf-display sm" style="margin-top:4px">AI 인공지능학과</div>
+        <div style="font-size:11px;color:#7a6f99;margin-top:6px">브랜드 이미지 패널 (사이트 테마 이미지)</div>
+      </div>
+    </div>
+    <!-- 우: 폼 -->
+    <div style="flex:1;background:#fff;padding:36px 34px;display:flex;flex-direction:column;justify-content:center">
+      <div class="wf-display sm">로그인</div>
+      <div style="font-size:11px;color:#8b84a3;margin-top:4px">통합 계정으로 모든 학과 사이트 이용</div>
+      <span class="wf-input square mt-4" style="display:block">아이디</span>
+      <span class="wf-input square mt-2" style="display:block">비밀번호</span>
+      <div class="wf-row mt-2" style="font-size:11px;color:#8b84a3">
+        <span class="wf-chip">☑ 아이디 저장</span><span class="wf-grow"></span><span>아이디 찾기 · 비밀번호 찾기</span>
+      </div>
+      <span class="wf-btn violet mt-4" style="display:block;text-align:center">로그인</span>
+      <span class="wf-btn ghost mt-2" style="display:block;text-align:center">회원가입</span>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 14px">
+    <span class="wf-note">풀스크린 2분할 — 헤더/푸터 없는 독립 레이아웃(관리자 login 독립 페이지와 같은 접근). 좌 패널은 tb_site 테마 이미지(없으면 브랜드 그라디언트), 모바일은 패널 숨기고 폼 1열.
+    POST /member/login = CSRF(XSRF-TOKEN 쿠키) + 로그인 잠금(5회/30분) + <span class="wf-code">changeSessionId()</span> + <span class="wf-code">maximumSessions(1)</span>. 실패 메시지는 htmx 폼 블록 갱신, 성공은 HX-Redirect(returnUrl 검증). 통합 로그인 = v_user_login VIEW.</span>
+  </div>
+</div>
+
+<!-- 가입 3단계 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">회원가입 — /member/join (3단계 · 상단 얇은 진행바)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/join</span></div>
+
+  <!-- 진행바 -->
+  <div class="wf-progress"><i style="width:66%"></i></div>
+  <div class="wf-band" style="padding:10px 24px 0">
+    <div class="wf-row" style="font-size:11px;color:#8b84a3;justify-content:center">
+      <span style="color:#7c3aed;font-weight:700">① 약관동의</span><span>─</span><span style="color:#7c3aed;font-weight:700">② 정보입력 ●</span><span>─</span><span>③ 완료</span>
+    </div>
+  </div>
+
+  <div class="wf-row stretch" style="gap:0">
+    <div class="wf-img flat" style="flex:.8;min-height:260px"><span>브랜드 패널 (로그인과 동일, 모바일 숨김)</span></div>
+    <div style="flex:1.2;background:#fff;padding:28px 34px">
+      <div class="wf-display sm">정보입력</div>
+      <span class="wf-input square mt-4" style="display:block">아이디 <span class="wf-chip vi" style="float:right">중복확인</span></span>
+      <span class="wf-input square mt-2" style="display:block">비밀번호 (규칙 힌트 인라인)</span>
+      <span class="wf-input square mt-2" style="display:block">비밀번호 확인</span>
+      <span class="wf-input square mt-2" style="display:block">이름 / 이메일 / 휴대전화</span>
+      <div class="wf-row mt-4">
+        <span class="wf-btn ghost">← 이전</span><span class="wf-grow"></span><span class="wf-btn violet">다음 →</span>
+      </div>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:8px 20px 14px">
+    <span class="wf-note">3단계 위저드 — 상단 4px 진행바(<span class="wf-code">.wf-progress</span>, 66% = 2/3단계) + 단계 라벨. 단계 전환 = htmx 폼 블록 교체(서버 세션에 단계 상태, <span class="wf-code">hx-history="false"</span> — 뒤로가기로 입력값 노출 금지).
+    ① 약관 = 필수/선택 체크(전체동의), ② 중복확인 = <span class="wf-code">hx-get="/api/v1/members/check-id"</span>, ③ 완료 = 가입 축하 + 로그인 유도.
+    PII(이름·이메일·전화)는 <span class="wf-code">@Encrypt</span>(AES-256-GCM) 저장 + log_privacy 기록. 회원 인가 = AUTHENTICATED + user_type=MEMBER(tb_member_role 미사용).</span>
+  </div>
+</div>
+
+<!-- 마이페이지 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">마이페이지 — /member/mypage (협폭 센터 + 상단 탭)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/mypage</span></div>
+
+  <div class="wf-shrinkbar">
+    <b style="font-size:13px">AI 인공지능학과</b>
+    <span class="wf-grow"></span>
+    <span class="wf-chip">🔔</span><span class="wf-chip">🔍</span><span class="wf-chip">◐</span><span class="wf-btn sm">☰ 메뉴</span>
+  </div>
+
+  <div class="wf-band" style="padding:28px 24px">
+    <div class="wf-narrow">
+      <span class="wf-kicker">My Page</span>
+      <div class="wf-display sm mt-2">홍길동 님</div>
+      <div style="font-size:11px;color:#8b84a3;margin-top:4px">ho***@konyang.ac.kr · 최근 접속 2026-07-09 18:22</div>
+
+      <!-- 상단 탭 -->
+      <div class="wf-row mt-4">
+        <span class="wf-chip on">프로필</span><span class="wf-chip">비밀번호 변경</span><span class="wf-chip">알림 설정</span><span class="wf-chip">회원 탈퇴</span>
+      </div>
+
+      <!-- 탭 콘텐츠(프로필) -->
+      <div class="wf-slot mt-2" style="text-align:left;padding:16px">
+        <div class="wf-box wf-p">
+          <div class="wf-row"><span style="font-size:12px;color:#8b84a3;width:90px">이름</span><b style="font-size:12.5px">홍길동</b></div>
+          <div class="wf-row mt-2"><span style="font-size:12px;color:#8b84a3;width:90px">이메일</span><b style="font-size:12.5px">ho***@konyang.ac.kr</b><span class="wf-chip">변경</span></div>
+          <div class="wf-row mt-2"><span style="font-size:12px;color:#8b84a3;width:90px">휴대전화</span><b style="font-size:12.5px">010-****-1234</b><span class="wf-chip">변경</span></div>
+        </div>
+        <div class="wf-row mt-2" style="justify-content:flex-end"><span class="wf-btn violet sm">저장</span></div>
+      </div>
+      <span class="wf-note">마이페이지 = 협폭 센터 컬럼 + 상단 탭(사이드 메뉴 없음 — D안 문법). 탭 전환 = <span class="wf-code">hx-get="/member/mypage/{tab}"</span> 부분갱신, <span class="wf-code">hx-history="false"</span>(민감 화면 + 캐시 no-store).
+    진입 시 <b>재인증 게이트</b>(비밀번호 확인) — A안 규약 동일. 표시값은 MaskUtils 마스킹, 원문 열람은 log_privacy 기록.
+    비밀번호 변경 성공 시 세션 재발급, 탈퇴는 soft-delete → 퍼지 스케줄러(04:45) 처리.</span>
+
+      <!-- 내 활동 -->
+      <div class="wf-h2 mt-6 mb-2">내 활동</div>
+      <div class="wf-grid-3">
+        <div class="wf-box wf-p" style="text-align:center"><div class="wf-stat"><b style="font-size:24px">12</b><span>작성 글</span></div></div>
+        <div class="wf-box wf-p" style="text-align:center"><div class="wf-stat"><b style="font-size:24px">34</b><span>댓글</span></div></div>
+        <div class="wf-box wf-p" style="text-align:center"><div class="wf-stat"><b style="font-size:24px">7</b><span>좋아요</span></div></div>
+      </div>
+      <span class="wf-note">내 활동 요약 카드 — 클릭 시 해당 목록(내가 쓴 글/댓글) 협폭 리스트로 이동. /member/** 전 라우트 tb_role_url_access 등록(무매칭 DENY), member 체인(Order 20) 소관.</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

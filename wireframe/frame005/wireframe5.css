@@ -1,0 +1,149 @@
+/* ============================================================
+   PCMS 2026-001 와이어프레임 E안(frame005) 공용 스타일
+   - 콘셉트: "포털형 벤토(bento) 대시보드" — 카드가 주인공
+   - 배경 = 밝은 웜그레이, 카드 = 흰색 radius 12px + 옅은 그림자,
+     카드 사이 넓은 거터(16px). 로즈/레드(#e11d48) = 주석/배지.
+   - A(블루프린트)·B(손그림)·C(각진 사이드바)·D(에디토리얼)와 구분.
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+  background: #ece9e4;              /* 밝은 웜그레이 */
+  color: #44403c;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 24px;
+}
+
+/* ── 페이지 머리말 ── */
+.wf-doc-header { max-width: 1080px; margin: 0 auto 20px; }
+.wf-doc-header h1 { font-size: 20px; color: #1c1917; margin-bottom: 4px; }
+.wf-doc-header p  { color: #57534e; font-size: 13px; }
+.wf-doc-header .route { display:inline-block; font-family: Consolas, monospace; background:#1c1917; color:#fafaf9; padding:2px 8px; border-radius:6px; font-size:12px; margin:4px 4px 0 0; }
+.wf-back { display:inline-block; margin-bottom:12px; color:#e11d48; text-decoration:none; font-size:12px; }
+.wf-back:hover { text-decoration:underline; }
+.wf-badge-e { display:inline-block; background:#e11d48; color:#fff; font-size:11px; padding:2px 10px; border-radius:10px; vertical-align:middle; margin-left:8px; font-weight:400; }
+
+/* ── 브라우저 프레임(캔버스) — 내부가 웜그레이 페이지 배경, 그 위에 카드 ── */
+.wf-canvas {
+  max-width: 1080px; margin: 0 auto 40px; background: #f5f4f1;
+  border: 1px solid #d6d3d1; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 6px rgba(28,25,23,.08), 0 12px 32px rgba(28,25,23,.08);
+}
+.wf-browserbar {
+  display: flex; align-items: center; gap: 8px;
+  background: #e7e4df; padding: 8px 12px; border-bottom: 1px solid #d6d3d1;
+}
+.wf-browserbar .dot { width: 10px; height: 10px; border-radius: 50%; background: #fda4af; }
+.wf-browserbar .dot:nth-child(2), .wf-browserbar .dot:nth-child(3) { background: #d6d3d1; }
+.wf-browserbar .url {
+  flex: 1; background: #fff; border: 1px solid #d6d3d1; border-radius: 12px;
+  padding: 2px 12px; font-family: Consolas, monospace; font-size: 12px; color: #44403c;
+}
+
+/* ── 밴드(헤더/푸터 등 풀폭 띠) ── */
+.wf-band { background: #fff; border-bottom: 1px solid #e7e5e4; padding: 10px 20px; }
+.wf-gray { background: #efedea; }
+.wf-dark { background: #292524; color: #e7e5e4; border-bottom-color: #292524; }
+
+/* ── 카드 — E안의 주인공 ── */
+.wf-card {
+  background: #fff; border: 1px solid #e7e5e4; border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(28,25,23,.05), 0 4px 14px rgba(28,25,23,.06);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.wf-card-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid #f0eeeb;
+  font-weight: 700; font-size: 13px; color: #1c1917;
+}
+.wf-card-body { padding: 12px 14px; flex: 1; }
+.wf-box  { border: 1px solid #e7e5e4; background: #fff; border-radius: 12px; }
+
+/* ── 벤토 그리드 — 4컬럼 기준, 넓은 거터 ── */
+.wf-bento { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; grid-auto-rows: minmax(96px, auto); grid-auto-flow: dense; }
+.wf-bento .c2 { grid-column: span 2; }
+.wf-bento .c3 { grid-column: span 3; }
+.wf-bento .c4 { grid-column: span 4; }
+.wf-bento .r2 { grid-row: span 2; }
+
+/* 동적 슬롯(htmx/JS 렌더) — 로즈 점선 */
+.wf-slot {
+  border: 2px dashed #fda4af; background: #fff8f8; color: #a8a29e;
+  padding: 10px 14px; text-align: center; border-radius: 12px;
+}
+
+/* 이미지 자리표시(X 박스) */
+.wf-img {
+  position: relative; background: #eae7e2; border: 1px solid #d6d3d1;
+  display: flex; align-items: center; justify-content: center;
+  color: #78716c; font-size: 11px; overflow: hidden; min-height: 60px;
+  border-radius: 8px;
+}
+.wf-img::before, .wf-img::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to top right, transparent calc(50% - .75px), #c8c3bc, transparent calc(50% + .75px));
+}
+.wf-img::after { transform: scaleX(-1); }
+.wf-img span { position: relative; z-index: 1; background: #eae7e2; padding: 1px 6px; border-radius: 6px; }
+
+/* ── 컨트롤 목업 ── */
+.wf-btn {
+  display: inline-block; border: 1px solid #e11d48; background: #e11d48; color: #fff;
+  padding: 5px 14px; font-size: 12px; border-radius: 8px; white-space: nowrap;
+}
+.wf-btn.ghost { background: #fff; color: #44403c; border-color: #d6d3d1; }
+.wf-btn.sm { padding: 2px 8px; font-size: 11px; }
+.wf-input {
+  border: 1px solid #d6d3d1; background: #fff; border-radius: 8px;
+  padding: 5px 10px; color: #a8a29e; font-size: 12px; display: inline-block;
+}
+.wf-chip { display:inline-block; border:1px solid #d6d3d1; border-radius:10px; padding:1px 8px; font-size:11px; color:#78716c; background:#faf9f7; }
+.wf-chip.on { background:#e11d48; color:#fff; border-color:#e11d48; }
+
+/* ── 텍스트 목업 ── */
+.wf-h1 { font-size: 20px; font-weight: 700; color: #1c1917; }
+.wf-h2 { font-size: 15px; font-weight: 700; color: #1c1917; }
+.wf-line { height: 8px; background: #d6d3d1; border-radius: 4px; margin: 6px 0; }
+.wf-line.w40 { width: 40%; } .wf-line.w60 { width: 60%; } .wf-line.w80 { width: 80%; }
+.wf-line.thin { height: 5px; background: #e7e5e4; }
+
+/* ── 주석(설명) — 로즈 ── */
+.wf-note {
+  color: #be123c; font-size: 11px;
+  background: #fff1f2; border-left: 3px solid #e11d48; padding: 3px 8px;
+  display: block; margin-top: 6px; border-radius: 0 8px 8px 0;
+}
+.wf-tag {
+  display: inline-block; background: #e11d48; color: #fff; font-size: 10px;
+  padding: 1px 6px; border-radius: 4px; vertical-align: middle; margin-left: 6px;
+  font-weight: 400;
+}
+.wf-code { font-family: Consolas, monospace; font-size: 11px; background:#efedea; padding:0 4px; border-radius:4px; color:#1c1917; }
+
+/* ── 레이아웃 유틸 ── */
+.wf-row  { display: flex; gap: 10px; align-items: center; }
+.wf-row.stretch { align-items: stretch; }
+.wf-grow { flex: 1; }
+.wf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.wf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.wf-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.wf-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.wf-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+.wf-p { padding: 14px; }
+.wf-section { padding: 20px; border-bottom: 1px solid #e0ddd8; }
+.wf-section:last-child { border-bottom: none; }
+.mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mb-2 { margin-bottom: 8px; }
+
+/* ── 테이블 목업 ── */
+.wf-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.wf-table th, .wf-table td { border: 1px solid #e0ddd8; padding: 6px 10px; text-align: left; }
+.wf-table th { background: #efedea; color: #57534e; }
+.wf-table td { color: #78716c; }
+
+/* ── IA 트리(index 전용) ── */
+.wf-tree { font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.9; color: #44403c; }
+.wf-tree a { color: #e11d48; text-decoration: none; }
+.wf-tree a:hover { text-decoration: underline; }
+.wf-tree .dim { color: #a8a29e; }

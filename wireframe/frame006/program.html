@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 F안 — 프로그램 페이지</title>
+<link rel="stylesheet" href="wireframe6.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>프로그램 — 연락처 앱형 교수진 리스트 · 바텀 시트 프로필 <span class="wf-badge-f">F안</span></h1>
+  <p><span class="route">GET /prg/faculty/{sc}</span><span class="route">GET /prg/{staff|lab|syllabus}/{sc}</span> — 교수진을 모바일 연락처 앱 문법(원형 썸네일 리스트 + ㄱㄴㄷ 인덱스 점프)으로. 프로그램 전환은 앱바 아래 가로 스크롤 칩.</p>
+</div>
+
+<div class="wf-duo">
+
+  <!-- ══════════ 모바일: 교수진 목록 ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 교수진 /prg/faculty/me (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/prg/faculty/me</div>
+
+      <div class="wf-appbar">
+        <span class="wf-chip">←</span><b>구성원·프로그램</b>
+        <span class="wf-grow"></span><span class="wf-chip">🔍</span><span class="wf-chip">🔔</span>
+      </div>
+
+      <!-- 프로그램 전환 칩 -->
+      <div class="wf-chipbar">
+        <span class="wf-chip on">교수 12</span><span class="wf-chip">직원 4</span><span class="wf-chip">연구실 8</span><span class="wf-chip">수업계획서</span><span class="wf-chip">…→</span>
+      </div>
+      <div style="padding:0 12px">
+        <span class="wf-note">프로그램 칩 — 앱바 아래 가로 스크롤 칩(overflow-x:auto, 스크롤바 숨김). 칩 = 일반 &lt;a&gt; 로 /prg/{program}/me 페이지 전환(부분갱신 아님 — URL 이 진실). 활성 칩 서버 렌더.</span>
+      </div>
+
+      <!-- 연락처 앱 스타일 리스트 + 인덱스 바 -->
+      <div class="wf-row stretch" style="gap:0;padding:8px 4px 8px 14px">
+        <div class="wf-grow">
+          <div style="font-size:10.5px;color:#0284c7;font-weight:700;padding:4px 0">ㄱ</div>
+          <div class="wf-row" style="padding:6px 0;border-bottom:1px solid #f1f5f9"><span class="wf-avatar">사진</span><div class="wf-grow"><b style="font-size:12.5px">김○○</b> <span class="wf-chip" style="font-size:9px">교수 · 학과장</span><div style="font-size:10.5px;color:#94a3b8">로봇공학 · kim@konyang.ac.kr</div></div><span class="wf-chip">›</span></div>
+          <div class="wf-row" style="padding:6px 0;border-bottom:1px solid #f1f5f9"><span class="wf-avatar">사진</span><div class="wf-grow"><b style="font-size:12.5px">김○○</b> <span class="wf-chip" style="font-size:9px">부교수</span><div style="font-size:10.5px;color:#94a3b8">열유체 · ─────</div></div><span class="wf-chip">›</span></div>
+          <div style="font-size:10.5px;color:#0284c7;font-weight:700;padding:4px 0">ㅂ</div>
+          <div class="wf-row" style="padding:6px 0;border-bottom:1px solid #f1f5f9"><span class="wf-avatar">사진</span><div class="wf-grow"><b style="font-size:12.5px">박○○</b> <span class="wf-chip" style="font-size:9px">조교수</span><div style="font-size:10.5px;color:#94a3b8">설계·생산 · ─────</div></div><span class="wf-chip">›</span></div>
+          <div style="font-size:10.5px;color:#0284c7;font-weight:700;padding:4px 0">ㅇ</div>
+          <div class="wf-row" style="padding:6px 0"><span class="wf-avatar">사진</span><div class="wf-grow"><b style="font-size:12.5px">이○○</b> <span class="wf-chip" style="font-size:9px">교수</span><div style="font-size:10.5px;color:#94a3b8">동역학 · ─────</div></div><span class="wf-chip">›</span></div>
+        </div>
+        <div class="wf-indexbar">ㄱ<br/>ㄴ<br/>ㄷ<br/>ㅁ<br/><b>ㅂ</b><br/>ㅅ<br/><b>ㅇ</b><br/>ㅈ<br/>ㅊ<br/>ㅎ</div>
+      </div>
+      <div style="padding:0 12px">
+        <span class="wf-note">연락처 앱 스타일 — 성(姓) 초성 그룹 헤더 + 우측 ㄱㄴㄷ 인덱스 점프 바.
+        인덱스 = 순수 앵커 링크(&lt;a href="#idx-ㅂ"&gt;) + CSS scroll-behavior:smooth — JS 0줄. 데이터에 없는 초성은 dim 처리.
+        데이터 = tb_faculty(secondary, site_code='me' 스코프) — sortOrder 대신 이름 가나다 정렬 파라미터. 이메일 등 연락처는 MaskUtils 정책에 따라 부분 마스킹 가능.</span>
+      </div>
+
+      <!-- 바텀 시트 프로필 -->
+      <div class="wf-sheet">
+        <div class="wf-sheet-grip"></div>
+        <div style="padding:4px 16px 14px">
+          <div class="wf-row"><span class="wf-avatar lg">사진</span>
+            <div><b style="font-size:14px">김○○ 교수</b><div style="font-size:11px;color:#64748b">학과장 · 로봇공학 연구실</div></div>
+            <span class="wf-grow"></span><span class="wf-chip">✕</span>
+          </div>
+          <div class="wf-grid-3 mt-2">
+            <span class="wf-btn ghost sm full">📞 전화</span><span class="wf-btn ghost sm full">✉ 메일</span><span class="wf-btn ghost sm full">🔬 연구실</span>
+          </div>
+          <div class="wf-line thin w80 mt-2"></div><div class="wf-line thin w60"></div>
+          <div style="font-size:11px;color:#64748b" class="mt-2">학력 · 경력 · 담당과목 · 논문 (섹션별 &lt;details&gt;)</div>
+        </div>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab active"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+    <span class="wf-note" style="max-width:390px">상세 프로필 = <b>바텀 시트 — 네이티브 &lt;dialog&gt;</b> 를 CSS 로 하단 정렬(마진·transform), 열기 = hx-get="/prg/faculty/me/{facultyId}" hx-target="#profile-sheet" 후 showModal() (data-action 위임, 외부 .js + nonce).
+    ESC/백드롭 닫기 기본 제공. 시트가 URL 을 바꾸지 않으므로 hx-history="false" — 뒤로가기 시 목록 상태 보존. FAC_ 접두 UUID v7 PK.</span>
+  </div>
+
+  <!-- ══════════ 데스크톱 (확장) ══════════ -->
+  <div class="wf-col" style="flex:1;min-width:560px">
+    <div class="wf-caption">🖥 데스크톱 (확장) — 같은 리스트가 2컬럼 카드로</div>
+    <div class="wf-canvas">
+      <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="url">http://127.0.0.1:8080/prg/faculty/me</span></div>
+
+      <div class="wf-band"><div class="wf-deskcol"><div class="wf-row"><b style="font-size:16px">기계공학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">🏠 홈</span><span class="wf-btn sky sm">🎓 학과</span><span class="wf-btn ghost sm">📋 게시판</span><span class="wf-btn ghost sm">🔍 검색</span><span class="wf-btn ghost sm">👤 MY</span></div></div></div>
+
+      <div class="wf-band" style="padding:16px">
+        <div class="wf-deskcol">
+          <div class="wf-row" style="font-size:11px;color:#64748b"><span>홈 › 구성원 › 교수진</span><span class="wf-grow"></span><div class="wf-img" style="width:180px;height:40px;min-height:40px"><span>SUB_HERO</span></div></div>
+
+          <div class="wf-row mt-4">
+            <span class="wf-chip on">교수 12</span><span class="wf-chip">직원 4</span><span class="wf-chip">연구실 8</span><span class="wf-chip">수업계획서</span>
+            <span class="wf-grow"></span>
+            <span class="wf-input" style="width:180px">🔍 이름·연구분야 검색</span>
+          </div>
+
+          <div style="font-size:11px;color:#0284c7;font-weight:700" class="mt-4">ㄱ</div>
+          <div class="wf-grid-2 mt-2">
+            <div class="wf-box wf-p" style="padding:10px"><div class="wf-row"><span class="wf-avatar">사진</span><div><b style="font-size:12.5px">김○○ 교수</b><div style="font-size:10.5px;color:#94a3b8">학과장 · 로봇공학</div></div></div></div>
+            <div class="wf-box wf-p" style="padding:10px"><div class="wf-row"><span class="wf-avatar">사진</span><div><b style="font-size:12.5px">김○○ 부교수</b><div style="font-size:10.5px;color:#94a3b8">열유체</div></div></div></div>
+          </div>
+          <div style="font-size:11px;color:#0284c7;font-weight:700" class="mt-2">ㅂ · ㅇ …</div>
+          <div class="wf-grid-2 mt-2">
+            <div class="wf-box wf-p" style="padding:10px"><div class="wf-row"><span class="wf-avatar">사진</span><div><b style="font-size:12.5px">박○○ 조교수</b><div style="font-size:10.5px;color:#94a3b8">설계·생산</div></div></div></div>
+            <div class="wf-box wf-p" style="padding:10px"><div class="wf-row"><span class="wf-avatar">사진</span><div><b style="font-size:12.5px">이○○ 교수</b><div style="font-size:10.5px;color:#94a3b8">동역학</div></div></div></div>
+          </div>
+          <span class="wf-note">데스크톱 = 같은 초성 그룹을 2컬럼 카드 그리드로 재배열(CSS grid 만 변경). 인덱스 점프 바는 데스크톱에서 숨김(한 화면에 다 보임) — 대신 검색 인풋 노출(htmx 부분갱신, 300ms debounce).
+          상세는 동일 &lt;dialog&gt; 를 센터 모달로(CSS 만 위치 변경 — 마크업·엔드포인트 공유).</span>
+        </div>
+      </div>
+
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-deskcol"><div class="wf-line w40" style="background:#475569"></div></div></div>
+    </div>
+
+    <div class="wf-canvas mt-4" style="min-width:0">
+      <div class="wf-section">
+        <div class="wf-h2 mb-2">프로그램 4종 공통/차이</div>
+        <table class="wf-table">
+          <tr><th style="width:150px">프로그램</th><th>모바일 리스트 문법</th><th>비고</th></tr>
+          <tr><td>교수 /prg/faculty/{sc}</td><td>연락처 앱 리스트 + ㄱㄴㄷ 인덱스 + 바텀 시트</td><td>본 페이지 기준</td></tr>
+          <tr><td>직원 /prg/staff/{sc}</td><td>동일 리스트(인덱스 바 생략 — 소수 인원)</td><td>담당업무 1줄 노출</td></tr>
+          <tr><td>연구실 /prg/lab/{sc}</td><td>썸네일 카드 리스트(사진 좌 사각)</td><td>지도교수 링크 → 교수 바텀 시트 재사용</td></tr>
+          <tr><td>수업계획서 /prg/syllabus/{sc}</td><td>학기 칩 + 과목 리스트, 상세는 PDF 뷰어/다운로드</td><td>연도·학기 필터 = htmx 부분갱신</td></tr>
+        </table>
+        <span class="wf-note">4종 모두 secondary DB 제네릭 조각(com.gonet.secondary.dept) — 다학과 공용이라 <b>사이트 복제 시 복사 불필요</b>(학과추가가이드). R5 격리: primary 쉘 페이지 + secondary 데이터 조각. /prg/** 는 tb_role_url_access 기존 규칙으로 커버.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

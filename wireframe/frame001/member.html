@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 — 회원(로그인/가입/마이페이지)</title>
+<link rel="stylesheet" href="wireframe.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>회원 — 로그인 · 가입 · 마이페이지</h1>
+  <p><span class="route">/member/login</span><span class="route">/member/join</span><span class="route">/member/mypage</span> — member SecurityFilterChain(Order 20), 세션 PCMS_SID</p>
+</div>
+
+<!-- 로그인 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/login?siteCode=me</span></div>
+  <div class="wf-section" style="display:flex;justify-content:center;padding:32px">
+    <div class="wf-box wf-p" style="width:380px">
+      <div class="wf-h1" style="text-align:center">로그인</div>
+      <div class="mt-4"><span class="wf-input" style="display:block">아이디</span></div>
+      <div class="mt-2"><span class="wf-input" style="display:block">비밀번호</span></div>
+      <div class="mt-2"><span class="wf-btn" style="display:block;text-align:center">로그인</span></div>
+      <div class="wf-row mt-2" style="justify-content:center;font-size:12px">
+        <span style="color:#64748b;text-decoration:underline">아이디 찾기</span>·<span style="color:#64748b;text-decoration:underline">비밀번호 찾기</span>·<span style="color:#64748b;text-decoration:underline">회원가입</span>
+      </div>
+      <div class="wf-band" style="border-top:1.5px solid #cbd5e1;border-bottom:none;margin-top:12px;padding:12px 0 0;text-align:center">
+        <span class="wf-btn ghost sm">소셜 로그인 (OAuth2)</span>
+      </div>
+    </div>
+  </div>
+  <div class="wf-section">
+    <span class="wf-note">로그인 잠금 5회/30분 + Bucket4j 레이트리밋. 성공 시 changeSessionId() + maximumSessions(1). 통합 로그인 v_user_login VIEW(관리자/회원). 휴면 계정이면 /dormant-restore 유도, OAuth2 신규는 /member/oauth2-join 추가정보 입력.</span>
+  </div>
+</div>
+
+<!-- 가입 3단계 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">회원가입 플로우 — 유형선택 → 약관 → 정보입력 → 완료</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-row" style="justify-content:center">
+      <span class="wf-chip" style="background:#475569;color:#fff">① 유형/약관</span><span>→</span>
+      <span class="wf-chip">② 본인인증·정보입력</span><span>→</span>
+      <span class="wf-chip">③ 완료</span>
+    </div>
+    <div class="wf-grid-3 mt-4 stretch">
+      <div class="wf-box wf-p">
+        <b>① join-type-select / join-agree</b>
+        <div class="wf-box wf-gray wf-p mt-2" style="font-size:11px;max-height:70px;overflow:hidden">이용약관 전문 (스크롤 박스)<div class="wf-line thin"></div><div class="wf-line thin w80"></div></div>
+        <div class="mt-2" style="font-size:12px">☑ 이용약관 동의(필수)<br/>☑ 개인정보 수집·이용 동의(필수)<br/>☐ 마케팅 수신(선택)</div>
+        <span class="wf-btn sm mt-2" style="display:inline-block">다음</span>
+      </div>
+      <div class="wf-box wf-p">
+        <b>② member-join</b>
+        <div class="mt-2"><span class="wf-btn ghost sm">NICE 본인인증</span></div>
+        <div class="mt-2"><span class="wf-input" style="display:block">아이디 <span class="wf-chip">중복확인</span></span></div>
+        <div class="mt-2"><span class="wf-input" style="display:block">비밀번호 / 확인</span></div>
+        <div class="mt-2"><span class="wf-input" style="display:block">이름 · 이메일 · 휴대폰</span></div>
+        <span class="wf-btn sm mt-2" style="display:inline-block">가입하기</span>
+      </div>
+      <div class="wf-box wf-p" style="text-align:center">
+        <b>③ join-complete</b>
+        <div style="font-size:32px;margin:12px 0">✓</div>
+        <div class="wf-line thin w80" style="margin:6px auto"></div>
+        <span class="wf-btn sm">로그인 하러가기</span>
+      </div>
+    </div>
+    <span class="wf-note">PII 는 @Encrypt(AES-256-GCM, {AG} 프리픽스) 저장 + log_privacy 기록. 회원 인가는 tb_member_role 미사용 — AUTHENTICATED + user_type=MEMBER. CSRF XSRF-TOKEN 쿠키.</span>
+  </div>
+</div>
+
+<!-- 마이페이지 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">마이페이지 — /member/mypage (재인증 게이트)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/mypage</span></div>
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <!-- 좌측 메뉴 -->
+      <div class="wf-box" style="width:180px">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>마이페이지</b></div>
+        <div class="wf-band" style="padding:8px 12px;background:#f1f5f9">대시보드</div>
+        <div class="wf-band" style="padding:8px 12px">프로필 수정</div>
+        <div class="wf-band" style="padding:8px 12px">비밀번호 변경</div>
+        <div class="wf-band" style="padding:8px 12px">내 글/댓글</div>
+        <div class="wf-band" style="padding:8px 12px;border-bottom:none;color:#94a3b8">회원 탈퇴</div>
+      </div>
+      <!-- 본문 -->
+      <div class="wf-grow">
+        <div class="wf-box wf-p">
+          <div class="wf-row"><div class="wf-img" style="width:56px;height:56px;min-height:56px;border-radius:50%"><span></span></div>
+            <div><b>홍길동</b> <span class="wf-chip">MEMBER</span><br/><span style="font-size:11px;color:#64748b">ho**@**.com · 010-****-1234 (마스킹)</span></div></div>
+        </div>
+        <div class="wf-grid-3 mt-2">
+          <div class="wf-box wf-p" style="text-align:center"><b>3</b><br/><span style="font-size:11px;color:#64748b">내 글</span></div>
+          <div class="wf-box wf-p" style="text-align:center"><b>12</b><br/><span style="font-size:11px;color:#64748b">댓글</span></div>
+          <div class="wf-box wf-p" style="text-align:center"><b>2</b><br/><span style="font-size:11px;color:#64748b">알림</span></div>
+        </div>
+        <div class="wf-slot mt-2" style="min-height:60px">최근 활동 목록 (htmx)</div>
+      </div>
+    </div>
+    <span class="wf-note">프로필/탈퇴 등 민감 페이지 진입 전 mypage-reauth(비밀번호 재확인) 게이트. 조회 화면 PII 는 MaskUtils 마스킹. 탈퇴 → 소프트 처리 후 퍼지 배치(04:45)가 파기, tb_pii_purge_log 기록. HTML no-store(CSP) — 뒤로가기 캐시 방지.</span>
+  </div>
+</div>
+
+</body>
+</html>

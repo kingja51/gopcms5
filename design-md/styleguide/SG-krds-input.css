@@ -1,0 +1,5 @@
+/* SG-krds 스타일가이드 전용 빌드 — design-md/styleguide 에서 실행:
+ *   npx @tailwindcss/cli -i ./SG-krds-input.css -o ./SG-krds-output.css
+ * 구성: 전역 src/krds.css(KRDS 토큰·프리셋) + 이 페이지 스캔(@source) */
+@import "../../src/krds.css";
+@source "./SG-krds.html";

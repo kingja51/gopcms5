@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>PCMS 2026 와이어프레임 — 목차 & 정보구조(IA)</title>
+<link rel="stylesheet" href="wireframe.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="../index.html">← 전체 목차 (설계안 A~G)</a>
+  <h1>PCMS 2026-001 사용자 사이트 와이어프레임 <span class="wf-tag">A안 (frame001)</span></h1>
+  <p>KRDS 공용 레이아웃(<span class="wf-code">front/layouts/KRDS/krds.html</span>) 기반 학과 사이트 기준.
+     사이트별 차이는 템플릿 CSS 1장(<span class="wf-code">/tmpl/css/krds/*.css</span>)과 테마 클래스뿐이며 페이지 골격은 전 사이트 공통.</p>
+  <p style="margin-top:6px">아래 <b>{sc}</b> = siteCode(학과코드 = 서브도메인, 예: me·cse·ai). URL이 진실, 세션은 편의.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">① 와이어프레임 목차</div>
+    <table class="wf-table">
+      <tr><th style="width:220px">파일</th><th>화면</th><th>대표 라우트</th></tr>
+      <tr><td><a href="layout.html">layout.html</a></td><td>공용 레이아웃 해부도 (마스트헤드·GNB·breadcrumb·푸터)</td><td><span class="wf-code">전 페이지 공통 프레임</span></td></tr>
+      <tr><td><a href="home.html">home.html</a></td><td>사이트 홈 (히어로·바로가기 타일·공지·포토앨범)</td><td><span class="wf-code">/{sc}/home</span></td></tr>
+      <tr><td><a href="content.html">content.html</a></td><td>콘텐츠 페이지 (학과소개·오시는길)</td><td><span class="wf-code">/{sc}/about · /{sc}/location</span></td></tr>
+      <tr><td><a href="program.html">program.html</a></td><td>프로그램 페이지 (교수진·직원·연구실·수업계획서)</td><td><span class="wf-code">/prg/{program}/{sc}</span></td></tr>
+      <tr><td><a href="board.html">board.html</a></td><td>게시판 목록 + 상세(댓글·좋아요/신고)</td><td><span class="wf-code">/bbs/{sc}/{bbsCode}</span></td></tr>
+      <tr><td><a href="member.html">member.html</a></td><td>회원 (로그인·가입 3단계·마이페이지)</td><td><span class="wf-code">/member/**</span></td></tr>
+      <tr><td><a href="search-sitemap.html">search-sitemap.html</a></td><td>통합검색 · 사이트맵</td><td><span class="wf-code">/search · /{sc}/sitemap</span></td></tr>
+      <tr><td><a href="common.html">common.html</a></td><td>공통 프로그램·보조 화면 (학사일정·알림함·계정찾기·설문·민원·파일뷰어·오류)</td><td><span class="wf-code">/schedule · /notification · /member/find-* · /survey · /complaint</span></td></tr>
+    </table>
+    <span class="wf-note">각 파일은 브라우저에서 직접 열면 됨(서버 불필요). 회색 실선 = 정적 마크업, 파란 점선 = htmx/JS 동적 슬롯, 파란 주석 = 구현 메모.</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">② 정보구조(IA) — 학과 사이트 표준 메뉴 5그룹 (정본 트리, 최대 4뎁스)</div>
+    <div class="wf-tree">
+/{sc}/home <span class="dim">─────────────────────── 홈(캐러셀 담당, SUB_HERO 미출력)</span><br/>
+├─ 소개 <span class="dim">(1뎁스 GROUP)</span><br/>
+│&nbsp;&nbsp;├─ 학과소개 <span class="dim">→ /{sc}/about (CONTENT)</span><br/>
+│&nbsp;&nbsp;│&nbsp;&nbsp;└─ 인사말 · 비전·인재상 · 연혁 <span class="dim">(3뎁스 = 페이지 내 앵커/탭)</span><br/>
+│&nbsp;&nbsp;└─ 오시는길 <span class="dim">→ /{sc}/location (CONTENT)</span><br/>
+├─ 구성원 <span class="dim">(GROUP)</span><br/>
+│&nbsp;&nbsp;├─ 교수진 <span class="dim">→ /prg/faculty/{sc} (secondary 조각, 다학과 공용)</span><br/>
+│&nbsp;&nbsp;│&nbsp;&nbsp;└─ 전임교원 · 겸임·초빙 · 명예교수 <span class="dim">(3뎁스 = 목록 필터)</span><br/>
+│&nbsp;&nbsp;└─ 직원&nbsp;&nbsp; <span class="dim">→ /prg/staff/{sc}</span><br/>
+├─ 교육 <span class="dim">(GROUP)</span><br/>
+│&nbsp;&nbsp;├─ 교과과정&nbsp;&nbsp; <span class="dim">→ /{sc}/curriculum</span><br/>
+│&nbsp;&nbsp;│&nbsp;&nbsp;├─ 학부 <span class="dim">(3뎁스)</span><br/>
+│&nbsp;&nbsp;│&nbsp;&nbsp;│&nbsp;&nbsp;└─ 전공필수 · 전공선택 <span class="dim">(4뎁스 = 페이지 내 탭)</span><br/>
+│&nbsp;&nbsp;│&nbsp;&nbsp;└─ 대학원 <span class="dim">(3뎁스)</span><br/>
+│&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ 석사과정 · 박사과정 <span class="dim">(4뎁스 = 페이지 내 탭)</span><br/>
+│&nbsp;&nbsp;├─ 수업계획서 <span class="dim">→ /prg/syllabus/{sc}</span><br/>
+│&nbsp;&nbsp;└─ 학사일정&nbsp;&nbsp; <span class="dim">→ /schedule/{master} (일정 프로그램)</span><br/>
+├─ 연구 <span class="dim">(GROUP)</span><br/>
+│&nbsp;&nbsp;├─ 연구실&nbsp;&nbsp;&nbsp; <span class="dim">→ /prg/lab/{sc}</span><br/>
+│&nbsp;&nbsp;└─ 연구성과 <span class="dim">→ /bbs/{sc}/pub</span><br/>
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ 논문 · 특허·기술이전 <span class="dim">(3뎁스 = 게시판 카테고리)</span><br/>
+└─ 커뮤니티 <span class="dim">(GROUP)</span><br/>
+&nbsp;&nbsp;&nbsp;├─ 공지사항 <span class="dim">→ /bbs/{sc}/notice (NOTICE 타입)</span><br/>
+&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;└─ 학사 · 장학 · 취업 <span class="dim">(3뎁스 = 카테고리 필터)</span><br/>
+&nbsp;&nbsp;&nbsp;├─ 학과소식 <span class="dim">→ /bbs/{sc}/news</span><br/>
+&nbsp;&nbsp;&nbsp;├─ 세미나&nbsp;&nbsp; <span class="dim">→ /bbs/{sc}/seminar</span><br/>
+&nbsp;&nbsp;&nbsp;└─ 자료실&nbsp;&nbsp; <span class="dim">→ /bbs/{sc}/archive (FILE 타입)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ 학사서식 <span class="dim">(3뎁스)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;└─ 휴·복학 서식 · 졸업 서식 <span class="dim">(4뎁스 = 카테고리)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ 강의자료 <span class="dim">(3뎁스)</span><br/>
+    </div>
+    <span class="wf-note"><b>뎁스 출력 규칙(전 안 공통)</b> — 메뉴(GNB·드롭다운)는 <b>1~3뎁스까지만 노출</b>, 4뎁스는 메뉴에 노출하지 않고 3뎁스 페이지 내 탭/필터로 처리(<a href="layout.html">layout.html</a> 드롭다운 해부도). <b>사이트맵은 1~4뎁스 전체 전개</b>(<a href="search-sitemap.html">search-sitemap.html</a>). 데이터는 siteContext.menuTree 하나(depth 1~4 저장) — GNB·사이트맵이 렌더 뎁스만 달리함.</span>
+    <span class="wf-note">메뉴는 tb_menu(site_code 스코프) 시드가 정본 — nav 는 link_url 을 직접 사용. 새 URL 은 tb_role_url_access 등록 필수(무매칭 DENY).</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">③ 공통(사이트 무관) 라우트</div>
+    <table class="wf-table">
+      <tr><th style="width:280px">라우트</th><th>화면</th></tr>
+      <tr><td><span class="wf-code">/member/login · /member/join</span></td><td>로그인 / 가입(약관→입력→완료) — <a href="member.html">member.html</a></td></tr>
+      <tr><td><span class="wf-code">/member/find-id · /member/find-password</span></td><td>아이디/비밀번호 찾기(이메일 인증·휴면 해제) — <a href="common.html">common.html</a></td></tr>
+      <tr><td><span class="wf-code">/member/mypage (profile·password·withdraw)</span></td><td>마이페이지(재인증 게이트)</td></tr>
+      <tr><td><span class="wf-code">/search?siteCode={sc}&amp;keyword=</span></td><td>통합검색 — <a href="search-sitemap.html">search-sitemap.html</a></td></tr>
+      <tr><td><span class="wf-code">/notification</span></td><td>알림함(마스트헤드 종 아이콘·수신 설정) — <a href="common.html">common.html</a></td></tr>
+      <tr><td><span class="wf-code">/schedule/{master}</span></td><td>일정(학사일정) 프로그램 — <a href="common.html">common.html</a></td></tr>
+      <tr><td><span class="wf-code">/weather/widget · /api/v1/sites/{sc}/banners</span></td><td>htmx/JS 조각 — 날씨, 배너(MAIN_HERO / SUB_HERO / 팝업)</td></tr>
+    </table>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">④ 게시판 스킨 타입 (tb_bbs_master.bbs_type)</div>
+    <div class="wf-row" style="flex-wrap:wrap">
+      <span class="wf-chip">NOTICE 공지</span><span class="wf-chip">FREE 자유</span><span class="wf-chip">QNA 질의응답</span>
+      <span class="wf-chip">FAQ</span><span class="wf-chip">GALLERY 갤러리</span><span class="wf-chip">FILE 자료실</span>
+      <span class="wf-chip">BODO 보도자료</span><span class="wf-chip">YOUTUBE 영상</span><span class="wf-chip">PDF 뷰어</span>
+    </div>
+    <span class="wf-note">목록 스킨만 다르고 골격(검색폼+목록+페이징, htmx 부분갱신)은 동일 — board.html 참고.</span>
+  </div>
+</div>
+
+</body>
+</html>

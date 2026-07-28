@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 C안 — 공용 레이아웃</title>
+<link rel="stylesheet" href="wireframe3.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>공용 레이아웃 C — 좌측 고정 다크 사이드바 GNB <span class="wf-badge-c">C안</span></h1>
+  <p>A안과 동일하게 <span class="wf-code">front/layouts/KRDS/krds.html</span> 1개 파일 체계 유지.
+     차이는 글로벌 내비를 <b>좌측 고정 세로 사이드바(~220px)</b>로 옮기고, 상단 가로 GNB 를 제거하는 것 —
+     본문 상단에는 얇은 유틸바(breadcrumb + 🔍)만 남는다.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/…  (모든 페이지 공통 프레임 — 예: 인공지능학과)</span></div>
+
+  <!-- 스킵 링크 -->
+  <div class="wf-band wf-gray" style="padding:4px 16px">
+    <span class="wf-chip">본문으로 건너뛰기</span>
+    <span class="wf-tag">sr-only, 포커스 시에만 노출 (A안 동일) — 사이드바 전체를 건너뛰므로 C안에서 더 중요</span>
+  </div>
+
+  <div class="wf-frame">
+    <!-- ◀ 다크 사이드바 -->
+    <div class="wf-side">
+      <div class="wf-side-logo">① 인공지능학과<span class="en">KONYANG UNIV. — 로고/사이트명(tb_site)</span></div>
+      <div class="wf-side-search">② 🔍 통합검색 …</div>
+      <div class="wf-side-item group">③ 소개 ▸</div>
+      <div class="wf-side-item group">구성원 ▸</div>
+      <div class="wf-side-item group">교육 ▾</div>
+      <div class="wf-side-sub">교과과정 ▾</div>
+      <div class="wf-side-sub2 active">학부</div>
+      <div class="wf-side-sub2">대학원</div>
+      <div class="wf-side-sub">수업계획서</div>
+      <div class="wf-side-sub">학사일정</div>
+      <div class="wf-side-item group">연구 ▸</div>
+      <div class="wf-side-item group">커뮤니티 ▸</div>
+      <div class="wf-side-util">④ <span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">가입</span><span class="wf-chip">◐ 고대비</span></div>
+    </div>
+
+    <!-- ▶ 메인(콘텐츠) 영역 -->
+    <div class="wf-main">
+      <div class="wf-utilbar">⑤ 홈 › 교육 › 교과과정 › 학부 <span class="wf-grow"></span><span class="wf-chip">건양대학교</span><span class="wf-chip">관련 사이트 ▾</span><span class="wf-chip">🔍</span></div>
+      <div class="wf-p wf-grow">
+        <div class="wf-slot" style="min-height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+          <b style="font-size:15px">⑥ 본문 — layout:fragment="content"</b>
+          <span>사이드바가 LNB 를 겸하므로 본문은 항상 1단 풀폭</span>
+          <span style="font-size:11px">콘텐츠 페이지 내부 이동은 인페이지 앵커 탭(content.html 참조)</span>
+        </div>
+        <div class="wf-row mt-2" style="justify-content:center">
+          <span class="wf-btn ghost sm">👍 좋아요 12</span><span class="wf-btn ghost sm">🚩 신고</span>
+        </div>
+      </div>
+      <div class="wf-band wf-dark" style="border-bottom:none">
+        <div class="wf-row">
+          <div class="wf-grow"><div class="wf-line w40" style="background:#3d5a54"></div><div class="wf-line thin w60" style="background:#1e3f39"></div></div>
+          <span class="wf-chip" style="border-color:#3d5a54;color:#9fc4bc;background:transparent">개인정보처리방침</span>
+          <span class="wf-chip" style="border-color:#3d5a54;color:#9fc4bc;background:transparent">이메일무단수집거부</span>
+          <span class="wf-chip" style="border-color:#3d5a54;color:#9fc4bc;background:transparent">TOP ↑</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wf-section">
+    <span class="wf-note">① 로고/사이트명 — tb_site 의 사이트명·테마 클래스(theme-*) 연동. 클릭 시 /{sc}/home.</span>
+    <span class="wf-note">② 사이드바 검색 인풋 — 상시 노출(C안 고유). submit → GET /search?siteCode={sc}&keyword= 일반 내비게이션(htmx 아님). 인라인 핸들러 금지 — form 기본 동작만 사용.</span>
+    <span class="wf-note">③ 메뉴 5그룹 아코디언 — 네이티브 &lt;details&gt;/&lt;summary&gt; 중첩으로 구현(KRDS 규약: 네이티브 요소 우선, JS 없이 동작): 1뎁스 그룹 → 2뎁스 → 3뎁스(2차 들여쓰기). 접힘 ▸ / 펼침 ▾ 표시, 현재 URL 이 속한 경로(교육 ▾ › 교과과정 ▾ › 학부)만 open 속성 SSR 렌더 — 스크롤스파이·펼침 저장 JS 불필요.
+    데이터는 siteContext.menuTree(tb_menu, site_code 스코프) 그대로 — A안 GNB·B안 메가메뉴와 동일 소스. nav 는 link_url 직접 사용. 현재 페이지 = active(청록 배경 + 좌측 램프).</span>
+    <span class="wf-note">③-1 메뉴 뎁스 출력 규칙(전 안 공통) — <b>사이드바 아코디언은 menuTree 1~3뎁스까지만 노출.</b> 4뎁스(전공필수·전공선택, 석사·박사과정, 휴·복학/졸업 서식 등)는 메뉴에 노출하지 않고 3뎁스 페이지 내 탭/필터로 처리.
+    <b>사이트맵(/{sc}/sitemap)만 1~4뎁스 전체 전개</b> — 데이터는 siteContext.menuTree 하나(depth 1~4 저장)이고 사이드바·사이트맵이 렌더 뎁스만 달리한다(search-sitemap.html 참조).</span>
+    <span class="wf-note">④ 하단 유틸 — 로그인/가입(로그인 후: 마이페이지/로그아웃), 🔔 알림함(/notification), ◐ 고대비(hc) 토글. 테마 토글은 외부 .js + CSP nonce, 이벤트 위임(closest('[data-action]')) 1회 등록.</span>
+    <span class="wf-note">⑤ 유틸바 — breadcrumb(menuTree 경로 역산) + 건양대·관련 사이트(타 학과 점프, 멀티사이트) + 🔍(사이드바 검색 포커스 이동). A안의 마스트헤드+breadcrumb 밴드 2개를 얇은 1줄로 통합.</span>
+    <span class="wf-note">⑥ 본문 — 사이드바는 position:sticky(뷰포트 고정)로 본문만 스크롤. SUB_HERO 배너는 유틸바 아래 슬림 밴드로 삽입(GET /api/v1/sites/{sc}/banners?location=SUB_HERO, 0건이면 미출력 — 폴백 자연스러움).
+    좋아요/신고 밴드는 contentId 있는 콘텐츠 페이지에서만(A안 동일). 푸터는 건양대 표준 공용(fragments/site-footer) — 콘텐츠 영역 하단에만 렌더(사이드바 아래 아님).</span>
+  </div>
+</div>
+
+<!-- 모바일 프레임 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">모바일 — 사이드바 → 오프캔버스 드로어 전환</h1></div>
+<div class="wf-row" style="max-width:1080px;margin:0 auto;align-items:flex-start;gap:24px;flex-wrap:wrap">
+  <div class="wf-canvas" style="max-width:320px;margin:0">
+    <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span>
+      <span class="url">…8080/ai/home (~767px)</span></div>
+    <div class="wf-band"><div class="wf-row"><span class="wf-btn sm">☰</span><b style="font-size:13px">인공지능학과</b><span class="wf-grow"></span><span class="wf-chip">🔍</span></div></div>
+    <div class="wf-p">
+      <div class="wf-slot" style="min-height:120px">본문 1단 풀폭 (사이드바 숨김)</div>
+      <div class="wf-line mt-2"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+    </div>
+    <div class="wf-band wf-dark" style="border-bottom:none;padding:8px 16px"><div class="wf-line thin w60" style="background:#3d5a54;margin:0"></div></div>
+  </div>
+  <div class="wf-canvas" style="max-width:320px;margin:0">
+    <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span>
+      <span class="url">☰ 클릭 → 드로어 열림</span></div>
+    <div class="wf-frame" style="min-height:300px">
+      <div class="wf-side" style="width:200px">
+        <div class="wf-side-logo">인공지능학과 <span class="wf-chip" style="float:right;border-color:#3d5a54;color:#9fc4bc;background:transparent">✕</span></div>
+        <div class="wf-side-search">🔍 통합검색 …</div>
+        <div class="wf-side-item group">소개 ▾</div>
+        <div class="wf-side-sub">학과소개 ▸</div>
+        <div class="wf-side-sub">오시는길</div>
+        <div class="wf-side-item group">구성원 ▸</div>
+        <div class="wf-side-item group">교육 ▸</div>
+        <div class="wf-side-util"><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div>
+      </div>
+      <div class="wf-main" style="background:rgba(18,41,38,.35)">
+        <div class="wf-p" style="color:#fff;font-size:11px">딤 오버레이<br/>(탭 시 닫힘)</div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;min-width:280px">
+    <span class="wf-note">모바일(~767px) — 사이드바 숨김, 상단에 ☰ + 사이트명 + 🔍 만 남는 슬림 헤더.
+    ☰ = 드로어 열기: 네이티브 &lt;dialog&gt;(모달) 안에 데스크톱 사이드바 조각을 그대로 재사용 — ESC·포커스 트랩·딤 기본 제공, 마크업 이중화 없음.</span>
+    <span class="wf-note">드로어 열림 중 body 스크롤 잠금은 dialog 기본 동작. 메뉴 선택 시 일반 내비게이션(드로어 상태 저장 불필요). 뒤로가기 시 드로어 재출현 방지 — 드로어 내부는 hx-boost 제외.</span>
+  </div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">A안 → C안 구현 시 바뀌는 것</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <table class="wf-table">
+      <tr><th style="width:200px">변경 지점</th><th>내용</th></tr>
+      <tr><td>krds.html 골격</td><td>세로 적층(헤더→본문→푸터) → <b>flex 2분할(aside 사이드바 + main)</b>. 마스트헤드·GNB 밴드 제거, fragments/sidebar 신설(menuTree → &lt;details&gt; 아코디언)</td></tr>
+      <tr><td>fragments/breadcrumb</td><td>독립 밴드 → main 상단 유틸바 내부로 이동(관련 사이트·🔍 병합)</td></tr>
+      <tr><td>sub-hero.js</td><td>풀폭 삽입 → 유틸바 아래 슬림 밴드 삽입으로 타깃만 변경</td></tr>
+      <tr><td>모바일 헤더 (신설)</td><td>☰+사이트명+🔍 슬림 헤더 + 드로어 &lt;dialog&gt; — 사이드바 조각 재사용</td></tr>
+      <tr><td>템플릿 CSS</td><td>사이드바 폭/컬러·sticky·드로어 미디어쿼리 — /tmpl/css/krds/*.css 1장에서 흡수. .hc 램프 반전 필수</td></tr>
+      <tr><td>변경 없음</td><td>라우트·컨트롤러·tb_menu·tb_role_url_access(무매칭 DENY)·팝업/좋아요/푸터 조각·CSP/htmx 규약</td></tr>
+    </table>
+    <span class="wf-note">스크립트 계층(외부 .js + nonce, 이벤트 위임, htmx:load 멱등 초기화 data-initialized 가드)은 A·B안과 동일 규약. 아코디언이 네이티브 &lt;details&gt; 라 C안의 신규 JS 는 드로어 열기/닫기 위임 1건뿐.</span>
+  </div>
+</div>
+
+</body>
+</html>

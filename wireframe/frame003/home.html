@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 C안 — 사이트 홈</title>
+<link rel="stylesheet" href="wireframe3.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>사이트 홈 <span class="wf-badge-c">C안</span></h1>
+  <p><span class="route">GET /{sc}/home</span> — 와이드 히어로(이미지+오버레이 카피) → 공지/일정 2컬럼 → 포토앨범·연구실 가로 스크롤 카드 레일. 사이드바 프레임 안의 1단 본문.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/home</span></div>
+
+  <div class="wf-frame">
+    <!-- 사이드바 (홈: 전 그룹 접힘) -->
+    <div class="wf-side">
+      <div class="wf-side-logo">인공지능학과<span class="en">KONYANG UNIV.</span></div>
+      <div class="wf-side-search">🔍 통합검색 …</div>
+      <div class="wf-side-item active">홈</div>
+      <div class="wf-side-item group">소개 ▸</div>
+      <div class="wf-side-item group">구성원 ▸</div>
+      <div class="wf-side-item group">교육 ▸</div>
+      <div class="wf-side-item group">연구 ▸</div>
+      <div class="wf-side-item group">커뮤니티 ▸</div>
+      <div class="wf-side-util"><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div>
+    </div>
+
+    <div class="wf-main">
+      <div class="wf-utilbar">홈 <span class="wf-grow"></span><span class="wf-chip">관련 사이트 ▾</span><span class="wf-chip">🔍</span></div>
+
+      <!-- 와이드 히어로 -->
+      <div style="position:relative">
+        <div class="wf-img" style="height:190px;border:none;border-bottom:1px solid #8ba39d"><span>MAIN_HERO 배너 이미지 (페이드 로테이션)</span></div>
+        <div style="position:absolute;left:24px;bottom:20px;background:rgba(17,49,44,.85);color:#fff;padding:14px 18px;max-width:340px">
+          <span class="wf-chip" style="background:transparent;border-color:#5eead4;color:#5eead4">KY · Artificial Intelligence</span>
+          <div style="font-size:17px;font-weight:700;margin-top:6px">사람을 향한 인공지능,<br/>미래를 여는 학과</div>
+          <div class="wf-row mt-2"><span class="wf-btn teal sm">학과소개 →</span><span class="wf-btn ghost sm" style="background:transparent;color:#fff;border-color:#fff">입학안내</span></div>
+        </div>
+        <div style="position:absolute;right:12px;bottom:12px"><span class="wf-chip">‹</span> <span class="wf-chip">1/3</span> <span class="wf-chip">›</span> <span class="wf-chip">⏸</span></div>
+      </div>
+      <div style="padding:0 16px"><span class="wf-note">와이드 히어로 — GET /api/v1/sites/{sc}/banners?location=MAIN_HERO 로테이션, 오버레이 카피는 배너 데이터(제목·링크). 0건이면 학과 기본 이미지+사이트명 폴백(레이아웃 붕괴 없음). ⏸ 일시정지 버튼 필수(접근성), 자동 전환은 prefers-reduced-motion 존중. 홈은 SUB_HERO 미출력(A안 동일).</span></div>
+
+      <!-- 공지 + 학사일정 2컬럼 -->
+      <div class="wf-section" style="border-top:1px solid #c5d4d0;margin-top:12px">
+        <div class="wf-row stretch">
+          <div style="flex:3">
+            <div class="wf-row"><span class="wf-h2">공지사항</span><span class="wf-grow"></span><span class="wf-chip">+ 더보기</span></div>
+            <div class="wf-slot mt-2" style="text-align:left;padding:12px">
+              <div class="wf-row"><span class="wf-chip teal">공지</span><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#9db3ae">07-08</span></div>
+              <div class="wf-row mt-2"><span class="wf-chip">N</span><div class="wf-line thin w60" style="margin:0;flex:1"></div><span style="font-size:11px;color:#9db3ae">07-05</span></div>
+              <div class="wf-row mt-2"><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#9db3ae">07-01</span></div>
+              <div class="wf-row mt-2"><div class="wf-line thin w60" style="margin:0;flex:1"></div><span style="font-size:11px;color:#9db3ae">06-27</span></div>
+              <div class="wf-row mt-2"><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#9db3ae">06-24</span></div>
+            </div>
+            <span class="wf-note">공지 위젯 — 첫 페인트는 SSR(위젯 조각 include), 이후 갱신 없음(홈 재방문 = 전체 로드). 행 클릭 → /bbs/ai/notice/{articleId} 일반 내비게이션.</span>
+          </div>
+          <div style="flex:2">
+            <div class="wf-row"><span class="wf-h2">학사일정</span><span class="wf-grow"></span><span class="wf-chip">7월 ▾</span></div>
+            <div class="wf-box mt-2 wf-p">
+              <div class="wf-row"><span class="wf-chip teal">07.15</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+              <div class="wf-row mt-2"><span class="wf-chip">07.21</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+              <div class="wf-row mt-2"><span class="wf-chip">08.01</span><div class="wf-line thin w40" style="margin:0;flex:1"></div></div>
+              <div class="wf-row mt-2"><span class="wf-chip">08.16</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+            </div>
+            <span class="wf-note">월 셀렉트 변경 = hx-get="/schedule/{master}/widget?month=" 부분갱신, hx-history="false". 전체 보기 → /schedule/{master}.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 포토앨범 가로 스크롤 레일 (2026-07-10: 교수진 레일 → 포토앨범 교체) -->
+      <div class="wf-section">
+        <div class="wf-row"><span class="wf-h2">포토앨범</span><span class="wf-grow"></span><span class="wf-chip">‹</span><span class="wf-chip">›</span><span class="wf-chip">전체보기 →</span></div>
+        <div class="wf-rail mt-2">
+          <div class="wf-box"><div class="wf-img" style="height:80px;border:none;border-bottom:1px solid #8ba39d"><span>썸네일</span></div><div style="padding:8px 10px"><b style="font-size:12px">졸업작품 전시회</b><div class="wf-line thin w60"></div><span style="font-size:10px;color:#9db3ae">07-05</span></div></div>
+          <div class="wf-box"><div class="wf-img" style="height:80px;border:none;border-bottom:1px solid #8ba39d"><span>썸네일</span></div><div style="padding:8px 10px"><b style="font-size:12px">학과 MT</b><div class="wf-line thin w80"></div><span style="font-size:10px;color:#9db3ae">06-27</span></div></div>
+          <div class="wf-box"><div class="wf-img" style="height:80px;border:none;border-bottom:1px solid #8ba39d"><span>썸네일</span></div><div style="padding:8px 10px"><b style="font-size:12px">AI 경진대회 수상</b><div class="wf-line thin w60"></div><span style="font-size:10px;color:#9db3ae">06-18</span></div></div>
+          <div class="wf-box"><div class="wf-img" style="height:80px;border:none;border-bottom:1px solid #8ba39d"><span>썸네일</span></div><div style="padding:8px 10px"><b style="font-size:12px">현장 견학</b><div class="wf-line thin w80"></div><span style="font-size:10px;color:#9db3ae">06-02</span></div></div>
+          <div class="wf-box" style="opacity:.5"><div class="wf-img" style="height:80px;border:none;border-bottom:1px solid #8ba39d"><span>썸네일</span></div><div style="padding:8px 10px"><b style="font-size:12px">신입생 OT</b><div class="wf-line thin w60"></div></div></div>
+        </div>
+      </div>
+
+      <!-- 연구실 가로 스크롤 레일 -->
+      <div class="wf-section">
+        <div class="wf-row"><span class="wf-h2">연구실</span><span class="wf-grow"></span><span class="wf-chip">‹</span><span class="wf-chip">›</span><span class="wf-chip">전체보기 →</span></div>
+        <div class="wf-rail mt-2">
+          <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div><div style="padding:8px 10px"><b style="font-size:12px">지능시스템 연구실</b><div class="wf-line thin w80"></div></div></div>
+          <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div><div style="padding:8px 10px"><b style="font-size:12px">데이터사이언스 랩</b><div class="wf-line thin w60"></div></div></div>
+          <div class="wf-box"><div class="wf-img" style="height:70px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div><div style="padding:8px 10px"><b style="font-size:12px">비전인식 연구실</b><div class="wf-line thin w80"></div></div></div>
+          <div class="wf-box" style="opacity:.5"><div class="wf-img" style="height:70px;border:none;border-bottom:1px solid #8ba39d"><span>사진</span></div><div style="padding:8px 10px"><b style="font-size:12px">HCI 연구실</b><div class="wf-line thin w60"></div></div></div>
+        </div>
+        <span class="wf-note">카드 레일(C안 고유) — 포토앨범은 GALLERY 게시판(/bbs/ai/photo) 최신 N건, 연구실은 tb_lab(secondary DB) 상위 N건을 hx-get 위젯 조각으로 지연 로드(hx-trigger="revealed").
+    overflow-x:auto + scroll-snap — 기본 스와이프/휠 스크롤, ‹ › 버튼은 scrollBy 보조(외부 .js, 이벤트 위임). 카드 전체가 링크(포토앨범 → 게시글 상세 / 연구실 → /prg/lab/ai), 키보드 Tab 순회 시 스크롤 자동 추종. 반투명 카드 = 넘침 힌트.
+    <b>교수진 레일은 홈에서 제거(2026-07-10 요청)</b> — 사이드바 구성원 › 교수진(/prg/faculty/ai) 링크로 접근.</span>
+      </div>
+
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#3d5a54"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">홈 진입 오버레이 — A안 동일</h1></div>
+<div class="wf-canvas"><div class="wf-section">
+  <div class="wf-slot" style="min-height:70px;max-width:360px">레이어 팝업 (activePopups) — 네이티브 &lt;dialog&gt;, 오늘 하루 안 보기(localStorage)</div>
+  <span class="wf-note">팝업 조각·배너 API·CSP nonce 규약은 세 안 공통 — 사이드바 프레임과 무관하게 body 직속 &lt;dialog&gt; 로 렌더.</span>
+</div></div>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>PCMS 2026 와이어프레임 D안 — 목차 & A/B/C/D 비교</title>
+<link rel="stylesheet" href="wireframe4.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="../index.html">← 전체 목차</a>
+  <h1>PCMS 2026-001 사용자 사이트 와이어프레임 <span class="wf-badge-d">D안 (frame004)</span></h1>
+  <p>동일한 KRDS 공용 레이아웃 체계·라우트를 유지하되 <b>원페이지 풀블리드 매거진/에디토리얼</b>로 화면을 재구성한 대안 설계.
+     투명 오버레이 헤더 + 풀스크린 오버레이 메뉴 + 협폭(720px) 에디토리얼 본문이 골격.</p>
+  <p style="margin-top:6px"><b>{sc}</b> = siteCode(학과코드 = 서브도메인, 예: ai·med·me). 라우트·보안·데이터 구조는 A안과 동일 — 달라지는 것은 프레젠테이션 계층뿐.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">① D안 핵심 차이 (vs A/B/C안)</div>
+    <table class="wf-table">
+      <tr><th style="width:110px">항목</th><th>A안 (frame001)</th><th>B안 (frame002)</th><th>C안 (frame003)</th><th style="background:#ede6fd;color:#6d28d9">D안 (frame004)</th></tr>
+      <tr><td>글로벌 내비</td><td>상단 GNB 밴드 + 호버 드롭다운</td><td>콤팩트 헤더 + ☰ 메가메뉴 오버레이</td><td>좌측 고정 사이드바 GNB</td><td><b>투명 오버레이 헤더(로고+미니 아이콘) + 풀스크린 오버레이 메뉴(거대 타이포)</b></td></tr>
+      <tr><td>서브페이지 구조</td><td>본문 1단(와이드) + breadcrumb</td><td>페이지 타이틀 밴드 + 좌측 LNB 2단</td><td>사이드바 프레임 유지 <span class="wf-tree"><span class="dim">(frame003 참조)</span></span></td><td><b>거대 타이포 페이지 히어로 → 센터 협폭(720px) 에디토리얼 본문 → 이전/다음 내비</b></td></tr>
+      <tr><td>홈 히어로</td><td>풀폭 배너 캐러셀</td><td>스플릿 히어로(카피+이미지)</td><td>사이드바 옆 대시보드형 <span class="wf-tree"><span class="dim">(frame003 참조)</span></span></td><td><b>풀스크린 히어로(거대 학과명 타이포) — 원페이지 스크롤 6섹션 + 우측 도트 내비</b></td></tr>
+      <tr><td>게시판</td><td>테이블형 목록</td><td>카드형 리스트</td><td>2-pane(목록 + 미리보기)</td><td><b>매거진 그리드(대형 리드 기사 1 + 2열 카드)</b> — 기능형(FILE/QNA)은 협폭 리스트 변형</td></tr>
+      <tr><td>검색</td><td>독립 결과 페이지</td><td>전체화면 오버레이 + 필터 2단</td><td>사이드바 내 검색 진입 <span class="wf-tree"><span class="dim">(frame003 참조)</span></span></td><td><b>풀스크린 오버레이(거대 인풋) + 협폭 에디토리얼 결과 리스트</b></td></tr>
+      <tr><td>마이페이지</td><td>좌측 메뉴 + 대시보드</td><td>상단 탭 + 카드 대시보드</td><td>사이드바 통합 <span class="wf-tree"><span class="dim">(frame003 참조)</span></span></td><td><b>협폭 센터 컬럼 + 상단 탭</b> — 로그인/가입은 풀스크린 2분할</td></tr>
+    </table>
+    <span class="wf-note">네 안 모두 KRDS 규약(시맨틱 토큰·htmx+순수JS·네이티브 &lt;dialog&gt;/&lt;details&gt;·CSP nonce·이벤트 위임) 안에서 구현 가능.
+    D안의 거대 타이포도 KRDS 타이포 토큰 <span class="wf-code">text-display-*</span> 범위에서 구현 — raw <span class="wf-code">text-6xl</span> 금지는 D안에서도 동일.
+    풀스크린 오버레이 메뉴는 siteContext.menuTree 재사용 — 추가 데이터 불필요. <b>출력 규칙(전 안 공통): 메뉴는 1~3뎁스까지만 노출, 사이트맵만 1~4뎁스 전체 전개</b> — 4뎁스는 3뎁스 페이지 내 탭/필터로 처리.</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">② 와이어프레임 목차</div>
+    <table class="wf-table">
+      <tr><th style="width:220px">파일</th><th>화면</th><th>대표 라우트</th></tr>
+      <tr><td><a href="layout.html" style="color:#7c3aed">layout.html</a></td><td>공용 레이아웃 D — 투명 헤더·풀스크린 메뉴·페이지 히어로·협폭 본문</td><td><span class="wf-code">전 페이지 공통 프레임</span></td></tr>
+      <tr><td><a href="home.html" style="color:#7c3aed">home.html</a></td><td>홈 — 원페이지 스크롤 7섹션(풀스크린 히어로·매니페스토·숫자·소식·포토앨범·연구실 밴드·CTA) + 도트 내비</td><td><span class="wf-code">/{sc}/home</span></td></tr>
+      <tr><td><a href="content.html" style="color:#7c3aed">content.html</a></td><td>콘텐츠 — 페이지 히어로 + 협폭 에디토리얼 본문(학과소개·오시는길 풀블리드 지도)</td><td><span class="wf-code">/{sc}/about · /{sc}/location</span></td></tr>
+      <tr><td><a href="program.html" style="color:#7c3aed">program.html</a></td><td>프로그램 — 매거진 피처 교수진·협폭 직원·풀블리드 연구실 밴드·협폭 수업계획서</td><td><span class="wf-code">/prg/{program}/{sc}</span></td></tr>
+      <tr><td><a href="board.html" style="color:#7c3aed">board.html</a></td><td>게시판 — 매거진 그리드 목록 + 에디토리얼 상세 + 기능형 협폭 변형</td><td><span class="wf-code">/bbs/{sc}/{bbsCode}</span></td></tr>
+      <tr><td><a href="member.html" style="color:#7c3aed">member.html</a></td><td>회원 — 풀스크린 2분할 로그인·진행바 가입 3단계·협폭 탭 마이페이지</td><td><span class="wf-code">/member/**</span></td></tr>
+      <tr><td><a href="search-sitemap.html" style="color:#7c3aed">search-sitemap.html</a></td><td>검색 풀스크린 오버레이·협폭 결과 · 거대 타이포 사이트맵</td><td><span class="wf-code">/search · /{sc}/sitemap</span></td></tr>
+      <tr><td><a href="common.html" style="color:#7c3aed">common.html</a></td><td>공통 프로그램·보조 화면 (학사일정·알림함·계정찾기·설문·민원·파일뷰어·오류)</td><td><span class="wf-code">/schedule · /notification · /member/find-* · /survey · /complaint</span></td></tr>
+    </table>
+    <span class="wf-note">표기 규칙: 흰 면 = 정적 마크업, 보라빛 점선 = htmx/JS 동적 슬롯, 보라 주석 = 구현 메모. 브라우저바 URL 은 개발 서버(<span class="wf-code">http://127.0.0.1:8080</span>) 기준.</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">③ 정보구조(IA) — A안과 동일 (메뉴 5그룹)</div>
+    <div class="wf-tree">
+/{sc}/home <span class="dim">· 소개(학과소개 /{sc}/about · 오시는길 /{sc}/location) · 구성원(교수진·직원 /prg/{faculty|staff}/{sc})</span><br/>
+<span class="dim">· 교육(교과과정 /{sc}/curriculum · 수업계획서 /prg/syllabus/{sc} · 학사일정 /schedule/{master}) · 연구(연구실 /prg/lab/{sc} · 연구성과 /bbs/{sc}/pub)</span><br/>
+<span class="dim">· 커뮤니티(/bbs/{sc}/notice·news·seminar·archive) · 회원(/member/**) · /search?siteCode={sc}&amp;keyword= · /{sc}/sitemap</span>
+    </div>
+    <span class="wf-note">IA·라우트·tb_menu 시드(최대 4뎁스)는 A안과 동일 — 달라지는 것은 프레젠테이션 계층뿐. D안은 같은 메뉴 트리를 풀스크린 오버레이/거대 타이포 사이트맵으로 다르게 렌더할 뿐.
+    <b>메뉴 뎁스 규칙: 풀스크린 오버레이 메뉴 = 1~3뎁스(4뎁스는 3뎁스 페이지 내 탭/필터), 사이트맵 = 1~4뎁스 전체 전개</b> — siteContext.menuTree 하나로 렌더 뎁스만 달리함.
+    새 URL 은 tb_role_url_access 등록 필수(무매칭 DENY) — 상세 트리는 <a href="../frame001/index.html" style="color:#6d28d9">frame001/index.html</a> ② 참조.</span>
+  </div>
+</div>
+
+</body>
+</html>

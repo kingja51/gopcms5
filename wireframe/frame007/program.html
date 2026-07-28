@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 G안 — 프로그램 페이지</title>
+<link rel="stylesheet" href="wireframe7.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>프로그램 — 교수진 · 직원 · 연구실 · 수업계획서 <span class="wf-badge-g">G안</span></h1>
+  <p><span class="route">GET /prg/faculty/{sc}</span><span class="route">GET /prg/staff/{sc}</span><span class="route">GET /prg/lab/{sc}</span><span class="route">GET /prg/syllabus/{sc}</span>
+     — secondary DB 제네릭 조각(다학과 공용, 복사 불필요). LNB + 검색폼 + 테이블-카드 하이브리드 리스트.</p>
+</div>
+
+<!-- 교수진 목록 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/prg/faculty/ai</span></div>
+
+  <div class="wf-band wf-util"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">가⁻</span><span class="wf-chip">가⁺</span><span class="wf-chip">◐</span><span class="wf-chip">한국어 ▾</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:17px">인공지능학과</b><span class="wf-grow"></span><span class="wf-input" style="width:280px">검색어를 입력하세요</span><span class="wf-btn navy sm">🔍</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span></div></div>
+  <div class="wf-gnbbar"><span class="gnb-item">소개</span><span class="gnb-item on">구성원</span><span class="gnb-item">교육</span><span class="gnb-item">연구</span><span class="gnb-item">커뮤니티</span></div>
+
+  <div class="wf-hero-band"><b>교수진</b><span class="sub">SUB_HERO</span></div>
+  <div class="wf-crumb"><div class="wf-row"><span class="path">🏠 홈 › 구성원 › <b>교수진</b></span><span class="wf-grow"></span><span class="wf-chip">🖨 인쇄</span><span class="wf-chip">🔗 URL 복사</span><span class="wf-chip">📤 공유</span></div></div>
+
+  <div class="wf-band" style="padding:16px">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="lnb-title">구성원</div>
+        <div class="d2 active">교수진 <span class="fold" style="color:#e0e7ff">▾</span></div>
+        <div class="d3 active">전임교원</div>
+        <div class="d3">겸임·초빙교원</div>
+        <div class="d3">명예교수</div>
+        <div class="d2" style="border-bottom:none">직원</div>
+      </div>
+
+      <div class="wf-grow">
+        <!-- 상단 검색폼 -->
+        <div class="wf-box wf-gray" style="padding:10px 14px">
+          <div class="wf-row">
+            <label style="font-size:12px"><b>검색</b></label>
+            <span class="wf-input">이름 ▾</span>
+            <span class="wf-input wf-grow">검색어 입력</span>
+            <span class="wf-btn navy sm">🔍 검색</span>
+            <span class="wf-btn ghost sm">초기화</span>
+          </div>
+        </div>
+        <span class="wf-note">검색폼 — 조건 셀렉트(이름/전공/연구분야) + 키워드. GET 파라미터 유지형(?field=name&keyword=) — htmx 부분갱신(hx-get, hx-push-url)로 목록 블록만 교체.
+        &lt;label&gt; 연결 필수. tb_faculty(secondary, site_code 스코프) 조회 — 전량 #{} 바인딩.</span>
+
+        <!-- 프로필 테이블-카드 하이브리드 -->
+        <div class="wf-box mt-2">
+          <div class="wf-band">
+            <div class="wf-row stretch">
+              <div class="wf-img" style="width:84px;min-height:100px"><span>사진</span></div>
+              <div class="wf-grow">
+                <div class="wf-row"><b style="font-size:14px">홍길동</b> <span class="wf-chip">교수</span> <span class="wf-chip">학과장</span><span class="wf-grow"></span><span class="wf-btn ghost sm">상세보기 →</span></div>
+                <table class="wf-table mt-2" style="font-size:11.5px">
+                  <tr><th style="width:80px">전공</th><td>기계학습</td><th style="width:80px">연구실</th><td>○○관 401호</td></tr>
+                  <tr><th>전화</th><td>041-000-0001</td><th>이메일</th><td>hong@konyang.ac.kr</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="wf-band" style="border-bottom:none">
+            <div class="wf-row stretch">
+              <div class="wf-img" style="width:84px;min-height:100px"><span>사진</span></div>
+              <div class="wf-grow">
+                <div class="wf-row"><b style="font-size:14px">김영희</b> <span class="wf-chip">부교수</span><span class="wf-grow"></span><span class="wf-btn ghost sm">상세보기 →</span></div>
+                <table class="wf-table mt-2" style="font-size:11.5px">
+                  <tr><th style="width:80px">전공</th><td>컴퓨터비전</td><th style="width:80px">연구실</th><td>○○관 402호</td></tr>
+                  <tr><th>전화</th><td>041-000-0002</td><th>이메일</th><td>kim@konyang.ac.kr</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="wf-note">테이블-카드 하이브리드 — 행 리스트(사진 좌 84px + 정보 테이블 우). 행 전체 링크가 아니라 "상세보기" 버튼 명시(공공 관례·스크린리더 명확성).
+        이메일·전화 = tb_faculty 공개 플래그 확인 후 노출, 비공개면 행 자체 생략. 모바일 = 사진 상단 스택.</span>
+
+        <div class="wf-row mt-2" style="justify-content:center">
+          <span class="wf-chip">‹</span><span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#4b5563"></div></div>
+
+  <div class="wf-quick">
+    <div class="q-title">퀵메뉴</div>
+    <div class="q-item"><span class="ico">📢</span>공지사항</div>
+    <div class="q-item"><span class="ico">👨‍🏫</span>교수진</div>
+    <div class="q-item"><span class="ico">📚</span>수업계획서</div>
+    <div class="q-item"><span class="ico">📅</span>학사일정</div>
+    <div class="q-item"><span class="ico">📍</span>오시는길</div>
+    <div class="q-top">TOP ↑</div>
+  </div>
+</div>
+
+<!-- 교수 상세 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">교수 상세 — /prg/faculty/{sc}/{facultyId} (같은 프레임 안 프로필 페이지)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="lnb-title">구성원</div>
+        <div class="d2 active">교수진 <span class="fold" style="color:#e0e7ff">▾</span></div>
+        <div class="d3 active">전임교원</div>
+        <div class="d3">겸임·초빙교원</div>
+        <div class="d3">명예교수</div>
+        <div class="d2" style="border-bottom:none">직원</div>
+      </div>
+      <div class="wf-grow">
+        <div class="wf-box">
+          <div class="wf-band wf-gray">
+            <div class="wf-row stretch">
+              <div class="wf-img" style="width:110px;min-height:130px"><span>사진</span></div>
+              <div class="wf-grow">
+                <b style="font-size:16px">홍길동</b> <span class="wf-chip">교수</span>
+                <table class="wf-table mt-2" style="font-size:11.5px;background:#fff">
+                  <tr><th style="width:80px">전공</th><td>기계학습</td></tr>
+                  <tr><th>이메일</th><td>hong@konyang.ac.kr</td></tr>
+                  <tr><th>연구실</th><td>○○관 401호 (041-000-0001)</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="wf-band"><b style="font-size:13px">학력</b><div class="wf-line thin w60"></div><div class="wf-line thin w80"></div></div>
+          <div class="wf-band"><b style="font-size:13px">경력</b><div class="wf-line thin w80"></div><div class="wf-line thin w60"></div></div>
+          <div class="wf-band" style="border-bottom:none"><b style="font-size:13px">주요 논문·저서</b><div class="wf-line thin w80"></div><div class="wf-line thin w60"></div><div class="wf-line thin w80"></div></div>
+        </div>
+        <div class="wf-row mt-2"><span class="wf-btn ghost sm">← 목록</span></div>
+        <span class="wf-note">상세 = 프로필 헤더(회색 밴드) + 섹션 아코디언 없이 전개(공공 정석 — 인쇄 친화). 학력/경력/논문 = tb_faculty 상세 JSON 또는 관리자 에디터 HTML(Sanitizer).
+        목록 복귀 시 검색·페이지 쿼리 보존.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 변형 3종 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">변형 — 직원 · 연구실 · 수업계획서 (동일 프레임, 리스트 골격만 교체)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-grid-3">
+      <div class="wf-box wf-p">
+        <b>직원 /prg/staff/{sc}</b>
+        <table class="wf-table center mt-2" style="font-size:11px">
+          <tr><th>이름</th><th>담당업무</th><th>전화</th></tr>
+          <tr><td>박○○</td><td class="tl">학사 ──</td><td>0003</td></tr>
+          <tr><td>이○○</td><td class="tl">장학 ─</td><td>0004</td></tr>
+        </table>
+        <span class="wf-note" style="margin-top:6px">직원 = 사진 없는 순수 테이블(tb_staff). 담당업무로 찾는 화면이라 업무 열이 핵심.</span>
+      </div>
+      <div class="wf-box wf-p">
+        <b>연구실 /prg/lab/{sc}</b>
+        <div class="wf-row stretch mt-2">
+          <div class="wf-img" style="width:60px;min-height:50px"><span>사진</span></div>
+          <div class="wf-grow"><b style="font-size:11.5px">지능로봇 연구실</b><div class="wf-line thin w80"></div><span style="font-size:10.5px;color:#9ca3af">지도교수 홍길동</span></div>
+        </div>
+        <span class="wf-note" style="margin-top:6px">연구실 = 교수진과 같은 하이브리드 행(tb_lab). 지도교수명 = tb_faculty 조인, 클릭 시 교수 상세로 크로스 링크.</span>
+      </div>
+      <div class="wf-box wf-p">
+        <b>수업계획서 /prg/syllabus/{sc}</b>
+        <div class="wf-row mt-2"><span class="wf-input">2026 ▾</span><span class="wf-input">2학기 ▾</span><span class="wf-btn navy sm">조회</span></div>
+        <table class="wf-table center mt-2" style="font-size:11px">
+          <tr><th>과목</th><th>담당</th><th>다운</th></tr>
+          <tr><td class="tl">기계학습 ─</td><td>홍길동</td><td><span class="wf-chip">PDF</span></td></tr>
+          <tr><td class="tl">자료구조 ──</td><td>김영희</td><td><span class="wf-chip">PDF</span></td></tr>
+        </table>
+        <span class="wf-note" style="margin-top:6px">수업계획서 = 연도·학기 셀렉트 조회(htmx 부분갱신) + 테이블 + PDF 다운로드(6중 방어 자원, Content-Disposition attachment).</span>
+      </div>
+    </div>
+    <span class="wf-note">/prg/** 는 제네릭 컨트롤러(com.gonet.secondary.dept) — 새 학과 추가 시 복사 불필요, 시드만.
+    R5 격리: 쉘(레이아웃·메뉴) = primary, 리스트 조각 = secondary — 조각 오류가 쉘을 죽이지 않는다. 4개 라우트 모두 tb_role_url_access 등록 필수(무매칭 DENY).</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 G안 — 게시판 목록/상세</title>
+<link rel="stylesheet" href="wireframe7.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>게시판 — 정석 테이블 목록 · 상세 <span class="wf-badge-g">G안</span></h1>
+  <p><span class="route">GET /bbs/{sc}/{bbsCode}</span><span class="route">GET /bbs/{sc}/{bbsCode}/{articleId}</span>
+     — 번호·제목·첨부·작성자·등록일·조회 테이블 + 공지 고정행 + 기간/범위 검색폼 + 숫자 페이징. 공공 게시판 정석형.</p>
+</div>
+
+<!-- 목록 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/bbs/ai/notice</span></div>
+
+  <div class="wf-band wf-util"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">가⁻</span><span class="wf-chip">가⁺</span><span class="wf-chip">◐</span><span class="wf-chip">한국어 ▾</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:17px">인공지능학과</b><span class="wf-grow"></span><span class="wf-input" style="width:280px">검색어를 입력하세요</span><span class="wf-btn navy sm">🔍</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span></div></div>
+  <div class="wf-gnbbar"><span class="gnb-item">소개</span><span class="gnb-item">구성원</span><span class="gnb-item">교육</span><span class="gnb-item">연구</span><span class="gnb-item on">커뮤니티</span></div>
+
+  <div class="wf-hero-band"><b>공지사항</b><span class="sub">SUB_HERO</span></div>
+  <div class="wf-crumb"><div class="wf-row"><span class="path">🏠 홈 › 커뮤니티 › <b>공지사항</b></span><span class="wf-grow"></span><span class="wf-chip">🖨 인쇄</span><span class="wf-chip">🔗 URL 복사</span><span class="wf-chip">📤 공유</span></div></div>
+
+  <div class="wf-band" style="padding:16px">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="lnb-title">커뮤니티</div>
+        <div class="d2 active">공지사항 <span class="fold" style="color:#e0e7ff">▾</span></div>
+        <div class="d3">학사</div>
+        <div class="d3">장학</div>
+        <div class="d3">취업</div>
+        <div class="d2">학과소식</div>
+        <div class="d2">세미나</div>
+        <div class="d2" style="border-bottom:none">자료실 <span class="fold">▸</span></div>
+      </div>
+
+      <div class="wf-grow">
+        <!-- 검색폼 -->
+        <div class="wf-box wf-gray" style="padding:10px 14px">
+          <div class="wf-row">
+            <span class="wf-input">기간: 전체 ▾</span>
+            <span class="wf-input">제목+내용 ▾</span>
+            <span class="wf-input wf-grow">검색어 입력</span>
+            <span class="wf-btn navy sm">🔍 검색</span>
+          </div>
+        </div>
+        <span class="wf-note">검색폼 — 기간(전체/1개월/6개월/1년/직접입력)·범위(제목+내용/제목/작성자) 셀렉트 + 키워드. htmx hx-get 부분갱신(목록 블록만),
+        hx-push-url 로 URL 동기화, <b>hx-history="false"</b>(뒤로가기 시 재요청). 300ms debounce.</span>
+
+        <div class="wf-row mt-2">
+          <span style="font-size:12px;color:#6b7280">전체 <b style="color:#1e3a8a">128</b>건 · 페이지 1/13</span>
+          <span class="wf-grow"></span>
+          <span class="wf-input" style="padding:2px 8px;font-size:11px">10개씩 ▾</span>
+        </div>
+
+        <!-- 정석 테이블 목록 -->
+        <table class="wf-table center mt-2">
+          <tr><th style="width:52px">번호</th><th>제목</th><th style="width:36px">첨부</th><th style="width:70px">작성자</th><th style="width:80px">등록일</th><th style="width:52px">조회</th></tr>
+          <tr style="background:#eef2ff">
+            <td><span class="wf-chip on">공지</span></td><td class="tl"><b>[필독] 2026-2학기 수강신청 안내 ──────</b> <span class="wf-chip">N</span></td><td>📎</td><td>관리자</td><td>07-08</td><td>231</td></tr>
+          <tr style="background:#eef2ff">
+            <td><span class="wf-chip on">공지</span></td><td class="tl"><b>학과 사무실 하계 운영시간 ────</b></td><td></td><td>관리자</td><td>07-01</td><td>187</td></tr>
+          <tr><td>128</td><td class="tl">캡스톤디자인 발표회 개최 안내 ────────</td><td>📎</td><td>관리자</td><td>07-05</td><td>96</td></tr>
+          <tr><td>127</td><td class="tl">장학금 신청 기간 안내 ─────</td><td></td><td>관리자</td><td>06-28</td><td>145</td></tr>
+          <tr><td>126</td><td class="tl">전공 세미나 일정 공지 ───────</td><td>📎</td><td>홍**</td><td>06-24</td><td>67</td></tr>
+          <tr><td>125</td><td class="tl">여름방학 연구실 안전점검 ────</td><td></td><td>관리자</td><td>06-20</td><td>52</td></tr>
+        </table>
+        <span class="wf-note">정석 테이블 — <b>공지 고정행 = 번호 대신 "공지" 뱃지 + 배경 하이라이트</b>, 일반 행은 역순 번호. 첨부 📎 아이콘(alt="첨부파일 있음").
+        신규 N = 7일 이내. 작성자 = MaskUtils 마스킹(회원 작성 글). 모바일은 번호·조회 열 숨기고 제목+메타 2줄 스택(동일 마크업, CSS만).
+        <b>LNB 3뎁스(학사·장학·취업) = 게시판 카테고리 필터</b>(정본 트리 ※) — 클릭 시 <span class="wf-code">?category=</span> 필터 목록(hx-get 부분갱신), 별도 게시판 아님.
+        메뉴는 3뎁스까지 노출 — 카테고리 세분(4뎁스)이 생겨도 메뉴가 아닌 필터 셀렉트로 처리.</span>
+
+        <!-- 페이징 + 글쓰기 -->
+        <div class="wf-row mt-2">
+          <span class="wf-grow"></span>
+          <span class="wf-chip">« 처음</span><span class="wf-chip">‹</span>
+          <span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">3</span><span class="wf-chip">4</span><span class="wf-chip">5</span>
+          <span class="wf-chip">›</span><span class="wf-chip">끝 »</span>
+          <span class="wf-grow"></span>
+          <span class="wf-btn navy sm">✏ 글쓰기</span>
+        </div>
+        <span class="wf-note">숫자형 페이징(처음/이전/1~5/다음/끝) — PageRequest 공통 DTO. 현재 페이지 = aria-current="page".
+        글쓰기 버튼은 tb_bbs_master 쓰기 권한(비로그인 숨김/로그인 유도) — 서버 인가는 tb_role_url_access 가 최종(무매칭 DENY).</span>
+      </div>
+    </div>
+    <span class="wf-note">스킨 변형(tb_bbs_master.bbs_type) — GALLERY: 테이블 → 썸네일 4열 격자 / FAQ: &lt;details&gt; 아코디언 / QNA: 상태 열(답변대기·완료) 추가 /
+    FILE: 첨부 열이 다운로드 버튼으로 확대 / YOUTUBE: 16:9 썸네일 격자 / PDF: 뷰어 버튼. 검색폼+페이징 골격은 전 스킨 공통.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#4b5563"></div></div>
+
+  <div class="wf-quick">
+    <div class="q-title">퀵메뉴</div>
+    <div class="q-item"><span class="ico">📢</span>공지사항</div>
+    <div class="q-item"><span class="ico">👨‍🏫</span>교수진</div>
+    <div class="q-item"><span class="ico">📚</span>수업계획서</div>
+    <div class="q-item"><span class="ico">📅</span>학사일정</div>
+    <div class="q-item"><span class="ico">📍</span>오시는길</div>
+    <div class="q-top">TOP ↑</div>
+  </div>
+</div>
+
+<!-- 상세 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">게시글 상세 — /bbs/{sc}/{bbsCode}/{articleId} (LNB 유지)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/bbs/ai/notice/BBS_0198e2…</span></div>
+
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="lnb-title">커뮤니티</div>
+        <div class="d2 active">공지사항 <span class="fold" style="color:#e0e7ff">▾</span></div>
+        <div class="d3 active">학사</div>
+        <div class="d3">장학</div>
+        <div class="d3">취업</div>
+        <div class="d2" style="border-bottom:none">학과소식</div>
+      </div>
+
+      <div class="wf-grow">
+        <!-- 제목 헤더 테이블 -->
+        <table class="wf-table">
+          <tr><th colspan="4" style="font-size:13.5px;background:#eef2ff;border-top:2px solid #1e3a8a">[필독] 2026-2학기 수강신청 안내 ──────────</th></tr>
+          <tr>
+            <th style="width:70px">작성자</th><td>관리자</td>
+            <th style="width:70px">등록일</th><td>2026-07-08 09:30</td>
+          </tr>
+          <tr>
+            <th>조회</th><td>231</td>
+            <th>첨부</th><td>2건</td>
+          </tr>
+        </table>
+        <span class="wf-note">제목 헤더 테이블 — 공공 정석(제목 행 + 메타 2행). 조회수 = 세션 기준 1회 증가.</span>
+
+        <!-- 첨부파일 리스트 -->
+        <div class="wf-box wf-gray mt-2" style="padding:8px 14px">
+          <b style="font-size:12px">📎 첨부파일</b>
+          <div class="wf-row mt-2"><span style="font-size:12px">수강신청_안내.pdf <span style="color:#9ca3af">(1.2MB)</span></span><span class="wf-chip">미리보기</span><span class="wf-chip">다운로드</span></div>
+          <div class="wf-row mt-2"><span style="font-size:12px">신청서_양식.hwp <span style="color:#9ca3af">(240KB)</span></span><span class="wf-chip">다운로드</span></div>
+        </div>
+        <span class="wf-note">첨부 = 제목 아래 배치(공공 관례 — 본문 읽기 전 서식 확보) + <b>용량 표기</b>. 다운로드 = 6중 방어 통과 자원(원본명 복원, UUID 저장명),
+        PDF만 미리보기 제공. 다운로드 이력 log_* 기록.</span>
+
+        <!-- 본문 -->
+        <div class="wf-box mt-2 wf-p" style="min-height:140px">
+          <div class="wf-line"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+          <div class="wf-img mt-4" style="height:90px;max-width:300px"><span>본문 이미지</span></div>
+          <div class="wf-line thin w80 mt-4"></div><div class="wf-line thin w60"></div>
+        </div>
+        <span class="wf-note">본문 = 에디터 HTML(OWASP Sanitizer 통과). 이미지 = 재인코딩 저장본. 콘텐츠 클래스는 safelist 내에서만.</span>
+
+        <!-- 좋아요/신고 -->
+        <div class="wf-band wf-gray mt-2" style="text-align:center;border:1.5px solid #d1d5db">
+          <span class="wf-btn ghost sm">👍 좋아요 12</span> <span class="wf-btn ghost sm">🚩 신고</span>
+        </div>
+        <span class="wf-note">좋아요 = htmx POST 후 카운트 블록 갱신(비로그인 → 로그인 유도). 신고 = &lt;dialog&gt; 사유 입력 → POST, CUD 는 try-catch + log + HX-Redirect 규약.</span>
+
+        <!-- 댓글 -->
+        <div class="wf-h2 mt-4 mb-2">댓글 <span style="color:#1e3a8a">3</span></div>
+        <div class="wf-box wf-p">
+          <div class="wf-row"><b style="font-size:12px">홍**</b><span style="font-size:11px;color:#9ca3af">07-09 10:31</span><span class="wf-grow"></span><span class="wf-chip">답글</span><span class="wf-chip">신고</span></div>
+          <div class="wf-line thin w80"></div>
+          <div style="margin-left:24px;border-left:2px solid #d1d5db;padding-left:10px" class="mt-2">
+            <div class="wf-row"><b style="font-size:12px">↳ 김**</b><span style="font-size:11px;color:#9ca3af">07-09 11:02</span><span class="wf-grow"></span><span class="wf-chip">신고</span></div>
+            <div class="wf-line thin w60"></div>
+          </div>
+        </div>
+        <div class="wf-row stretch mt-2">
+          <span class="wf-input wf-grow" style="min-height:40px">댓글을 입력하세요 (로그인 필요)</span>
+          <span class="wf-btn navy">등록</span>
+        </div>
+        <span class="wf-note">댓글 — 목록 아래 입력창(정석 순서: 읽기 → 참여). 1뎁스 답글까지. htmx 블록 갱신(hx-target="#comments"),
+        작성자 마스킹, 등록 = CSRF 토큰(XSRF-TOKEN 쿠키) 자동 첨부.</span>
+
+        <!-- 이전글/다음글 + 목록 -->
+        <table class="wf-table mt-4">
+          <tr><th style="width:70px">▲ 이전글</th><td class="tl">학과 사무실 하계 운영시간 ────</td><td style="width:80px">07-01</td></tr>
+          <tr><th>▼ 다음글</th><td class="tl">캡스톤디자인 발표회 개최 안내 ────────</td><td>07-05</td></tr>
+        </table>
+        <div class="wf-row mt-2">
+          <span class="wf-btn ghost sm">≡ 목록</span>
+          <span class="wf-grow"></span>
+          <span class="wf-btn ghost sm">수정</span><span class="wf-btn ghost sm">삭제</span>
+        </div>
+        <span class="wf-note">이전/다음글 = 제목 노출 2행 테이블(정석). 목록 버튼 = 검색·페이지 쿼리 보존 복귀. 수정/삭제 = 작성자 본인 or 관리자만(서버 검증), 삭제는 soft-delete(delete_yn).</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 B안 — 공통 프로그램·보조 화면</title>
+<link rel="stylesheet" href="wireframe2.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>공통 프로그램 · 보조 화면 <span class="wf-badge-b">B안</span></h1>
+  <p><span class="route">/schedule/{master}</span><span class="route">/notification</span><span class="route">/member/find-*</span><span class="route">/survey/**</span><span class="route">/complaint/**</span>
+     — 학사일정·알림함·계정찾기·설문·민원·파일뷰어·오류. 전부 B안 프레임(콤팩트 헤더+LNB 2단) 안에서 렌더, 뷰어·오류만 독립 레이아웃.</p>
+</div>
+
+<!-- ═══════════════ 1. 학사일정 ═══════════════ -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/schedule/academic</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 16px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">기계공학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm" style="border-bottom:3px solid #44403c">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-chip">🔍</span><span class="wf-btn sm">☰</span></div></div>
+  <div class="wf-band wf-dark"><div class="wf-row"><div><b style="font-size:15px">학사일정</b><br/><span style="font-size:11px;color:#a8a29e">홈 › 교육 › 학사일정</span></div><span class="wf-grow"></span><div class="wf-img" style="width:200px;height:44px;min-height:44px"><span>SUB_HERO</span></div></div></div>
+
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <!-- LNB -->
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>교육</b></div>
+        <div class="wf-band">▸ 교과과정</div>
+        <div class="wf-band">수업계획서</div>
+        <div class="wf-band active" style="border-bottom:none">학사일정</div>
+      </div>
+
+      <div class="wf-grow">
+        <span class="wf-note" style="margin-top:0;margin-bottom:8px">교과과정만 3뎁스(학부/대학원) 보유 — 현재 경로가 아니므로 접힘(▸), 진입 시 아코디언 펼침. 4뎁스(전공필수·전공선택, 석사·박사과정)는 LNB 미노출 — 학부/대학원 페이지 내 탭으로 처리.</span>
+        <!-- 툴바: 월 이동 + 보기 전환 -->
+        <div class="wf-row">
+          <span class="wf-chip">◂</span><b style="font-size:14px">2026. 07</b><span class="wf-chip">▸</span>
+          <span class="wf-chip">오늘</span>
+          <span class="wf-grow"></span>
+          <span class="wf-chip" style="background:#44403c;color:#fffdf9">📅 월간</span><span class="wf-chip">☰ 목록</span>
+        </div>
+        <span class="wf-note">월 이동 = htmx 부분갱신 <span class="wf-code">GET /schedule/academic?ym=2026-07</span> → 캘린더 블록만 교체, <span class="wf-code">hx-push-url</span>로 URL 동기(공유 가능). 월간/목록 전환도 동일 데이터 다른 조각.</span>
+
+        <!-- 월간 캘린더 (htmx 슬롯) -->
+        <div class="wf-slot mt-2" style="padding:10px;text-align:left">
+          <table class="wf-table" style="background:#fffdf9">
+            <tr><th style="text-align:center">일</th><th style="text-align:center">월</th><th style="text-align:center">화</th><th style="text-align:center">수</th><th style="text-align:center">목</th><th style="text-align:center">금</th><th style="text-align:center">토</th></tr>
+            <tr>
+              <td style="height:52px;color:#d6d3d1">28</td><td style="color:#d6d3d1">29</td><td style="color:#d6d3d1">30</td><td>1<br/><span class="wf-chip" style="font-size:10px">계절학기 시작</span></td><td>2</td><td>3</td><td>4</td>
+            </tr>
+            <tr>
+              <td style="height:52px">5</td><td>6</td><td>7<br/><span class="wf-chip" style="font-size:10px;background:#44403c;color:#fffdf9">수강신청</span></td><td>8<br/><span class="wf-chip" style="font-size:10px;background:#44403c;color:#fffdf9">수강신청</span></td><td>9</td><td>10</td><td>11</td>
+            </tr>
+            <tr>
+              <td style="height:52px">12</td><td>13</td><td>14</td><td>15<br/><span class="wf-chip" style="font-size:10px">등록금 납부</span></td><td>16</td><td>17</td><td>18</td>
+            </tr>
+          </table>
+        </div>
+        <span class="wf-note">캘린더 = 서버 렌더 &lt;table&gt;(스크린리더 호환) — JS 캘린더 라이브러리 금지(htmx+순수JS 규약). 일정 칩 = 카테고리별 톤(학사=진회색·장학=외곽선), 클릭 시 하단 상세 카드로 스크롤.</span>
+
+        <!-- 선택일 상세 -->
+        <div class="wf-box mt-2 wf-p">
+          <div class="wf-row"><b style="font-size:12.5px">07-07 ~ 07-08 · 2학기 수강신청</b><span class="wf-chip">학사</span></div>
+          <div class="wf-line thin w80" style="margin:4px 0"></div>
+          <span style="font-size:11px;color:#a8a29e">담당: 교무처 · 관련 공지 링크 →</span>
+        </div>
+        <span class="wf-note">데이터 = <span class="wf-code">tb_schedule</span>(master 코드로 세트 분리 — 학사/학과 별도 운영 가능). 목록 보기 = 같은 월 데이터를 카드 리스트로(게시판 카드 문법 재사용).</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 2. 알림함 ═══════════════ -->
+<div class="wf-doc-header"><h1 style="font-size:15px">알림함 — 헤더 드롭 패널 + 전체 페이지 /notification</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/notification</span></div>
+
+  <!-- 헤더 + 종 드롭 패널 -->
+  <div class="wf-band wf-gray" style="padding:4px 16px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip" style="background:#44403c;color:#fffdf9">🔔 3</span><span class="wf-chip">홍길동님</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band" style="padding:0">
+    <div class="wf-slot" style="margin:12px 16px;text-align:left;padding:12px;max-width:340px;margin-left:auto">
+      <div class="wf-row"><b style="color:#c2410c">🔔 클릭 시 드롭 패널 (&lt;dialog&gt; 비모달)</b><span class="wf-grow"></span><span class="wf-chip">✕</span></div>
+      <div class="wf-box mt-2" style="padding:6px 10px;background:#fffdf9"><b style="font-size:11.5px">● 댓글에 답글이 달렸습니다</b><br/><span style="font-size:10.5px;color:#a8a29e">10분 전</span></div>
+      <div class="wf-box mt-2" style="padding:6px 10px;background:#fffdf9"><b style="font-size:11.5px">● 설문 참여 요청</b><br/><span style="font-size:10.5px;color:#a8a29e">2시간 전</span></div>
+      <div class="wf-row mt-2" style="font-size:11px"><span class="wf-chip">모두 읽음</span><span class="wf-grow"></span><a href="#" style="color:#ea580c">알림함 전체 보기 →</a></div>
+    </div>
+    <span class="wf-note" style="margin:0 16px 12px">종 배지 = 미읽음 수, <span class="wf-code">hx-trigger="every 60s"</span> 폴링으로 배지만 갱신(WebSocket 불필요 — 보수적). 패널 최근 5건, 로그인 회원만(비로그인 시 종 숨김).</span>
+  </div>
+
+  <div class="wf-band wf-dark"><div class="wf-row"><div><b style="font-size:15px">알림함</b><br/><span style="font-size:11px;color:#a8a29e">홈 › 알림함</span></div></div></div>
+
+  <div class="wf-section">
+    <!-- 필터 + 일괄 처리 -->
+    <div class="wf-row">
+      <span class="wf-chip" style="background:#44403c;color:#fffdf9">전체 24</span><span class="wf-chip">안읽음 3</span><span class="wf-chip">댓글</span><span class="wf-chip">공지</span><span class="wf-chip">설문/민원</span>
+      <span class="wf-grow"></span>
+      <span class="wf-btn ghost sm">모두 읽음</span><span class="wf-btn ghost sm">읽은 알림 삭제</span>
+    </div>
+
+    <!-- 카드 리스트 (게시판 카드 문법) -->
+    <div class="wf-box mt-2">
+      <div class="wf-band" style="background:#fff8f2">
+        <div class="wf-row"><span class="wf-chip">댓글</span><b style="font-size:12.5px">● 내 글에 새 댓글이 달렸습니다 ──────</b></div>
+        <span style="font-size:11px;color:#a8a29e">공지사항 › "게시글 제목…" · 10분 전</span>
+      </div>
+      <div class="wf-band">
+        <div class="wf-row"><span class="wf-chip">민원</span><b style="font-size:12.5px;font-weight:400">민원 답변이 등록되었습니다 ────</b></div>
+        <span style="font-size:11px;color:#a8a29e">민원 #128 · 어제</span>
+      </div>
+      <div class="wf-band" style="border-bottom:none">
+        <div class="wf-row"><span class="wf-chip">공지</span><b style="font-size:12.5px;font-weight:400">새 공지사항 알림 ──────────</b></div>
+        <span style="font-size:11px;color:#a8a29e">07-05</span>
+      </div>
+    </div>
+    <span class="wf-note">미읽음 = 배경 강조 + ● 마커. 카드 클릭 = 읽음 처리(POST) 후 대상 링크로 이동 — CUD 규약대로 try-catch + <span class="wf-code">HX-Redirect</span>. 개인 데이터 페이지 → <span class="wf-code">hx-history="false"</span> + no-store.</span>
+
+    <!-- 수신 설정 -->
+    <div class="wf-h2 mt-4 mb-2">알림 설정 — 채널별 수신 토글</div>
+    <div class="wf-box">
+      <table class="wf-table">
+        <tr><th>알림 유형</th><th style="width:90px;text-align:center">웹(사이트)</th><th style="width:90px;text-align:center">이메일</th></tr>
+        <tr><td>내 글 댓글/답글</td><td style="text-align:center"><span class="wf-chip" style="background:#44403c;color:#fffdf9">ON</span></td><td style="text-align:center"><span class="wf-chip">OFF</span></td></tr>
+        <tr><td>민원 처리 상태 변경</td><td style="text-align:center"><span class="wf-chip" style="background:#44403c;color:#fffdf9">ON</span></td><td style="text-align:center"><span class="wf-chip" style="background:#44403c;color:#fffdf9">ON</span></td></tr>
+        <tr><td>공지/설문 안내</td><td style="text-align:center"><span class="wf-chip" style="background:#44403c;color:#fffdf9">ON</span></td><td style="text-align:center"><span class="wf-chip">OFF</span></td></tr>
+      </table>
+    </div>
+    <span class="wf-note">토글 = 네이티브 체크박스 + CSS(프레임워크 금지), 변경 즉시 htmx POST 저장(디바운스 불필요 — 클릭 단위). 회원 체인(Order 20) <span class="wf-code">AUTHENTICATED</span> — tb_role_url_access 에 <span class="wf-code">/notification/**</span> 규칙 등록 필수(무매칭 DENY).</span>
+  </div>
+</div>
+
+<!-- ═══════════════ 3. 계정 찾기 ═══════════════ -->
+<div class="wf-doc-header"><h1 style="font-size:15px">계정 찾기 — 아이디 찾기 · 비밀번호 재설정 · 휴면 해제 (가입 위저드와 동일 문법)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/member/find-id</span></div>
+
+  <div class="wf-section" style="display:flex;justify-content:center">
+    <div style="width:520px">
+      <!-- 탭 -->
+      <div class="wf-row mb-2" style="gap:0;border-bottom:1.5px solid #d6d3d1">
+        <span style="padding:8px 14px;border-bottom:3px solid #44403c"><b style="font-size:12.5px">아이디 찾기</b></span>
+        <span style="padding:8px 14px;font-size:12.5px;color:#78716c">비밀번호 재설정</span>
+      </div>
+
+      <!-- 진행 표시 (가입 위저드 문법) -->
+      <div class="wf-row mb-2" style="justify-content:center">
+        <span class="wf-chip" style="background:#44403c;color:#fffdf9">1 본인인증</span>
+        <div style="width:30px;height:2px;background:#d6d3d1"></div>
+        <span class="wf-chip">2 결과 확인</span>
+      </div>
+
+      <!-- 단계 1 -->
+      <div class="wf-box wf-p">
+        <b>1. 본인인증</b>
+        <div class="mt-2"><span class="wf-btn" style="display:block;text-align:center">휴대폰 본인인증 (NICE)</span></div>
+        <div class="mt-2"><span class="wf-btn ghost" style="display:block;text-align:center">가입 이메일로 인증코드 받기</span></div>
+      </div>
+      <!-- 단계 2 -->
+      <div class="wf-box mt-2 wf-p" style="background:#f0ebe1">
+        <b style="font-size:12px">2. 결과 — 회원님의 아이디</b>
+        <div class="wf-box mt-2" style="padding:8px 12px;background:#fffdf9;text-align:center"><b>hong***</b> <span style="font-size:11px;color:#a8a29e">(가입일 2024-03-12)</span></div>
+        <div class="wf-row mt-2"><span class="wf-btn sm wf-grow" style="text-align:center">로그인 하러 가기</span><span class="wf-btn ghost sm wf-grow" style="text-align:center">비밀번호 재설정</span></div>
+      </div>
+      <span class="wf-note">아이디는 <span class="wf-code">MaskUtils</span> 마스킹 노출(전체 노출 금지), 조회 사실은 <span class="wf-code">log_privacy</span> 기록. 비밀번호 재설정 = 인증 후 일회성 토큰 링크(유효 30분·1회) → 새 비밀번호 입력 — 기존 비밀번호는 절대 발급/표시 안 함.</span>
+      <span class="wf-note">시도 제한 = 로그인과 동일 잠금 정책(5회/30분, Bucket4j) — 계정 존재 여부를 알 수 없게 실패 메시지 통일("일치하는 정보가 없거나 인증에 실패했습니다"). CSRF 쿠키(XSRF-TOKEN) 필수.</span>
+
+      <!-- 휴면 해제 -->
+      <div class="wf-h2 mt-4 mb-2">휴면 해제 — /member/dormant-restore</div>
+      <div class="wf-box wf-p" style="border-color:#44403c">
+        <div class="wf-row"><span class="wf-chip" style="background:#44403c;color:#fffdf9">휴면</span><b style="font-size:12.5px">장기 미이용으로 휴면 전환된 계정입니다</b></div>
+        <div class="wf-line thin w80" style="margin:6px 0"></div>
+        <span style="font-size:11px;color:#78716c">마지막 로그인 2025-06-30 · 휴면 전환 2026-07-01 (01:00 배치)</span>
+        <div class="mt-2"><span class="wf-btn" style="display:block;text-align:center">본인인증 후 휴면 해제</span></div>
+      </div>
+      <span class="wf-note">휴면 계정 로그인 시도 → 이 화면으로 리다이렉트(로그인 플로우에서 진입). 해제 = NICE 재인증 → 상태 복원 → 로그인 페이지. 회원 생명주기(활성→휴면 01:00→탈퇴 퍼지 04:45) 배치와 짝.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 4. 설문 ═══════════════ -->
+<div class="wf-doc-header"><h1 style="font-size:15px">설문 — 목록 → 참여 → 완료</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/survey/list</span></div>
+
+  <div class="wf-band wf-dark"><div class="wf-row"><div><b style="font-size:15px">설문조사</b><br/><span style="font-size:11px;color:#a8a29e">홈 › 커뮤니티 › 설문조사</span></div></div></div>
+
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>커뮤니티</b></div>
+        <div class="wf-band">▸ 공지사항</div>
+        <div class="wf-band active">설문조사</div>
+        <div class="wf-band" style="border-bottom:none">▸ 자료실</div>
+      </div>
+
+      <div class="wf-grow">
+        <!-- 카드형 목록 -->
+        <div class="wf-box">
+          <div class="wf-band">
+            <div class="wf-row"><span class="wf-chip" style="background:#44403c;color:#fffdf9">진행중</span><b style="font-size:12.5px">2026 학과 교육과정 만족도 조사 ────</b></div>
+            <span style="font-size:11px;color:#a8a29e">2026-07-01 ~ 07-15 · 문항 8개 · 참여 132명</span>
+            <div class="wf-row mt-2"><span class="wf-grow"></span><span class="wf-btn sm">참여하기 →</span></div>
+          </div>
+          <div class="wf-band" style="border-bottom:none">
+            <div class="wf-row"><span class="wf-chip">마감</span><b style="font-size:12.5px;color:#a8a29e">신입생 오리엔테이션 설문 ──────</b></div>
+            <span style="font-size:11px;color:#a8a29e">2026-03-02 ~ 03-15 · <a href="#" style="color:#78716c">결과 보기</a></span>
+          </div>
+        </div>
+        <span class="wf-note">게시판 카드 문법 재사용 — 상태 뱃지(진행중/마감/참여완료)만 추가. 이미 참여한 설문 = "참여완료" 뱃지 + 버튼 비활성(중복 참여 방지: 회원 ID 기준, 비회원 허용 설문은 쿠키+IP 보조).</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/survey/detail?surveyId=…</span></div>
+  <div class="wf-section" style="display:flex;justify-content:center">
+    <div style="width:560px">
+      <div class="wf-h2 mb-2">2026 학과 교육과정 만족도 조사</div>
+      <div class="wf-row mb-2"><div class="wf-grow" style="height:6px;background:#d6d3d1;border-radius:3px"><div style="width:38%;height:6px;background:#44403c;border-radius:3px"></div></div><span style="font-size:11px;color:#78716c">3 / 8</span></div>
+
+      <div class="wf-box wf-p">
+        <b style="font-size:12.5px">Q3. 전공 커리큘럼에 만족하십니까? <span style="color:#c2410c">*</span></b>
+        <div class="mt-2" style="font-size:12px">◉ 매우 만족　○ 만족　○ 보통　○ 불만족</div>
+      </div>
+      <div class="wf-box wf-p mt-2">
+        <b style="font-size:12.5px">Q4. 개선이 필요한 부분 (복수 선택)</b>
+        <div class="mt-2" style="font-size:12px">☑ 실습 장비　☐ 강의실　☐ 커리큘럼　☐ 기타</div>
+      </div>
+      <div class="wf-box wf-p mt-2">
+        <b style="font-size:12.5px">Q5. 자유 의견</b>
+        <div class="mt-2"><span class="wf-input" style="display:block;min-height:52px">서술형 입력…</span></div>
+      </div>
+
+      <div class="wf-row mt-4"><span class="wf-btn ghost">◂ 이전</span><span class="wf-grow"></span><span class="wf-btn">제출하기</span></div>
+      <span class="wf-note">문항 유형 = 단일(radio)·복수(checkbox)·서술(textarea) — 전부 네이티브 요소. 필수 문항 미응답 = 네이티브 validation + 서버 재검증. 제출 = htmx POST → 완료 조각 교체, <span class="wf-code">hx-history="false"</span>(응답 내용 뒤로가기 캐시 방지).</span>
+    </div>
+  </div>
+  <!-- 완료 -->
+  <div class="wf-section" style="display:flex;justify-content:center">
+    <div class="wf-box wf-p" style="width:420px;text-align:center">
+      <b style="font-size:15px">✓ 설문 참여가 완료되었습니다</b>
+      <div class="wf-line thin w60" style="margin:8px auto"></div>
+      <div class="wf-row mt-2" style="justify-content:center"><span class="wf-btn ghost sm">목록으로</span><span class="wf-btn ghost sm">결과 보기 (공개 설문만)</span></div>
+    </div>
+  </div>
+  <div class="wf-section">
+    <span class="wf-note">완료(thanks) = 같은 URL 에서 조각 교체(별도 페이지 없음). 새로고침/재진입 시 서버가 참여 이력 확인 → 완료 화면 재표시(이중 제출 차단). 결과 공개 여부는 설문 마스터 설정.</span>
+  </div>
+</div>
+
+<!-- ═══════════════ 5. 민원 ═══════════════ -->
+<div class="wf-doc-header"><h1 style="font-size:15px">민원 — 목록 · 작성 (처리 상태 추적)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/complaint/list</span></div>
+
+  <div class="wf-band wf-dark"><div class="wf-row"><div><b style="font-size:15px">민원/건의</b><br/><span style="font-size:11px;color:#a8a29e">홈 › 커뮤니티 › 민원/건의</span></div></div></div>
+
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>커뮤니티</b></div>
+        <div class="wf-band">▸ 공지사항</div>
+        <div class="wf-band active" style="border-bottom:none">민원/건의</div>
+      </div>
+
+      <div class="wf-grow">
+        <div class="wf-row">
+          <span class="wf-chip" style="background:#44403c;color:#fffdf9">전체</span><span class="wf-chip">접수</span><span class="wf-chip">처리중</span><span class="wf-chip">답변완료</span>
+          <span class="wf-grow"></span>
+          <span class="wf-btn sm">✏ 민원 작성</span>
+        </div>
+        <div class="wf-box mt-2">
+          <div class="wf-band">
+            <div class="wf-row"><span class="wf-chip" style="background:#44403c;color:#fffdf9">답변완료</span><b style="font-size:12.5px">🔒 실습실 장비 관련 문의 ─────</b></div>
+            <span style="font-size:11px;color:#a8a29e">홍** · 07-01 접수 · 07-03 답변</span>
+          </div>
+          <div class="wf-band">
+            <div class="wf-row"><span class="wf-chip">처리중</span><b style="font-size:12.5px">🔒 ── 비공개 민원 ──</b></div>
+            <span style="font-size:11px;color:#a8a29e">김** · 07-05 접수</span>
+          </div>
+          <div class="wf-band" style="border-bottom:none">
+            <div class="wf-row"><span class="wf-chip">접수</span><b style="font-size:12.5px">공개 건의: 휴게 공간 개선 ────</b></div>
+            <span style="font-size:11px;color:#a8a29e">이** · 07-07 접수</span>
+          </div>
+        </div>
+        <span class="wf-note">🔒 비공개 = 목록에 제목 마스킹, 상세는 작성자 본인+관리자만(서버 인가 — 화면 숨김만으로 처리 금지). 상태 변경(접수→처리중→답변완료) 시 알림함 연동. 작성자 표기 = <span class="wf-code">MaskUtils</span>.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/complaint/write</span></div>
+  <div class="wf-section" style="display:flex;justify-content:center">
+    <div style="width:560px">
+      <div class="wf-h2 mb-2">민원 작성</div>
+      <div class="wf-row mb-2"><span class="wf-input" style="width:160px">분류 선택 ▾</span><span class="wf-chip" style="background:#44403c;color:#fffdf9">🔒 비공개</span><span class="wf-chip">공개</span></div>
+      <div class="mb-2"><span class="wf-input" style="display:block">제목</span></div>
+      <div class="mb-2"><span class="wf-input" style="display:block;min-height:110px">내용 (에디터 아님 — 플레인 textarea, 서버에서 Sanitizer)</span></div>
+
+      <!-- 첨부 -->
+      <div class="wf-slot" style="text-align:center;padding:16px">
+        📎 파일을 끌어다 놓거나 클릭해서 첨부 (최대 3개 · 10MB)
+      </div>
+      <span class="wf-note">업로드 6중 방어 — 확장자 화이트리스트 / Tika 매직바이트 / 격리 저장 / 이미지 재인코딩 / FIM / ClamAV. 문서·이미지만 허용, 실행형 즉시 거부. 진행률 = htmx + 순수 JS(<span class="wf-code">htmx:xhr:progress</span>).</span>
+
+      <div class="wf-row mt-2" style="font-size:12px"><span>☑ 답변 알림 수신 (알림함·이메일)</span></div>
+      <div class="wf-row mt-4"><span class="wf-btn ghost">취소</span><span class="wf-grow"></span><span class="wf-btn">제출하기</span></div>
+      <span class="wf-note">POST = CSRF 토큰 + 로그인 필수(<span class="wf-code">AUTHENTICATED</span>, 비회원 민원 없음 — 스팸 차단). CUD 규약: try-catch + log + <span class="wf-code">HX-Redirect</span> → 목록. Bucket4j 로 연속 제출 제한. <span class="wf-code">tb_role_url_access</span> 에 <span class="wf-code">/complaint/**</span> 등록 필수.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 6. 파일 미리보기 뷰어 ═══════════════ -->
+<div class="wf-doc-header"><h1 style="font-size:15px">파일 미리보기 뷰어 — 새 창 · VIEWER 독립 레이아웃 (헤더/LNB 없음)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/viewer?fileId=…  (새 창 target=_blank)</span></div>
+
+  <!-- 뷰어 툴바 -->
+  <div class="wf-band wf-dark">
+    <div class="wf-row">
+      <b style="font-size:12.5px">파일명.pdf</b><span class="wf-chip">1.2MB</span>
+      <span class="wf-grow"></span>
+      <span class="wf-chip">◂</span><span style="font-size:12px">3 / 12</span><span class="wf-chip">▸</span>
+      <span class="wf-chip">－</span><span style="font-size:12px">100%</span><span class="wf-chip">＋</span>
+      <span class="wf-btn ghost sm">⬇ 다운로드</span>
+      <span class="wf-chip">✕ 닫기</span>
+    </div>
+  </div>
+
+  <!-- 페이지 영역 -->
+  <div class="wf-section" style="background:#e7e0d5;display:flex;justify-content:center;padding:24px">
+    <div class="wf-img" style="width:420px;height:280px"><span>PDF 페이지 렌더 (canvas)</span></div>
+  </div>
+
+  <div class="wf-section">
+    <span class="wf-note">VIEWER = 독립 레이아웃(공용 헤더/푸터 미포함) — 새 창 열기 시 <span class="wf-code">rel="noopener"</span>. PDF.js self-host(CDN 금지, CSP nonce) — PDF 외 형식(이미지)은 네이티브 &lt;img&gt;. hwp/docx 는 미리보기 미지원 → 다운로드만.</span>
+    <span class="wf-note">파일 접근 = fileId 로 서버 스트리밍(실경로 비노출) + 소유 게시물의 열람 권한 재검증 — 직접 URL 추측 차단. 응답 <span class="wf-code">no-store</span>, 다운로드는 6중 방어 통과 자원만.</span>
+  </div>
+</div>
+
+<!-- ═══════════════ 7. 오류 페이지 ═══════════════ -->
+<div class="wf-doc-header"><h1 style="font-size:15px">오류 페이지 — 404 · 403 · 5xx</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/error/…</span></div>
+
+  <div class="wf-section">
+    <div class="wf-grid-3">
+      <!-- 404 -->
+      <div class="wf-box wf-p" style="text-align:center">
+        <b style="font-size:22px">404</b>
+        <div style="font-size:12px" class="mt-2"><b>페이지를 찾을 수 없습니다</b></div>
+        <div class="wf-line thin w80" style="margin:8px auto"></div>
+        <div class="wf-row mt-2" style="justify-content:center"><span class="wf-btn ghost sm">홈으로</span><span class="wf-btn ghost sm">사이트맵</span></div>
+      </div>
+      <!-- 403 -->
+      <div class="wf-box wf-p" style="text-align:center;border-color:#44403c">
+        <b style="font-size:22px">403</b>
+        <div style="font-size:12px" class="mt-2"><b>접근 권한이 없습니다</b></div>
+        <div style="font-size:11px;color:#78716c" class="mt-2">로그인이 필요하거나<br/>권한이 없는 페이지입니다</div>
+        <div class="wf-row mt-2" style="justify-content:center"><span class="wf-btn sm">로그인</span><span class="wf-btn ghost sm">홈으로</span></div>
+      </div>
+      <!-- 5xx -->
+      <div class="wf-box wf-p" style="text-align:center">
+        <b style="font-size:22px">5xx</b>
+        <div style="font-size:12px" class="mt-2"><b>일시적인 오류가 발생했습니다</b></div>
+        <div style="font-size:11px;color:#78716c" class="mt-2">오류 코드: <span class="wf-code">ERR-a1b2c3</span></div>
+        <div class="wf-row mt-2" style="justify-content:center"><span class="wf-btn ghost sm">다시 시도</span><span class="wf-btn ghost sm">홈으로</span></div>
+      </div>
+    </div>
+    <span class="wf-note">403 주의 — <span class="wf-code">tb_role_url_access</span> 는 <b>무매칭 DENY</b>: 새 URL 을 추가하고 접근 규칙 등록을 빠뜨리면 정상 화면도 403 이 뜬다(가장 흔한 실수). 이 화면에서 원인을 짐작할 수 있게 개발(local) 프로파일에서만 "매칭 규칙 없음" 힌트 노출, 운영은 일반 문구만.</span>
+    <span class="wf-note">404/403 = 공용 레이아웃 유지(헤더·푸터 포함, 사이트 이탈 방지). 5xx = 레이아웃 렌더 자체가 실패할 수 있어 <b>정적 독립 HTML</b>. 오류 코드 = 로그 상관키(스택·내부 정보 화면 노출 금지 — errorId 로만 추적). 오류 페이지도 no-store.</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 F안 — 콘텐츠 페이지</title>
+<link rel="stylesheet" href="wireframe6.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>콘텐츠 페이지 — 아코디언 분절 학과소개 · 풀폭 지도 오시는길 <span class="wf-badge-f">F안</span></h1>
+  <p><span class="route">GET /{sc}/about</span><span class="route">GET /{sc}/location</span> — 긴 콘텐츠를 모바일에서 아코디언(&lt;details&gt;)으로 접어 스캔 가능하게. 데스크톱은 협폭 본문 세로 전개.</p>
+</div>
+
+<div class="wf-duo">
+
+  <!-- ══════════ 모바일: 학과소개 ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 학과소개 /med/about (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/med/about</div>
+
+      <div class="wf-appbar">
+        <span class="wf-chip">←</span><b>학과소개</b>
+        <span class="wf-grow"></span><span class="wf-chip">🔍</span><span class="wf-chip">🔔</span>
+      </div>
+
+      <div class="wf-p" style="padding:14px">
+        <!-- 리드 -->
+        <div class="wf-img" style="height:110px"><span>학과 대표 이미지</span></div>
+        <div class="wf-line w80 mt-2"></div><div class="wf-line thin w60"></div>
+
+        <!-- 아코디언 섹션 -->
+        <div class="wf-box mt-4">
+          <div class="wf-band" style="padding:10px 12px"><div class="wf-row"><b style="font-size:12.5px">▾ 인사말</b><span class="wf-grow"></span><span class="wf-chip" style="font-size:9px">열림</span></div>
+            <div class="wf-line thin w80" style="margin-top:6px"></div><div class="wf-line thin w60"></div><div class="wf-line thin w80"></div>
+          </div>
+          <div class="wf-band" style="padding:10px 12px"><b style="font-size:12.5px">▸ 비전·인재상</b></div>
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px"><b style="font-size:12.5px">▸ 연혁</b></div>
+        </div>
+        <span class="wf-note">아코디언 = 네이티브 &lt;details&gt;/&lt;summary&gt; — JS 0줄. 첫 섹션만 open 기본.
+        섹션 구성 = <b>정본 메뉴 트리 3뎁스(인사말·비전·인재상·연혁)와 1:1</b> — "3뎁스 = 페이지 내 앵커/탭" 뎁스 규칙. 전체메뉴·사이트맵의 3뎁스 링크 = 해당 섹션 앵커(#) 직결(details open 상태로 진입).
+        분절 단위는 관리자 콘텐츠(tb_content HTML)의 samples 서식(아코디언 블록)을 그대로 사용 — 콘텐츠 안 클래스는 _content-utility-safelist.html 범위만.
+        본문 HTML 은 OWASP Sanitizer 통과분(A안 동일). 데스크톱(≥1024px)에서는 details 를 CSS 로 항상 펼침 처리하지 않고 그대로 아코디언 유지 — 동작 일관성 우선.</span>
+
+        <!-- 좋아요/신고 -->
+        <div class="wf-row mt-4" style="justify-content:center">
+          <span class="wf-btn ghost sm">👍 좋아요 8</span><span class="wf-btn ghost sm">🚩 신고</span>
+        </div>
+        <span class="wf-note">좋아요/신고 밴드 — contentId 있는 콘텐츠 페이지 공통 조각(A안 동일). htmx POST → 블록 갱신.</span>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab active"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 모바일: 오시는길 ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 오시는길 /med/location (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/med/location</div>
+
+      <div class="wf-appbar">
+        <span class="wf-chip">←</span><b>오시는길</b>
+        <span class="wf-grow"></span><span class="wf-chip">🔍</span><span class="wf-chip">🔔</span>
+      </div>
+
+      <!-- 풀폭 지도 -->
+      <div class="wf-slot" style="height:170px;border-radius:0;border-left:none;border-right:none;display:flex;align-items:center;justify-content:center">
+        지도 임베드 (풀폭, self-host 타일/정적 이미지 폴백)
+      </div>
+      <div style="padding:0 12px">
+        <span class="wf-note">지도 — 외부 지도 SDK 는 CSP self-host 정책과 충돌 → 정적 지도 이미지 + "카카오맵/네이버지도 앱으로 열기" 딥링크 버튼이 기본. 동적 임베드는 P6 CSP 화이트리스트 결정 후.</span>
+      </div>
+
+      <!-- 연락처 리스트 -->
+      <div class="wf-p" style="padding:12px 14px">
+        <div class="wf-box">
+          <div class="wf-band" style="padding:10px 12px"><div class="wf-row"><span style="font-size:14px">📍</span><div><b style="font-size:12px">주소</b><div class="wf-line thin w80" style="margin:3px 0 0"></div></div><span class="wf-grow"></span><span class="wf-chip">복사</span></div></div>
+          <div class="wf-band" style="padding:10px 12px"><div class="wf-row"><span style="font-size:14px">📞</span><div><b style="font-size:12px">학과 사무실</b><div style="font-size:11px;color:#64748b">041-000-0000</div></div><span class="wf-grow"></span><span class="wf-chip">전화</span></div></div>
+          <div class="wf-band" style="padding:10px 12px"><div class="wf-row"><span style="font-size:14px">✉️</span><div><b style="font-size:12px">이메일</b><div class="wf-line thin w60" style="margin:3px 0 0"></div></div></div></div>
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px"><div class="wf-row"><span style="font-size:14px">🚌</span><div><b style="font-size:12px">대중교통</b><div class="wf-line thin w80" style="margin:3px 0 0"></div></div></div></div>
+        </div>
+        <span class="wf-note">연락처 리스트 — 모바일 행동 버튼(전화 = tel: 링크, 주소 복사 = navigator.clipboard, 외부 .js data-action 위임).
+        전화번호 등 개인 연락처가 아닌 기관 대표 정보만 노출(교수 개인 연락처는 /prg/faculty 의 마스킹 규칙 적용).</span>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab active"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 데스크톱 (확장) ══════════ -->
+  <div class="wf-col" style="flex:1;min-width:560px">
+    <div class="wf-caption">🖥 데스크톱 (확장) — /med/about 협폭 본문</div>
+    <div class="wf-canvas">
+      <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="url">http://127.0.0.1:8080/med/about</span></div>
+
+      <div class="wf-band"><div class="wf-deskcol"><div class="wf-row"><b style="font-size:16px">의학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">🏠 홈</span><span class="wf-btn sky sm">🎓 학과</span><span class="wf-btn ghost sm">📋 게시판</span><span class="wf-btn ghost sm">🔍 검색</span><span class="wf-btn ghost sm">👤 MY</span></div></div></div>
+
+      <div class="wf-band" style="padding:16px">
+        <div class="wf-deskcol">
+          <div class="wf-row" style="font-size:11px;color:#64748b"><span>홈 › 소개 › 학과소개</span><span class="wf-grow"></span><div class="wf-img" style="width:180px;height:40px;min-height:40px"><span>SUB_HERO</span></div></div>
+
+          <div class="wf-h1 mt-4">학과소개</div>
+          <div class="wf-img mt-2" style="height:150px"><span>학과 대표 이미지 (협폭 860px 풀폭)</span></div>
+
+          <div class="wf-box mt-4">
+            <div class="wf-band" style="padding:10px 14px"><b style="font-size:13px">▾ 인사말</b>
+              <div class="wf-line thin w80" style="margin-top:6px"></div><div class="wf-line thin w60"></div>
+            </div>
+            <div class="wf-band" style="padding:10px 14px"><b style="font-size:13px">▸ 비전·인재상</b></div>
+            <div class="wf-band" style="border-bottom:none;padding:10px 14px"><b style="font-size:13px">▸ 연혁</b></div>
+          </div>
+          <span class="wf-note">데스크톱도 같은 &lt;details&gt; 아코디언 마크업 — 협폭 컬럼이라 접기 UI 가 데스크톱에서도 어색하지 않음(F안이 아코디언을 공용 문법으로 쓰는 이유). 섹션 = 메뉴 3뎁스(인사말·비전·인재상·연혁) 앵커와 1:1. breadcrumb·SUB_HERO 만 데스크톱 추가.</span>
+
+          <div class="wf-row mt-4" style="justify-content:center">
+            <span class="wf-btn ghost sm">👍 좋아요 8</span><span class="wf-btn ghost sm">🚩 신고</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-deskcol"><div class="wf-line w40" style="background:#475569"></div></div></div>
+    </div>
+
+    <div class="wf-canvas mt-4" style="min-width:0">
+      <div class="wf-section">
+        <div class="wf-h2 mb-2">콘텐츠 유형별 처리</div>
+        <table class="wf-table">
+          <tr><th style="width:170px">유형</th><th>모바일(정본)</th><th>데스크톱(확장)</th></tr>
+          <tr><td>긴 서술형(about)</td><td>아코디언 &lt;details&gt; 분절</td><td>동일 아코디언, 협폭 컬럼</td></tr>
+          <tr><td>오시는길(location)</td><td>풀폭 지도 + 연락처 액션 리스트</td><td>지도(좌) + 연락처(우) 2컬럼 재배열</td></tr>
+          <tr><td>표가 많은 콘텐츠</td><td>가로 스크롤 wrapper(overflow-x)</td><td>그대로 노출</td></tr>
+        </table>
+        <span class="wf-note">콘텐츠 페이지는 CmsUsrController → tb_content 렌더(A안 동일 컨트롤러·라우트). F안에서 바뀌는 건 samples 서식(아코디언·액션 리스트 블록 추가)뿐 — 백엔드 변경 없음.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

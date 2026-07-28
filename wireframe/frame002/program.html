@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 B안 — 프로그램 페이지</title>
+<link rel="stylesheet" href="wireframe2.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>프로그램 — 교수진 · 직원 · 연구실 · 수업계획서 <span class="wf-badge-b">B안</span></h1>
+  <p><span class="route">GET /prg/{program}/{sc}</span> 쉘(primary) + <span class="route">GET /prg/{program}/{sc}/list</span> 조각(secondary) — 구조는 A안 동일, 표현만 변경</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/prg/faculty/me</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 16px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">기계공학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm" style="border-bottom:3px solid #44403c">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-chip">🔍</span><span class="wf-btn sm">☰</span></div></div>
+  <div class="wf-band wf-dark"><div class="wf-row"><div><b style="font-size:15px">교수진</b><br/><span style="font-size:11px;color:#a8a29e">홈 › 구성원 › 교수진</span></div><span class="wf-grow"></span><div class="wf-img" style="width:200px;height:44px;min-height:44px"><span>SUB_HERO</span></div></div></div>
+
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <!-- LNB -->
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>구성원</b></div>
+        <div class="wf-band active">▾ 교수진</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px;background:#f0ebe1"><b>└ 전임교원</b></div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 겸임·초빙</div>
+        <div class="wf-band" style="padding-left:26px;font-size:12px">└ 명예교수</div>
+        <div class="wf-band" style="border-bottom:none">직원</div>
+      </div>
+
+      <!-- htmx 조각 -->
+      <div class="wf-grow">
+        <span class="wf-note" style="margin-top:0;margin-bottom:8px">LNB 3뎁스(전임교원·겸임·초빙·명예교수) = 교원 구분 — 현재 위치 강조(전임교원). 클릭 시 #prg-panel 조각을 hx-get 파라미터(구분)로 갱신 + hx-push-url URL 동기. 4뎁스 없음.</span>
+        <div class="wf-slot" style="text-align:left;padding:14px">
+          <b style="color:#c2410c">#prg-panel — hx-get="/prg/faculty/{sc}/list" (secondary 조각, A안 동일)</b>
+
+          <!-- 필터 칩 + 뷰 전환 -->
+          <div class="wf-row mt-2">
+            <span class="wf-chip" style="background:#44403c;color:#fffdf9">전체</span>
+            <span class="wf-chip">열유체</span><span class="wf-chip">고체·설계</span><span class="wf-chip">생산·로봇</span>
+            <span class="wf-grow"></span>
+            <span class="wf-input" style="width:140px">이름 검색</span>
+            <span class="wf-chip">☷ 그리드</span><span class="wf-chip" style="background:#44403c;color:#fffdf9">☰ 리스트</span>
+          </div>
+          <span class="wf-note">A안(셀렉트+검색버튼) → 전공분야 필터 칩 즉시 갱신(hx-get, 300ms debounce) + 그리드/리스트 뷰 토글(localStorage 기억).</span>
+
+          <!-- 리스트형(가로 카드) -->
+          <div class="wf-box mt-2" style="background:#fffdf9">
+            <div class="wf-band"><div class="wf-row">
+              <div class="wf-img" style="width:64px;height:76px;min-height:76px"><span>사진</span></div>
+              <div class="wf-grow"><b>홍길동 교수</b> <span class="wf-chip">열유체</span>
+                <div class="wf-line thin w60"></div>
+                <span style="font-size:11px;color:#78716c">연구실 A-301 · ☎ 041-***-**** · ✉ h***@ko***</span></div>
+              <span class="wf-btn ghost sm">상세 ▾</span>
+            </div></div>
+            <div class="wf-band"><div class="wf-row">
+              <div class="wf-img" style="width:64px;height:76px;min-height:76px"><span>사진</span></div>
+              <div class="wf-grow"><b>김철수 교수</b> <span class="wf-chip">고체·설계</span>
+                <div class="wf-line thin w80"></div>
+                <span style="font-size:11px;color:#78716c">연구실 A-305 · ☎ · ✉ (MaskUtils 마스킹)</span></div>
+              <span class="wf-btn ghost sm">상세 ▾</span>
+            </div></div>
+            <div class="wf-band" style="border-bottom:none;background:#f0ebe1">
+              <b style="font-size:12px">▾ 이영희 교수 — 인라인 상세 펼침</b>
+              <div class="wf-line thin w80 mt-2"></div><div class="wf-line thin w60"></div>
+              <span style="font-size:11px;color:#78716c">학력·경력·논문 목록 (details 펼침 — 상세 페이지 이동 없음)</span>
+            </div>
+          </div>
+          <span class="wf-note">A안(세로 카드 3열 그리드) → 가로 리스트 + &lt;details&gt; 인라인 상세. 스캔이 빠르고 모바일 전환 자연스러움.</span>
+
+          <!-- 더보기 -->
+          <div style="text-align:center;margin-top:12px">
+            <span class="wf-btn ghost sm">더보기 (12 / 24) ▾</span>
+          </div>
+          <span class="wf-note">A안(번호 페이징) → hx-get 다음 페이지 append 더보기 버튼. PageRequest 재사용 — 파라미터 동일.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#78716c"></div></div>
+</div>
+
+<!-- 변형 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">프로그램별 목록 변형 (LNB·쉘 동일, 조각만 교체)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-grid-3">
+      <div class="wf-box wf-p">
+        <b>직원 /prg/staff/{sc}</b>
+        <div class="wf-box mt-2" style="padding:8px"><div class="wf-row"><span style="font-size:16px">🧑‍💼</span><div class="wf-grow"><b style="font-size:12px">담당자명</b><div class="wf-line thin w80" style="margin:2px 0"></div></div><span class="wf-chip">☎</span></div></div>
+        <div class="wf-box mt-2" style="padding:8px"><div class="wf-row"><span style="font-size:16px">🧑‍💼</span><div class="wf-grow"><b style="font-size:12px">담당자명</b><div class="wf-line thin w60" style="margin:2px 0"></div></div><span class="wf-chip">☎</span></div></div>
+        <span class="wf-note">테이블 → 담당업무 중심 카드. 전화 클릭 = tel: 링크</span>
+      </div>
+      <div class="wf-box wf-p">
+        <b>연구실 /prg/lab/{sc}</b>
+        <div class="wf-img mt-2" style="height:56px"><span>대표 이미지 배너형</span></div>
+        <div class="wf-row mt-2"><span class="wf-chip">지도교수</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+        <div class="wf-row mt-2"><span class="wf-chip">연구분야</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+        <span class="wf-note">이미지 배너형 카드 1열 — 홈 하이라이트와 톤 일치</span>
+      </div>
+      <div class="wf-box wf-p">
+        <b>수업계획서 /prg/syllabus/{sc}</b>
+        <div class="wf-row mt-2"><span class="wf-chip" style="background:#44403c;color:#fffdf9">2026-1</span><span class="wf-chip">2025-2</span><span class="wf-chip">2025-1</span></div>
+        <table class="wf-table mt-2">
+          <tr><th>교과목</th><th>교수</th><th>📎</th></tr>
+          <tr><td>─</td><td>─</td><td>보기</td></tr>
+        </table>
+        <span class="wf-note">연도/학기 셀렉트 → 학기 칩 토글. 파일 = 뷰어 팝업</span>
+      </div>
+    </div>
+    <span class="wf-note">데이터·API·보안은 A안과 완전 동일(tb_faculty/tb_staff/tb_lab, secondary, site_code 스코프, FAC/STF/LAB/SYL 접두사) — 조각 템플릿(list fragment)만 다름.</span>
+  </div>
+</div>
+
+</body>
+</html>

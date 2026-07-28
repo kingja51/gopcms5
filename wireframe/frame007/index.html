@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>PCMS 2026 와이어프레임 G안 — 목차 & A~F 비교</title>
+<link rel="stylesheet" href="wireframe7.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="../index.html">← 전체 목차</a>
+  <h1>PCMS 2026-001 사용자 사이트 와이어프레임 <span class="wf-badge-g">G안 (frame007)</span></h1>
+  <p><b>"공공기관 정석 3단 헤더 + 좌 LNB 3뎁스 + 우측 플로팅 퀵메뉴"</b> — KRDS 가이드라인에 가장 보수적으로 충실한 안.
+     유틸바·로고+통합검색·풀폭 GNB(전체 펼침형 패널)의 3단 헤더, 서브페이지는 SUB_HERO 타이틀 밴드 + 좌 LNB + breadcrumb 유틸, 푸터는 풀 사이트맵형.</p>
+  <p style="margin-top:6px"><b>{sc}</b> = siteCode(학과코드 = 서브도메인, 예: ai·med·me). 라우트·보안·데이터 구조는 A안과 동일 — 달라지는 것은 프레젠테이션 계층뿐.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">① G안 핵심 차이 (vs A~F안)</div>
+    <table class="wf-table">
+      <tr><th style="width:110px">항목</th><th>A~F안 요약</th><th>G안 (frame007)</th></tr>
+      <tr><td>글로벌 내비</td>
+          <td>A=GNB 밴드+호버 드롭다운 / B=콤팩트 헤더+☰ 메가메뉴 / C=좌측 사이드바+2-pane / D=풀블리드 원페이지 에디토리얼 / E=포털형 벤토 카드 / F=모바일 퍼스트 하단 탭바</td>
+          <td><b>3단 헤더</b> — ①유틸바(관련사이트·글자크기·고대비·언어) ②로고+통합검색 인풋+로그인/알림 ③풀폭 GNB 5그룹, 호버 시 <b>전체 펼침형 패널</b>(모든 그룹 2~3뎁스 하위메뉴 동시 전개 — 4뎁스는 메뉴 미노출)</td></tr>
+      <tr><td>서브페이지 구조</td>
+          <td>A=본문 1단 와이드 / B=타이틀 밴드+LNB 2단 / C=2-pane 고정 / D=원페이지 스크롤 / E=카드 대시보드 / F=단일 컬럼 스택</td>
+          <td><b>SUB_HERO 배경 타이틀 밴드 + 좌 LNB 2~3뎁스 트리</b>(현재 위치 강조·상위 접기) + 본문 우상단 breadcrumb·인쇄·URL복사 유틸 + <b>우측 플로팅 퀵메뉴</b>(5개+TOP)</td></tr>
+      <tr><td>홈</td>
+          <td>A=풀폭 캐러셀+타일 / B=스플릿 히어로+탭 위젯 / C=사이드바 옆 피드 / D=매거진 커버 / E=벤토 그리드 / F=앱형 카드 스트림</td>
+          <td><b>풀폭 히어로 캐러셀(재생/정지 컨트롤)</b> → 학과 소식 2컬럼(공지 테이블+갤러리 썸네일) → 바로가기 배너 4열 → <b>학사일정 미니 캘린더</b>+정보 패널 → 하단 배너존 롤링</td></tr>
+      <tr><td>게시판</td>
+          <td>A=테이블형 / B=카드형 / C=리스트+미리보기 pane / D=피드형 / E=카드 그리드 / F=무한스크롤 카드</td>
+          <td><b>정석 테이블형</b>(번호·제목·첨부·작성자·등록일·조회) + 상단 공지 고정행 + 기간·범위 셀렉트 검색폼 + <b>숫자형 페이징</b>. 상세 = 제목 헤더 테이블+첨부 용량 표기+이전/다음 행</td></tr>
+      <tr><td>검색</td>
+          <td>A=독립 결과 페이지 / B=전체화면 오버레이 / C=사이드바 인라인 / D=커맨드 팔레트 / E=검색 위젯 카드 / F=검색 탭</td>
+          <td><b>헤더 중앙 상시 인풋</b> → 결과 페이지(재검색 폼+범위 탭 전체/콘텐츠/게시글/파일+<b>인기검색어 사이드 박스</b>)</td></tr>
+      <tr><td>마이페이지</td>
+          <td>A=좌측 메뉴+대시보드 / B=상단 탭+카드 / C=사이드바 통합 / D=프로필 히어로 / E=위젯 보드 / F=설정 리스트</td>
+          <td><b>좌 LNB(회원정보·비밀번호·내 글·알림함·회원탈퇴) + 본문 폼 테이블</b> — 서브페이지와 동일 프레임의 정석형</td></tr>
+    </table>
+    <span class="wf-note">G안의 지향점 = 낯섦 0%. 대학·관공서 사용자가 이미 학습한 관습(3단 헤더·좌 LNB·테이블 게시판·플로팅 퀵메뉴)을 그대로 재현해 학습 비용을 없앤다.
+    KRDS 규약(시맨틱 토큰·htmx+순수JS·네이티브 요소 우선·CSP nonce·radius ≤12px) 안에서 구현 — G안은 radius 0~6px 로 더 보수적으로 잡는다.</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">② 와이어프레임 목차</div>
+    <table class="wf-table">
+      <tr><th style="width:220px">파일</th><th>화면</th><th>대표 라우트</th></tr>
+      <tr><td><a href="layout.html" style="color:#1e3a8a">layout.html</a></td><td>공용 레이아웃 G — 3단 헤더·전체 펼침 GNB·LNB 3뎁스·플로팅 퀵메뉴·사이트맵 푸터</td><td><span class="wf-code">전 페이지 공통 프레임</span></td></tr>
+      <tr><td><a href="home.html" style="color:#1e3a8a">home.html</a></td><td>홈 — 풀폭 캐러셀·소식 2컬럼(공지+포토앨범)·바로가기 4열·미니 캘린더·배너존</td><td><span class="wf-code">/{sc}/home</span></td></tr>
+      <tr><td><a href="content.html" style="color:#1e3a8a">content.html</a></td><td>콘텐츠 — LNB 3뎁스 학과소개(인사말·비전·인재상·연혁)·오시는길·교과과정(4뎁스 = 페이지 내 탭)</td><td><span class="wf-code">/{sc}/about · /{sc}/location · /{sc}/curriculum</span></td></tr>
+      <tr><td><a href="program.html" style="color:#1e3a8a">program.html</a></td><td>프로그램 — 교수진 검색폼+테이블-카드 하이브리드·상세·직원/연구실/수업계획서</td><td><span class="wf-code">/prg/{program}/{sc}</span></td></tr>
+      <tr><td><a href="board.html" style="color:#1e3a8a">board.html</a></td><td>게시판 — 정석 테이블 목록+고정공지+검색폼 · 상세(첨부·댓글·이전/다음)</td><td><span class="wf-code">/bbs/{sc}/{bbsCode}</span></td></tr>
+      <tr><td><a href="member.html" style="color:#1e3a8a">member.html</a></td><td>회원 — 탭형 로그인 센터 박스·가로 스텝 가입·LNB 마이페이지</td><td><span class="wf-code">/member/**</span></td></tr>
+      <tr><td><a href="search-sitemap.html" style="color:#1e3a8a">search-sitemap.html</a></td><td>통합검색(범위 탭+인기검색어) · 사이트맵 5그룹 격자</td><td><span class="wf-code">/search · /{sc}/sitemap</span></td></tr>
+      <tr><td><a href="common.html" style="color:#1e3a8a">common.html</a></td><td>공통 프로그램·보조 화면 (학사일정·알림함·계정찾기·설문·민원·파일뷰어·오류)</td><td><span class="wf-code">/schedule · /notification · /member/find-* · /survey · /complaint</span></td></tr>
+    </table>
+    <span class="wf-note">표기 규칙: 회색 실선 = 정적 마크업, 점선 = htmx/JS 동적 슬롯, <b>네이비 주석 = 구현 메모</b>. (A안 파랑·B안 주황과 구분)
+    각 파일은 브라우저에서 직접 열면 됨 — 서버 불필요, 순수 정적 HTML+CSS.</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">③ 정보구조(IA) — A안과 동일 (메뉴 5그룹)</div>
+    <div class="wf-tree">
+/{sc}/home <span class="dim">· 소개(학과소개 /{sc}/about · 오시는길 /{sc}/location) · 구성원(교수진 /prg/faculty/{sc} · 직원 /prg/staff/{sc})</span><br/>
+<span class="dim">· 교육(교과과정 · 수업계획서 /prg/syllabus/{sc} · 학사일정 /schedule/{master}) · 연구(연구실 /prg/lab/{sc} · 연구성과)</span><br/>
+<span class="dim">· 커뮤니티(공지 /bbs/{sc}/notice · 소식 /bbs/{sc}/news · 세미나 · 자료실 /bbs/{sc}/archive) · 회원(/member/**) · /search?siteCode={sc}&keyword=</span>
+    </div>
+    <span class="wf-note"><b>IA·라우트·tb_menu 시드는 A안과 동일 — 달라지는 것은 프레젠테이션 계층뿐.</b>
+    siteContext.menuTree 하나로 ③풀폭 GNB 전체 펼침 패널·좌 LNB·푸터 사이트맵·사이트맵 페이지 4곳을 모두 렌더 — 추가 데이터 불필요.
+    <b>메뉴 뎁스 출력 규칙(전 안 공통): 메뉴(GNB 패널·LNB)는 1~3뎁스까지만 노출, 4뎁스는 3뎁스 페이지 내 탭/필터로 처리.
+    사이트맵 페이지는 1~4뎁스 전체 전개, 푸터 사이트맵은 1~2뎁스 요약</b> — menuTree(depth 1~4 저장)의 렌더 뎁스만 달리한다.
+    새 URL 은 tb_role_url_access 등록 필수(무매칭 DENY). 상세 트리는 <a href="../frame001/index.html" style="color:#1e3a8a">frame001/index.html</a> ② 참조.</span>
+  </div>
+</div>
+
+</body>
+</html>

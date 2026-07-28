@@ -1,0 +1,33 @@
+# ── Java / Maven ─────────────────────────────
+target/
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+# ── Node / Tailwind 빌드 ─────────────────────
+node_modules/
+dist/
+
+# ── IDE ──────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+out/
+
+# ── OS ───────────────────────────────────────
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ── 로컬 설정 / 비밀 ─────────────────────────
+*.local
+.env
+.env.*
+application-local.yml
+
+# ── 기타 ─────────────────────────────────────
+*.tmp
+*.bak

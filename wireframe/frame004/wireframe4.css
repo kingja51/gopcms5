@@ -1,0 +1,193 @@
+/* ============================================================
+   PCMS 2026-001 와이어프레임 D안(frame004) 공용 스타일
+   - 콘셉트: 원페이지 풀블리드 매거진/에디토리얼
+   - 구분: A안(파란 주석·실선) / B안(주황·손그림) / C안(사이드바) / D안(보라·면 분리)
+   - 박스는 선 대신 면(옅은 채움 + 최소 그림자)으로 구분
+   - 거대 타이포 · 넉넉한 여백 · 풀블리드 섹션 스택
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+  background: #f4f2f9;              /* 아주 연한 라벤더 회색 */
+  color: #3d3654;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 24px;
+}
+
+/* ── 페이지 머리말 ── */
+.wf-doc-header { max-width: 1080px; margin: 0 auto 20px; }
+.wf-doc-header h1 { font-size: 21px; letter-spacing: -.5px; color: #221c35; margin-bottom: 4px; }
+.wf-doc-header p  { color: #5f5878; font-size: 13px; }
+.wf-doc-header .route { display:inline-block; font-family: Consolas, monospace; background:#221c35; color:#eee9fa; padding:2px 8px; border-radius:6px; font-size:12px; margin:4px 4px 0 0; }
+.wf-back { display:inline-block; margin-bottom:12px; color:#7c3aed; text-decoration:none; font-size:12px; }
+.wf-back:hover { text-decoration:underline; }
+.wf-badge-d { display:inline-block; background:#7c3aed; color:#fff; font-size:11px; padding:2px 10px; border-radius:999px; vertical-align:middle; margin-left:8px; font-weight:400; }
+
+/* ── 브라우저 프레임(캔버스) — 면 + 부드러운 그림자 ── */
+.wf-canvas {
+  position: relative;               /* 도트 내비 등 absolute 기준 */
+  max-width: 1080px; margin: 0 auto 40px; background: #faf9fd;
+  border: 1px solid #d8d2e8; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 6px 24px rgba(43,36,64,.10);
+}
+.wf-browserbar {
+  display: flex; align-items: center; gap: 8px;
+  background: #e6e1f2; padding: 8px 14px; border-bottom: 1px solid #d8d2e8;
+}
+.wf-browserbar .dot { width: 10px; height: 10px; border-radius: 50%; background: #b7abd8; }
+.wf-browserbar .url {
+  flex: 1; background: #faf9fd; border: 1px solid #c9c1e0; border-radius: 999px;
+  padding: 2px 14px; font-family: Consolas, monospace; font-size: 12px; color: #3d3654;
+}
+
+/* ── 기본 박스 — 선 대신 면(흰 면 + 최소 그림자) ── */
+.wf-box  { background: #fff; border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(43,36,64,.08); overflow: hidden; }
+.wf-band { border-bottom: none; padding: 14px 20px; }
+.wf-gray { background: #efecf6; }              /* 옅은 라벤더 면 */
+.wf-dark { background: #221c35; color: #dcd6ee; }
+
+/* 동적 슬롯(htmx/JS 렌더) — 보라빛 점선 */
+.wf-slot {
+  border: 2px dashed #b7a8e3; background: #f7f4fd; color: #7a6f99;
+  padding: 10px 14px; text-align: center; border-radius: 12px;
+}
+
+/* 이미지 자리표시(옅은 면 + 소프트 X) */
+.wf-img {
+  position: relative; background: #e9e4f4; border: none; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: #7a6f99; font-size: 11px; overflow: hidden; min-height: 60px;
+}
+.wf-img::before, .wf-img::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to top right, transparent calc(50% - .75px), #c6bce0, transparent calc(50% + .75px));
+}
+.wf-img::after { transform: scaleX(-1); }
+.wf-img span { position: relative; z-index: 1; background: #f4f2f9; padding: 1px 8px; border-radius: 999px; }
+.wf-img.flat { border-radius: 0; }             /* 풀블리드용 */
+
+/* ── 컨트롤 목업 ── */
+.wf-btn {
+  display: inline-block; border: 1.5px solid #221c35; background: #221c35; color: #fff;
+  padding: 6px 16px; font-size: 12px; border-radius: 999px; white-space: nowrap;
+}
+.wf-btn.ghost  { background: transparent; color: #221c35; }
+.wf-btn.violet { background: #7c3aed; border-color: #7c3aed; }
+.wf-btn.onimg  { background: rgba(255,255,255,.14); border-color: #fff; color: #fff; }
+.wf-btn.sm { padding: 2px 10px; font-size: 11px; }
+.wf-input {
+  border: none; background: #efecf6; border-radius: 999px;
+  padding: 6px 14px; color: #8b84a3; font-size: 12px; display: inline-block;
+}
+.wf-input.square { border-radius: 10px; }
+.wf-chip { display:inline-block; border:none; border-radius:999px; padding:2px 10px; font-size:11px; color:#5f5878; background:#efecf6; }
+.wf-chip.on { background:#221c35; color:#fff; }
+.wf-chip.vi { background:#ede6fd; color:#6d28d9; }
+
+/* ── 텍스트 목업 ── */
+.wf-h1 { font-size: 20px; font-weight: 700; letter-spacing: -.5px; color: #221c35; }
+.wf-h2 { font-size: 15px; font-weight: 700; color: #221c35; }
+.wf-line { height: 8px; background: #d8d2e8; border-radius: 4px; margin: 6px 0; }
+.wf-line.w40 { width: 40%; } .wf-line.w60 { width: 60%; } .wf-line.w80 { width: 80%; }
+.wf-line.thin { height: 5px; background: #e9e4f4; }
+.wf-line.center { margin-left:auto; margin-right:auto; }
+
+/* D안 전용 — 거대 에디토리얼 타이포 */
+.wf-display { font-size: 40px; font-weight: 700; line-height: 1.1; letter-spacing: -1.2px; color: #221c35; }
+.wf-display.sm { font-size: 28px; letter-spacing: -.6px; }
+.wf-display.xl { font-size: 52px; letter-spacing: -1.6px; }
+.wf-display.onimg { color: #fff; text-shadow: 0 2px 14px rgba(34,28,53,.5); }
+.wf-kicker { display:inline-block; font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #7c3aed; }
+.wf-quote { font-size: 23px; font-weight: 500; line-height: 1.55; letter-spacing: -.3px; color: #3d3654; }
+.wf-quote::before { content: "“"; color: #7c3aed; font-size: 32px; line-height: 0; vertical-align: -8px; margin-right: 4px; }
+
+/* ── 주석(설명) — 보라색 ── */
+.wf-note {
+  color: #6d28d9; font-size: 11px;
+  background: #f3eefd; border-left: 3px solid #7c3aed; padding: 3px 8px;
+  display: block; margin-top: 6px; border-radius: 0 8px 8px 0;
+}
+.wf-tag {
+  display: inline-block; background: #7c3aed; color: #fff; font-size: 10px;
+  padding: 1px 8px; border-radius: 999px; vertical-align: middle; margin-left: 6px;
+  font-weight: 400;
+}
+.wf-code { font-family: Consolas, monospace; font-size: 11px; background:#eee9fa; padding:0 4px; border-radius:4px; color:#221c35; }
+
+/* ── 레이아웃 유틸 ── */
+.wf-row  { display: flex; gap: 10px; align-items: center; }
+.wf-row.stretch { align-items: stretch; }
+.wf-grow { flex: 1; }
+.wf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.wf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.wf-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.wf-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.wf-p { padding: 16px; }
+.wf-section { padding: 20px; border-bottom: 1px solid #e5e0f0; }
+.wf-section:last-child { border-bottom: none; }
+.mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mt-6 { margin-top: 24px; } .mb-2 { margin-bottom: 8px; }
+
+/* ── D안 전용 프레임 부품 ── */
+/* 협폭 에디토리얼 컬럼(본문 읽기 폭 720px) */
+.wf-narrow { max-width: 720px; margin: 0 auto; }
+
+/* 풀스크린/페이지 히어로 */
+.wf-hero { position: relative; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; padding: 56px 24px 40px; }
+.wf-hero .bg { position: absolute; inset: 0; border-radius: 0; min-height: 100%; }
+.wf-hero .fg { position: relative; z-index: 2; }
+
+/* 투명(오버레이) 헤더 — 히어로 위에 얹힘 */
+.wf-ghostbar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 4;
+  display: flex; align-items: center; gap: 10px; padding: 14px 22px;
+  background: linear-gradient(180deg, rgba(34,28,53,.55), rgba(34,28,53,0));
+  color: #fff; font-weight: 700;
+}
+.wf-ghostbar .wf-chip { background: rgba(255,255,255,.16); color: #fff; }
+/* 스크롤 후 축소 고정 헤더(서브페이지 기본형) */
+.wf-shrinkbar {
+  display: flex; align-items: center; gap: 10px; padding: 8px 22px;
+  background: rgba(255,255,255,.94); border-bottom: 1px solid #e5e0f0;
+  color: #221c35; font-weight: 700;
+}
+
+/* 우측 고정 도트 섹션 내비(스크롤스파이) */
+.wf-dotnav { position: absolute; right: 12px; top: 220px; z-index: 6; display: flex; flex-direction: column; gap: 9px; }
+.wf-dotnav i { display: block; width: 8px; height: 8px; border-radius: 50%; background: #cfc7e6; }
+.wf-dotnav i.on { background: #7c3aed; }
+
+/* 풀스크린 오버레이(메뉴/검색) 목업 */
+.wf-overlay { background: #221c35; color: #eee9fa; padding: 26px 28px; }
+.wf-overlay .item { font-size: 28px; font-weight: 700; letter-spacing: -.8px; line-height: 1.7; color: #eee9fa; }
+.wf-overlay .item.dim { color: #6f6591; }
+.wf-overlay .sub { font-size: 13px; color: #b7abd8; line-height: 2; }
+
+/* 메뉴/사이트맵 뎁스 위계 — 1뎁스(.item 거대 타이포) 아래 2~4뎁스 축소·들여쓰기 */
+.wf-overlay .d2 { font-size: 13.5px; font-weight: 700; color: #dcd6ee; margin: 7px 0 1px; line-height: 1.6; }
+.wf-overlay .d2.focus { background: #2c2547; border-radius: 8px; padding: 5px 10px; color: #fff; }
+.wf-overlay .d3 { font-size: 12px; color: #b7abd8; margin-left: 16px; line-height: 1.9; }
+.wf-overlay .d4 { font-size: 11px; color: #8b84a3; margin-left: 32px; line-height: 1.8; }
+.wf-overlay .hint { font-size: 10px; color: #8b84a3; font-weight: 400; }
+
+/* 숫자 하이라이트(카운트업) */
+.wf-stat b { display:block; font-size: 40px; font-weight: 700; letter-spacing: -1px; color: #221c35; line-height: 1.1; }
+.wf-stat span { font-size: 11px; color: #8b84a3; }
+.wf-dark .wf-stat b { color: #fff; }
+
+/* 가입 진행바 등 얇은 진행 표시 */
+.wf-progress { height: 4px; background: #e9e4f4; border-radius: 999px; overflow: hidden; }
+.wf-progress i { display: block; height: 100%; background: #7c3aed; }
+
+/* ── 테이블 목업 ── */
+.wf-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.wf-table th, .wf-table td { border: 1px solid #e2ddf0; padding: 6px 10px; text-align: left; }
+.wf-table th { background: #efecf6; color: #4b4468; }
+.wf-table td { color: #6b6488; }
+
+/* ── 트리(index 전용) ── */
+.wf-tree { font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.9; color: #3d3654; }
+.wf-tree a { color: #7c3aed; text-decoration: none; }
+.wf-tree a:hover { text-decoration: underline; }
+.wf-tree .dim { color: #a49bc2; }

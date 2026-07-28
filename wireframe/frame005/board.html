@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 E안 — 게시판 목록/상세</title>
+<link rel="stylesheet" href="wireframe5.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>게시판 — 카드 스택 목록 · 카드 분리 상세 <span class="wf-badge-e">E안</span></h1>
+  <p><span class="route">GET /bbs/{sc}/{bbsCode}</span><span class="route">GET /bbs/{sc}/{bbsCode}/{articleId}</span>
+     — 헤더 카드(검색폼) + 목록 카드 + 페이징. 상세는 본문·첨부·댓글을 <b>카드 3장으로 분리 스택</b>.</p>
+</div>
+
+<!-- 목록 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/bbs/med/notice</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 20px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔 알림</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">의학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm" style="border-color:#e11d48;color:#e11d48">커뮤니티</span><span class="wf-input" style="width:150px">🔍 통합검색</span></div></div>
+
+  <div class="wf-section">
+    <!-- 게시판 헤더 카드 -->
+    <div class="wf-card">
+      <div class="wf-card-body" style="display:flex;align-items:center;gap:12px">
+        <div class="wf-grow"><span style="font-size:11px;color:#a8a29e">홈 › 커뮤니티 › 공지사항</span><div class="wf-h1">공지사항</div>
+          <div class="wf-row mt-2"><span class="wf-chip on">공지사항</span><span class="wf-chip">학과소식</span><span class="wf-chip">세미나</span><span class="wf-chip">자료실</span></div>
+          <div class="wf-row mt-2"><span class="wf-chip on" style="font-size:10px">전체</span><span class="wf-chip" style="font-size:10px">학사</span><span class="wf-chip" style="font-size:10px">장학</span><span class="wf-chip" style="font-size:10px">취업</span></div></div>
+        <div style="flex-shrink:0">
+          <div class="wf-row"><span class="wf-input" style="width:110px">제목+내용 ▾</span><span class="wf-input" style="width:160px">검색어</span><span class="wf-btn sm">검색</span></div>
+          <div class="wf-row mt-2" style="justify-content:flex-end"><span style="font-size:11px;color:#a8a29e">전체 128건</span><span class="wf-chip on">최신순</span><span class="wf-chip">조회순</span></div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">헤더 카드 = 타이틀 + 게시판 전환 칩(커뮤니티 그룹 2뎁스) + <b>카테고리 필터 칩(학사·장학·취업 = 메뉴 3뎁스 — 게시판 카테고리)</b> + 검색폼 + 정렬 토글을 카드 1장에 통합. GNB 드롭 카드의 3뎁스 클릭 = /bbs/{sc}/notice?category= 로 진입(메뉴 뎁스 출력 규칙). 카테고리·검색·정렬 = hx-get 으로 <b>아래 목록 카드만 부분갱신</b>(hx-target="#list-card"), hx-history="false"(검색어 히스토리 캐시 방지).</span>
+
+    <!-- 목록 카드 (행 단위 구분선 리스트) -->
+    <div class="wf-card mt-4">
+      <div class="wf-card-body" style="padding:0">
+        <div class="wf-band" style="background:#fff1f2;border-bottom-color:#fecdd3">
+          <div class="wf-row"><span class="wf-chip on" style="font-size:10px">📌 고정</span><b style="font-size:12.5px">[고정 공지] ─────────────</b><span class="wf-grow"></span><span style="font-size:11px;color:#a8a29e">07-01</span></div>
+        </div>
+        <div class="wf-band">
+          <div class="wf-row"><b style="font-size:12.5px">게시글 제목 ──────────</b><span class="wf-chip" style="font-size:10px">N</span><span class="wf-chip" style="font-size:10px">📎</span><span class="wf-grow"></span><span style="font-size:11px;color:#a8a29e">관리자 · 06-30 · 조회 45</span></div>
+        </div>
+        <div class="wf-band">
+          <div class="wf-row"><b style="font-size:12.5px">게시글 제목 ────────</b><span class="wf-grow"></span><span style="font-size:11px;color:#a8a29e">관리자 · 06-28 · 조회 102</span></div>
+        </div>
+        <div class="wf-band" style="border-bottom:none">
+          <div class="wf-row"><b style="font-size:12.5px">게시글 제목 ───────────</b><span class="wf-chip" style="font-size:10px">📎</span><span class="wf-grow"></span><span style="font-size:11px;color:#a8a29e">관리자 · 06-24 · 조회 67</span></div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">목록 카드 = 카드 1장 안에 행 단위 구분선 리스트(행마다 카드를 만들지 않음 — B안 카드형과의 차이). 고정공지 = 로즈 틴트 행으로 카드 상단 고정. 행 전체 클릭 영역(이벤트 위임 1개). 모바일도 동일 구조(메타만 줄바꿈).</span>
+
+    <!-- 페이징 + 글쓰기 -->
+    <div class="wf-row mt-4">
+      <span class="wf-grow"></span>
+      <span class="wf-chip">‹</span><span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">3</span><span class="wf-chip">›</span>
+      <span class="wf-grow"></span>
+      <span class="wf-btn sm">✏ 글쓰기</span>
+    </div>
+    <span class="wf-note">글쓰기 버튼 = tb_bbs_master 권한 설정에 따라 노출(비로그인 시 로그인 유도). 등록 POST 는 try-catch + log + HX-Redirect 규약. 스킨 변형 — GALLERY: 아래 썸네일 카드 그리드 / FAQ: 목록 행이 &lt;details&gt; / QNA: 답변상태 뱃지 / FILE: 행에 첨부 목록 / YOUTUBE: 16:9 썸네일 — 목록 카드 골격은 공유.</span>
+
+    <!-- 갤러리형 -->
+    <div class="wf-h2 mt-4 mb-2">갤러리형(GALLERY) — 썸네일 카드 그리드</div>
+    <div class="wf-grid-4">
+      <div class="wf-card"><div class="wf-img" style="height:70px;border:none;border-radius:0"><span>썸네일</span></div><div class="wf-card-body" style="padding:8px 10px"><b style="font-size:11.5px">사진 제목 ───</b><br/><span style="font-size:10px;color:#a8a29e">07-02 · 조회 31</span></div></div>
+      <div class="wf-card"><div class="wf-img" style="height:70px;border:none;border-radius:0"><span>썸네일</span></div><div class="wf-card-body" style="padding:8px 10px"><b style="font-size:11.5px">사진 제목 ──</b><br/><span style="font-size:10px;color:#a8a29e">06-28 · 조회 54</span></div></div>
+      <div class="wf-card"><div class="wf-img" style="height:70px;border:none;border-radius:0"><span>썸네일</span></div><div class="wf-card-body" style="padding:8px 10px"><b style="font-size:11.5px">사진 제목 ────</b><br/><span style="font-size:10px;color:#a8a29e">06-20 · 조회 12</span></div></div>
+      <div class="wf-card"><div class="wf-img" style="height:70px;border:none;border-radius:0"><span>썸네일</span></div><div class="wf-card-body" style="padding:8px 10px"><b style="font-size:11.5px">사진 제목 ──</b><br/><span style="font-size:10px;color:#a8a29e">06-15 · 조회 88</span></div></div>
+    </div>
+    <span class="wf-note">갤러리형만 목록 카드 대신 개별 썸네일 카드 그리드(벤토 문법과 통일). 썸네일 = 업로드 재인코딩본. 4컬럼 → 태블릿 2 → 모바일 1.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#57534e"></div></div>
+</div>
+
+<!-- 상세 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">게시글 상세 — /bbs/{sc}/{bbsCode}/{articleId} (본문·첨부·댓글 카드 분리 스택)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/bbs/med/notice/01977a3c-…</span></div>
+
+  <div class="wf-section">
+    <!-- ① 본문 카드 -->
+    <div class="wf-card">
+      <div class="wf-card-head" style="display:block">
+        <div class="wf-h2">게시글 제목 ─────────────</div>
+        <div class="wf-row mt-2" style="font-size:11px;color:#78716c;font-weight:400">
+          <span>관리자</span><span>·</span><span>2026-07-01</span><span>·</span><span>조회 231</span>
+          <span class="wf-grow"></span><span class="wf-chip">URL 복사</span><span class="wf-chip">🖨 인쇄</span>
+        </div>
+      </div>
+      <div class="wf-card-body" style="min-height:120px">
+        <div class="wf-line"></div><div class="wf-line w80"></div><div class="wf-line w60"></div>
+        <div class="wf-img mt-4" style="height:90px;max-width:300px"><span>본문 이미지</span></div>
+      </div>
+      <div class="wf-card-body" style="border-top:1px solid #f0eeeb;text-align:center;padding:10px">
+        <span class="wf-btn ghost sm">👍 좋아요 12</span> <span class="wf-btn ghost sm">🚩 신고</span>
+      </div>
+    </div>
+    <span class="wf-note">① 본문 카드 — 제목/메타 헤드 + Sanitizer 통과 HTML 본문 + 좋아요/신고 푸터를 1장에. 신고 = 네이티브 &lt;dialog&gt; 사유 입력.</span>
+
+    <!-- ② 첨부 카드 -->
+    <div class="wf-card mt-4">
+      <div class="wf-card-head" style="font-size:12px">📎 첨부파일 2</div>
+      <div class="wf-card-body" style="padding:10px 14px">
+        <div class="wf-row"><span style="font-size:12px">수강신청_안내.pdf (1.2MB)</span><span class="wf-grow"></span><span class="wf-chip">미리보기</span><span class="wf-chip">다운로드</span></div>
+        <div class="wf-row mt-2"><span style="font-size:12px">신청서_양식.hwp (240KB)</span><span class="wf-grow"></span><span class="wf-chip">다운로드</span></div>
+      </div>
+    </div>
+    <span class="wf-note">② 첨부 카드 — 첨부 0건이면 카드 자체 미출력. 다운로드 = 6중 방어(확장자/Tika/격리/재인코딩/FIM/ClamAV) 통과 자원만, 원본 경로 비노출(UUID 키).</span>
+
+    <!-- ③ 댓글 카드 — hx-get 부분갱신 -->
+    <div class="wf-card mt-4">
+      <div class="wf-card-head" style="font-size:12px">💬 댓글 3 <span class="wf-tag">hx-get 부분갱신 (카드 단위)</span></div>
+      <div class="wf-slot" style="margin:10px 14px;text-align:left;border-radius:8px">
+        <div class="wf-row stretch mb-2">
+          <span class="wf-input wf-grow" style="min-height:38px">댓글 입력 (비로그인 시 로그인 유도)</span>
+          <span class="wf-btn">등록</span>
+        </div>
+        <div class="wf-row"><b style="font-size:12px">홍**</b><span style="font-size:11px;color:#a8a29e">07-02 10:31</span><span class="wf-grow"></span><span class="wf-chip">답글</span><span class="wf-chip">신고</span></div>
+        <div class="wf-line thin w80"></div>
+        <div style="margin-left:24px;border-left:2px solid #fecdd3;padding-left:10px" class="mt-2">
+          <div class="wf-row"><b style="font-size:12px">↳ 김**</b><span style="font-size:11px;color:#a8a29e">07-02 11:02</span></div>
+          <div class="wf-line thin w60"></div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">③ 댓글 카드만 동적 — 등록/답글/삭제 후 <b>이 카드만 hx-get 재조회</b>(본문·첨부 카드는 그대로). 작성자명 MaskUtils 마스킹, 도배 방지 Bucket4j, CSRF = XSRF-TOKEN 쿠키 자동 헤더. 댓글 로드 실패 시 이 카드만 "댓글을 불러오지 못했습니다 ↻" — 본문 열람에 영향 없음(카드 단위 격리).</span>
+
+    <!-- 하단 내비 -->
+    <div class="wf-row mt-4">
+      <span class="wf-btn ghost sm">← 목록</span>
+      <span class="wf-grow"></span>
+      <span class="wf-chip">◂ 이전글</span><span class="wf-chip">다음글 ▸</span>
+      <span class="wf-grow"></span>
+      <span class="wf-btn ghost sm">수정</span><span class="wf-btn ghost sm">삭제</span>
+    </div>
+    <span class="wf-note">목록 복귀 시 검색·페이지 쿼리 보존. 수정/삭제 = 작성자 본인 또는 관리자만(서버 검증이 정본, 버튼 숨김은 편의). 삭제 = soft-delete(delete_yn) + &lt;dialog&gt; 확인.</span>
+  </div>
+</div>
+
+</body>
+</html>

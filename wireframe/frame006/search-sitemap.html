@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 F안 — 통합검색 · 사이트맵</title>
+<link rel="stylesheet" href="wireframe6.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>통합검색(검색 탭) · 사이트맵("학과" 탭 전체메뉴) <span class="wf-badge-f">F안</span></h1>
+  <p><span class="route">GET /search?siteCode={sc}&keyword=</span><span class="route">GET /{sc}/sitemap?view=full</span> — 검색은 탭바의 상시 탭(검색 홈 → 자동완성 → 결과 무한스크롤), 사이트맵은 "학과" 탭 전체메뉴(1~3뎁스, layout.html)의 <b>풀 뷰 — 1~4뎁스 전체 전개</b>.</p>
+</div>
+
+<div class="wf-duo">
+
+  <!-- ══════════ 모바일: 검색 홈 + 자동완성 ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 검색 탭 — 검색 홈 → 입력 중 (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/search?siteCode=ai</div>
+
+      <div class="wf-appbar">
+        <span class="wf-input wf-grow" style="border-radius:18px">🔍 수강신청</span>
+        <span class="wf-chip">취소</span>
+      </div>
+
+      <!-- 검색 홈 상태 -->
+      <div class="wf-p" style="padding:12px 14px;border-bottom:1.5px solid #e2e8f0">
+        <div class="wf-row"><b style="font-size:12px">최근 검색어</b><span class="wf-grow"></span><span style="font-size:10.5px;color:#94a3b8">전체 삭제</span></div>
+        <div class="wf-row mt-2" style="flex-wrap:wrap;gap:6px">
+          <span class="wf-chip">수강신청 ✕</span><span class="wf-chip">장학금 ✕</span><span class="wf-chip">김교수 ✕</span>
+        </div>
+        <div class="wf-row mt-4"><b style="font-size:12px">인기 검색어</b></div>
+        <div class="wf-row mt-2" style="flex-wrap:wrap;gap:6px">
+          <span class="wf-chip on">1 수강신청</span><span class="wf-chip">2 학사일정</span><span class="wf-chip">3 졸업요건</span><span class="wf-chip">4 연구실</span>
+        </div>
+        <span class="wf-note">검색 홈 — 최근 검색어는 <b>localStorage(서버 미저장 — PII 최소화)</b>, 인기 검색어는 log_search 집계 캐시(스케줄러). 칩 탭 = 즉시 검색 실행.</span>
+      </div>
+
+      <!-- 자동완성 상태 -->
+      <div class="wf-p" style="padding:12px 14px">
+        <div style="font-size:10.5px;color:#94a3b8">"수강" 입력 중 — 자동완성</div>
+        <div class="wf-slot mt-2" style="text-align:left;padding:10px 12px">
+          <div class="wf-row" style="font-size:12px"><span>🔍</span><b>수강</b>신청 일정</div>
+          <div class="wf-row mt-2" style="font-size:12px"><span>🔍</span><b>수강</b>정정 안내</div>
+          <div class="wf-row mt-2" style="font-size:12px"><span>📚</span><b>수강</b>계획서 — 프로그램 바로가기</div>
+        </div>
+        <span class="wf-note">자동완성 — <span class="wf-code">hx-get="/api/v1/search/suggest?siteCode=ai&q=수강" hx-trigger="keyup changed delay:300ms" hx-target="#suggest"</span>.
+        300ms debounce 는 htmx 내장(delay) — JS 0줄. 항목은 제안어 + 바로가기 타입 혼합. Bucket4j 레이트리밋 대상 API. 전량 #{} 바인딩(SQLi 금지 규약).</span>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab active"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 모바일: 검색 결과 ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 검색 결과 — 무한스크롤 (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/search?siteCode=ai&keyword=수강신청</div>
+
+      <div class="wf-appbar">
+        <span class="wf-input wf-grow" style="border-radius:18px;color:#334155">🔍 수강신청 ✕</span>
+      </div>
+
+      <!-- 범위 칩 -->
+      <div class="wf-chipbar">
+        <span class="wf-chip on">전체 24</span><span class="wf-chip">게시글 18</span><span class="wf-chip">콘텐츠 3</span><span class="wf-chip">교수/직원 2</span><span class="wf-chip">첨부 1</span>
+      </div>
+
+      <div class="wf-p" style="padding:10px 14px">
+        <div class="wf-box">
+          <div class="wf-band" style="padding:10px 12px">
+            <span class="wf-chip" style="font-size:9px">공지사항</span>
+            <div style="font-size:12.5px" class="mt-2">2026-2학기 <b style="color:#0284c7">수강신청</b> 일정 안내</div>
+            <div class="wf-line thin w80" style="margin:4px 0"></div>
+            <span style="font-size:10.5px;color:#94a3b8">/bbs/ai/notice · 07-01</span>
+          </div>
+          <div class="wf-band" style="padding:10px 12px">
+            <span class="wf-chip" style="font-size:9px">콘텐츠</span>
+            <div style="font-size:12.5px" class="mt-2"><b style="color:#0284c7">수강신청</b> 방법 — 학과소개</div>
+            <div class="wf-line thin w60" style="margin:4px 0"></div>
+            <span style="font-size:10.5px;color:#94a3b8">/ai/about</span>
+          </div>
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px">
+            <span class="wf-chip" style="font-size:9px">수업계획서</span>
+            <div style="font-size:12.5px" class="mt-2">─── <b style="color:#0284c7">수강</b> 안내 포함 과목</div>
+            <span style="font-size:10.5px;color:#94a3b8">/prg/syllabus/ai</span>
+          </div>
+        </div>
+        <div class="wf-slot mt-2" style="padding:6px;font-size:11px">▼ hx-trigger="revealed" — 결과 무한스크롤 (게시판 피드와 동일 패턴)</div>
+        <span class="wf-note">결과 카드 = 출처 뱃지 + 제목(키워드 하이라이트 — 서버 이스케이프 후 &lt;mark&gt;) + 요약 + 경로.
+        범위 칩 전환 = hx-get 부분갱신. 검색 결과는 <b>hx-history="false"</b>(뒤로가기 민감). 결과 0건 = 제안어("혹시 …?") + 인기 검색어 재노출.
+        siteCode=ai 기본(현재 사이트 스코프) — "전체 학과에서 검색" 토글 시 siteCode 해제.</span>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab active"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 모바일: 사이트맵 풀 뷰("학과" 탭 전체메뉴의 4뎁스 전개) ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 사이트맵 풀 뷰 /ai/sitemap?view=full — 1~4뎁스 전체 (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/ai/sitemap?view=full</div>
+
+      <div class="wf-appbar">
+        <b>학과 전체메뉴 — 사이트맵</b><span class="wf-grow"></span><span class="wf-chip on">전체 펼침</span>
+      </div>
+
+      <div class="wf-p" style="padding:12px 14px">
+        <div class="wf-box">
+          <!-- 소개 -->
+          <div class="wf-band" style="padding:10px 12px">
+            <b style="font-size:12.5px">▾ 소개</b>
+            <div style="font-size:12px;color:#334155;padding:6px 0 0 12px">학과소개 <span style="font-size:10px;color:#94a3b8">/ai/about</span></div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 인사말 · 비전·인재상 · 연혁 <span style="font-size:9.5px;color:#94a3b8">페이지 내 앵커/탭</span></div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">오시는길 <span style="font-size:10px;color:#94a3b8">/ai/location</span></div>
+          </div>
+          <!-- 구성원 -->
+          <div class="wf-band" style="padding:10px 12px">
+            <b style="font-size:12.5px">▾ 구성원</b>
+            <div style="font-size:12px;color:#334155;padding:6px 0 0 12px">교수진 <span style="font-size:10px;color:#94a3b8">/prg/faculty/ai</span></div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 전임교원 · 겸임·초빙 · 명예교수</div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">직원 <span style="font-size:10px;color:#94a3b8">/prg/staff/ai</span></div>
+          </div>
+          <!-- 교육 -->
+          <div class="wf-band" style="padding:10px 12px">
+            <b style="font-size:12.5px">▾ 교육</b>
+            <div style="font-size:12px;color:#334155;padding:6px 0 0 12px">교과과정 <span style="font-size:10px;color:#94a3b8">/ai/curriculum</span></div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 학부</div>
+            <div style="font-size:10.5px;color:#94a3b8;padding:2px 0 0 40px">· 전공필수 · 전공선택 <span class="wf-tag" style="margin-left:4px">4뎁스 — 사이트맵만</span></div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 대학원</div>
+            <div style="font-size:10.5px;color:#94a3b8;padding:2px 0 0 40px">· 석사과정 · 박사과정</div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">수업계획서 <span style="font-size:10px;color:#94a3b8">/prg/syllabus/ai</span></div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">학사일정 <span style="font-size:10px;color:#94a3b8">/schedule/academic</span></div>
+          </div>
+          <!-- 연구 -->
+          <div class="wf-band" style="padding:10px 12px">
+            <b style="font-size:12.5px">▾ 연구</b>
+            <div style="font-size:12px;color:#334155;padding:6px 0 0 12px">연구실 <span style="font-size:10px;color:#94a3b8">/prg/lab/ai</span></div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">연구성과 <span style="font-size:10px;color:#94a3b8">/bbs/ai/pub</span></div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 논문 · 특허·기술이전 <span style="font-size:9.5px;color:#94a3b8">게시판 카테고리</span></div>
+          </div>
+          <!-- 커뮤니티 -->
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px">
+            <b style="font-size:12.5px">▾ 커뮤니티</b>
+            <div style="font-size:12px;color:#334155;padding:6px 0 0 12px">공지사항 <span style="font-size:10px;color:#94a3b8">/bbs/ai/notice</span></div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 학사 · 장학 · 취업 <span style="font-size:9.5px;color:#94a3b8">카테고리 필터</span></div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">학과소식 <span style="font-size:10px;color:#94a3b8">/bbs/ai/news</span></div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">세미나 <span style="font-size:10px;color:#94a3b8">/bbs/ai/seminar</span></div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">자료실 <span style="font-size:10px;color:#94a3b8">/bbs/ai/archive</span></div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 학사서식</div>
+            <div style="font-size:10.5px;color:#94a3b8;padding:2px 0 0 40px">· 휴·복학 서식 · 졸업 서식</div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 강의자료</div>
+          </div>
+        </div>
+        <span class="wf-note"><b>메뉴는 3뎁스까지, 사이트맵만 4뎁스 — 동일 menuTree 재사용</b>(전 안 공통 출력 규칙).
+        "학과" 탭 기본 = 전체메뉴 1~3뎁스 아코디언(layout.html), 앱바 "전체 펼치기" = 이 풀 뷰(?view=full, 서버 렌더 분기 — 같은 siteContext.menuTree 를 depth 4 까지 전개).
+        4뎁스는 메뉴에서 3뎁스 페이지 내 탭/필터로 진입(전공필수·전공선택 = 교과과정&gt;학부 탭, 휴·복학/졸업 서식 = 자료실&gt;학사서식 필터).
+        데이터 = tb_menu(site_code 스코프) — 별도 시드·쿼리 없음, 링크 = link_url 직결. 다른 안의 GNB/메가메뉴가 하던 역할을 이 탭이 전담.</span>
+
+        <div class="wf-box wf-sky mt-4" style="padding:8px 12px">
+          <b style="font-size:11.5px">관련 사이트</b>
+          <div class="wf-row mt-2" style="flex-wrap:wrap;gap:6px"><span class="wf-chip">의학과(med)</span><span class="wf-chip">기계공학과(me)</span><span class="wf-chip">대학 홈 ↗</span></div>
+        </div>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab active"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ 데스크톱 (확장) ══════════ -->
+<div class="wf-doc-header"><h1 style="font-size:15px">🖥 데스크톱 (확장) — 검색 협폭 결과 · 사이트맵 5그룹 컬럼(1~4뎁스 전체)</h1></div>
+<div class="wf-canvas solo">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/search?siteCode=ai&keyword=수강신청</span></div>
+  <div class="wf-band" style="padding:16px">
+    <div class="wf-deskcol">
+      <div class="wf-row"><span class="wf-input" style="flex:1;max-width:480px">🔍 수강신청</span><span class="wf-btn sky sm">검색</span><span class="wf-grow"></span><span class="wf-chip">☐ 전체 학과에서 검색</span></div>
+      <div class="wf-row mt-2"><span class="wf-chip on">전체 24</span><span class="wf-chip">게시글 18</span><span class="wf-chip">콘텐츠 3</span><span class="wf-chip">교수/직원 2</span><span class="wf-chip">첨부 1</span></div>
+      <div class="wf-box mt-2">
+        <div class="wf-band" style="padding:8px 14px"><div class="wf-row"><span class="wf-chip" style="font-size:9px">공지사항</span><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#94a3b8">07-01</span></div></div>
+        <div class="wf-band" style="border-bottom:none;padding:8px 14px"><div class="wf-row"><span class="wf-chip" style="font-size:9px">콘텐츠</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div></div>
+      </div>
+      <div class="wf-slot mt-2" style="padding:6px;font-size:11px">동일 무한스크롤 — 모바일과 같은 조각/엔드포인트</div>
+      <span class="wf-note">데스크톱 검색 = 같은 결과 카드가 협폭 컬럼에. 자동완성도 동일 suggest API. 사이트맵은 데스크톱에서 아코디언 대신 5그룹을 한 화면 컬럼으로 <b>1~4뎁스 전체 전개</b>(아래).</span>
+      <div class="wf-grid-4 mt-4" style="grid-template-columns:repeat(5,1fr);font-size:10.5px">
+        <div class="wf-box wf-p" style="padding:10px"><b style="font-size:12px">소개</b>
+          <div style="color:#334155;margin-top:6px">학과소개</div>
+          <div style="color:#64748b;padding-left:10px">인사말 · 비전·인재상 · 연혁</div>
+          <div style="color:#334155;margin-top:4px">오시는길</div>
+        </div>
+        <div class="wf-box wf-p" style="padding:10px"><b style="font-size:12px">구성원</b>
+          <div style="color:#334155;margin-top:6px">교수진</div>
+          <div style="color:#64748b;padding-left:10px">전임교원 · 겸임·초빙 · 명예교수</div>
+          <div style="color:#334155;margin-top:4px">직원</div>
+        </div>
+        <div class="wf-box wf-p" style="padding:10px"><b style="font-size:12px">교육</b>
+          <div style="color:#334155;margin-top:6px">교과과정</div>
+          <div style="color:#64748b;padding-left:10px">학부</div>
+          <div style="color:#94a3b8;padding-left:20px">전공필수 · 전공선택</div>
+          <div style="color:#64748b;padding-left:10px">대학원</div>
+          <div style="color:#94a3b8;padding-left:20px">석사과정 · 박사과정</div>
+          <div style="color:#334155;margin-top:4px">수업계획서</div>
+          <div style="color:#334155;margin-top:4px">학사일정</div>
+        </div>
+        <div class="wf-box wf-p" style="padding:10px"><b style="font-size:12px">연구</b>
+          <div style="color:#334155;margin-top:6px">연구실</div>
+          <div style="color:#334155;margin-top:4px">연구성과</div>
+          <div style="color:#64748b;padding-left:10px">논문 · 특허·기술이전</div>
+        </div>
+        <div class="wf-box wf-p" style="padding:10px"><b style="font-size:12px">커뮤니티</b>
+          <div style="color:#334155;margin-top:6px">공지사항</div>
+          <div style="color:#64748b;padding-left:10px">학사 · 장학 · 취업</div>
+          <div style="color:#334155;margin-top:4px">학과소식</div>
+          <div style="color:#334155;margin-top:4px">세미나</div>
+          <div style="color:#334155;margin-top:4px">자료실</div>
+          <div style="color:#64748b;padding-left:10px">학사서식</div>
+          <div style="color:#94a3b8;padding-left:20px">휴·복학 서식 · 졸업 서식</div>
+          <div style="color:#64748b;padding-left:10px">강의자료</div>
+        </div>
+      </div>
+      <span class="wf-note">사이트맵 데스크톱 = 진한 글자 2뎁스 · 회색 3뎁스 · 옅은 회색 4뎁스 — <b>메뉴(전체메뉴·드롭 패널)는 3뎁스까지, 사이트맵만 4뎁스, 동일 menuTree 재사용</b>.
+      /search·/{sc}/sitemap·/api/v1/search/suggest 모두 기존 tb_role_url_access 규칙 커버(무매칭 DENY — F안 신규 URL 없음, ?view=full 은 쿼리 파라미터라 규칙 추가 불필요). 검색 로그는 logging DB(log_search) 적재.</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

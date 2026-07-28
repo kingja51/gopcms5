@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 G안 — 사이트 홈</title>
+<link rel="stylesheet" href="wireframe7.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>사이트 홈 <span class="wf-badge-g">G안</span></h1>
+  <p><span class="route">GET /{sc}/home</span> — 풀폭 히어로 캐러셀 + 학과 소식 2컬럼 + 바로가기 4열 + 학사일정 미니 캘린더 + 배너존. LNB 없는 1단 풀폭, 정석 대학 홈.</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/ai/home</span></div>
+
+  <!-- 3단 헤더 (축약) -->
+  <div class="wf-band wf-util"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">가⁻</span><span class="wf-chip">가⁺</span><span class="wf-chip">◐ 고대비</span><span class="wf-chip">한국어 ▾</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:17px">인공지능학과</b><span class="wf-grow"></span><span class="wf-input" style="width:280px">검색어를 입력하세요</span><span class="wf-btn navy sm">🔍</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span></div></div>
+  <div class="wf-gnbbar"><span class="gnb-item">소개</span><span class="gnb-item">구성원</span><span class="gnb-item">교육</span><span class="gnb-item">연구</span><span class="gnb-item">커뮤니티</span></div>
+
+  <!-- 풀폭 히어로 캐러셀 -->
+  <div class="wf-band" style="padding:0;position:relative">
+    <div class="wf-img" style="height:200px;border:none;border-radius:0"><span>MAIN_HERO 배너 캐러셀 (1920×480, 최대 5장)</span></div>
+    <div class="wf-row" style="position:absolute;bottom:8px;left:16px;background:rgba(255,255,255,.85);padding:2px 8px">
+      <span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">3</span>
+      <span class="wf-chip">◂</span><span class="wf-chip">▸</span><span class="wf-chip"><b>⏸ 정지</b></span>
+    </div>
+  </div>
+  <div class="wf-band" style="padding:6px 16px">
+    <span class="wf-note" style="margin-top:0">히어로 캐러셀 — GET /api/v1/sites/{sc}/banners?location=MAIN_HERO (htmx 조각, 첫 장은 SSR로 LCP 확보).
+    <b>자동 재생에는 재생/정지(⏸) 컨트롤 필수 + 페이지 인디케이터 + 이전/다음 버튼</b> — KWCAG "움직이는 콘텐츠 정지 기능".
+    prefers-reduced-motion 이면 자동 재생 자체를 끈다. 배너 0건이면 캐러셀 미출력(밴드 접힘). 순수 JS 타이머 — 외부 .js + nonce, data-initialized 멱등 가드.</span>
+  </div>
+
+  <!-- 학과 소식 2컬럼: 공지 테이블 + 갤러리 -->
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div style="flex:3">
+        <div class="wf-row"><span class="wf-h2">학과 소식</span>
+          <span class="wf-chip on">공지사항</span><span class="wf-chip">학과소식</span><span class="wf-chip">세미나</span>
+          <span class="wf-grow"></span><span class="wf-chip">+ 더보기</span></div>
+        <table class="wf-table center mt-2">
+          <tr><th style="width:60px">구분</th><th>제목</th><th style="width:80px">등록일</th></tr>
+          <tr><td><span class="wf-chip on">공지</span></td><td class="tl">2026-2학기 수강신청 안내 ─────────── <span class="wf-chip">N</span></td><td>07-08</td></tr>
+          <tr><td>일반</td><td class="tl">학과 MT 참가 신청 ──────</td><td>07-05</td></tr>
+          <tr><td>일반</td><td class="tl">캡스톤디자인 발표회 개최 ────────</td><td>07-01</td></tr>
+          <tr><td>일반</td><td class="tl">장학금 신청 기간 안내 ─────</td><td>06-28</td></tr>
+          <tr><td>일반</td><td class="tl">전공 세미나 일정 공지 ───────</td><td>06-24</td></tr>
+        </table>
+        <span class="wf-note">공지 위젯 — 정석 테이블 리스트 5행. 탭 전환 = hx-get="/bbs/{sc}/{code}/widget" 부분갱신(첫 탭 SSR).
+        N 뱃지 = 7일 이내 신규. 제목 셀만 좌측 정렬(공공 테이블 관례).</span>
+      </div>
+      <div style="flex:2">
+        <div class="wf-row"><span class="wf-h2">포토앨범</span><span class="wf-grow"></span><span class="wf-chip">+ 더보기</span></div>
+        <div class="wf-grid-2 mt-2">
+          <div class="wf-box"><div class="wf-img" style="height:64px;border:none;border-bottom:1.5px solid #9ca3af"><span>썸네일</span></div><div style="padding:6px 8px;font-size:11.5px">졸업작품 전시회 ──</div></div>
+          <div class="wf-box"><div class="wf-img" style="height:64px;border:none;border-bottom:1.5px solid #9ca3af"><span>썸네일</span></div><div style="padding:6px 8px;font-size:11.5px">AI 경진대회 수상 ─</div></div>
+        </div>
+        <span class="wf-note">포토앨범 위젯(구 갤러리, 2026-07-10 개칭) — GALLERY 타입 게시판 /bbs/ai/photo 최신 2~4건 썸네일. 이미지 없으면 기본 이미지 폴백. alt = 게시글 제목. 더보기 → /bbs/ai/photo.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 바로가기 배너 4열 -->
+  <div class="wf-band wf-gray">
+    <div class="wf-grid-4">
+      <div class="wf-box wf-p" style="text-align:center;padding:14px"><div style="font-size:20px">🗂</div><b style="font-size:12px">자료실</b><div style="font-size:10.5px;color:#9ca3af">/bbs/ai/archive</div></div>
+      <div class="wf-box wf-p" style="text-align:center;padding:14px"><div style="font-size:20px">📚</div><b style="font-size:12px">수업계획서</b><div style="font-size:10.5px;color:#9ca3af">/prg/syllabus/ai</div></div>
+      <div class="wf-box wf-p" style="text-align:center;padding:14px"><div style="font-size:20px">🔬</div><b style="font-size:12px">연구실</b><div style="font-size:10.5px;color:#9ca3af">/prg/lab/ai</div></div>
+      <div class="wf-box wf-p" style="text-align:center;padding:14px"><div style="font-size:20px">📍</div><b style="font-size:12px">오시는길</b><div style="font-size:10.5px;color:#9ca3af">/ai/location</div></div>
+    </div>
+    <span class="wf-note">바로가기 배너 4열 — 정적 링크 타일(관리자 메뉴 설정 or 하드코딩 조각). 아이콘 = self-host SVG 스프라이트(이모지는 자리표시). 모바일 2×2. 전체가 &lt;a&gt; — 터치 타깃 44px 이상. <b>교수진은 홈 바로가기에서 제거(2026-07-10 요청)</b> — 우측 플로팅 퀵메뉴·GNB 구성원 › 교수진 링크로 접근.</span>
+  </div>
+
+  <!-- 학사일정 미니 캘린더 + 정보 패널 -->
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <div style="flex:1">
+        <div class="wf-row"><span class="wf-h2">학사일정</span><span class="wf-chip">◂ 7월 ▸</span><span class="wf-grow"></span><span class="wf-chip">+ 전체</span></div>
+        <table class="wf-cal mt-2">
+          <tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr>
+          <tr><td></td><td></td><td></td><td>1</td><td>2</td><td>3</td><td>4</td></tr>
+          <tr><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td class="today">10</td><td>11</td></tr>
+          <tr><td>12</td><td>13</td><td>14</td><td class="ev">15</td><td>16</td><td>17</td><td>18</td></tr>
+          <tr><td>19</td><td>20</td><td class="ev">21</td><td>22</td><td>23</td><td>24</td><td>25</td></tr>
+        </table>
+        <div class="wf-row mt-2" style="font-size:11px"><span class="wf-chip on">07.15</span><span>계절학기 종강 ──</span></div>
+        <div class="wf-row mt-2" style="font-size:11px"><span class="wf-chip">07.21</span><span>수강신청 시작 ────</span></div>
+        <span class="wf-note">미니 캘린더 — /schedule/{master} 데이터 월 단위 htmx 조각(◂▸ = hx-get 월 이동, hx-history="false").
+        일정 있는 날 = 하이라이트, 아래 리스트 병기(색상만으로 정보 전달 금지 — KWCAG). 캘린더는 &lt;table&gt;+caption 마크업.</span>
+      </div>
+      <div style="flex:1">
+        <div class="wf-h2">이용 안내</div>
+        <div class="wf-box mt-2">
+          <div class="wf-band"><div class="wf-row"><span style="font-size:16px">🚌</span><div><b style="font-size:12px">셔틀버스</b><div style="font-size:11px;color:#9ca3af">교내 순환 08:30~17:30</div></div></div></div>
+          <div class="wf-band"><div class="wf-row"><span style="font-size:16px">☎</span><div><b style="font-size:12px">학과 사무실</b><div style="font-size:11px;color:#9ca3af">041-000-0000 (평일 09~18시)</div></div></div></div>
+          <div class="wf-band" style="border-bottom:none"><div class="wf-row"><span style="font-size:16px">🌤</span><div class="wf-slot" style="padding:4px 10px;font-size:11px">날씨 위젯 (/weather/widget)</div></div></div>
+        </div>
+        <span class="wf-note">정보 패널 — 셔틀/전화 = 관리자 콘텐츠 조각(정적), 날씨 = htmx 지연 로드(hx-trigger="revealed"). 전화번호는 tel: 링크.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 배너존 롤링 -->
+  <div class="wf-band wf-gray">
+    <div class="wf-row">
+      <span class="wf-chip">◂</span>
+      <div class="wf-img" style="flex:1;height:44px;min-height:44px"><span>배너존 — 유관기관·사업단 로고 롤링 (한 화면 4개 × N페이지)</span></div>
+      <span class="wf-chip">▸</span><span class="wf-chip">⏸ 정지</span>
+    </div>
+    <span class="wf-note">배너존 — location=FOOTER_BANNER. 자동 롤링 + 정지 버튼(KWCAG). 로고 alt = 기관명, 새 창 링크는 title="새 창" 명시.</span>
+  </div>
+
+  <!-- 푸터 (축약) -->
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-row"><div class="wf-grow"><div class="wf-line w40" style="background:#4b5563"></div></div><span class="wf-chip"><b>개인정보처리방침</b></span></div></div>
+
+  <!-- 플로팅 퀵메뉴 -->
+  <div class="wf-quick">
+    <div class="q-title">퀵메뉴</div>
+    <div class="q-item"><span class="ico">📢</span>공지사항</div>
+    <div class="q-item"><span class="ico">👨‍🏫</span>교수진</div>
+    <div class="q-item"><span class="ico">📚</span>수업계획서</div>
+    <div class="q-item"><span class="ico">📅</span>학사일정</div>
+    <div class="q-item"><span class="ico">📍</span>오시는길</div>
+    <div class="q-top">TOP ↑</div>
+  </div>
+</div>
+
+<div class="wf-doc-header"><h1 style="font-size:15px">홈 진입 시 오버레이</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-slot" style="min-height:70px;max-width:360px">레이어 팝업 (activePopups) — 네이티브 &lt;dialog&gt;, "오늘 하루 안 보기" 쿠키</div>
+    <span class="wf-note">팝업 — tb_popup 노출 기간 필터. &lt;dialog&gt; 기본 포커스 트랩/ESC 활용, 다중 팝업은 캐스케이드 배치. 닫기 버튼 키보드 도달 순서 최우선.</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 — 공용 레이아웃(KRDS)</title>
+<link rel="stylesheet" href="wireframe.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>공용 레이아웃 해부도 — front/layouts/KRDS/krds.html</h1>
+  <p>KRDS 템플릿 13종이 이 레이아웃 1개를 공유. 템플릿별 차이는 CSS 1장(<span class="wf-code">--tpl-chrome</span>·<span class="wf-code">--brand-*</span> 램프)뿐.
+     모든 사용자 페이지가 이 프레임 안의 <b>본문 슬롯</b>만 갈아끼움(Thymeleaf layout:decorate).</p>
+</div>
+
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/{sc}/…  (모든 페이지 공통 프레임)</span></div>
+
+  <!-- 스킵 링크 -->
+  <div class="wf-band wf-gray" style="padding:4px 16px">
+    <span class="wf-chip">본문으로 건너뛰기</span>
+    <span class="wf-tag">sr-only, 포커스 시에만 노출 (접근성)</span>
+  </div>
+
+  <!-- ① 마스트헤드 -->
+  <div class="wf-band wf-dark">
+    <div class="wf-row">
+      <b>사이트명 (tb_site.site_name)</b>
+      <span class="wf-grow"></span>
+      <span class="wf-slot" style="padding:2px 8px;font-size:11px">☀ 날씨 위젯</span>
+      <span class="wf-chip">🔔 알림</span>
+      <span class="wf-chip">로그인</span>
+      <span class="wf-chip">회원가입</span>
+      <span class="wf-chip">◐ 고대비</span>
+      <span class="wf-chip">☰ 사이트맵</span>
+    </div>
+    <span class="wf-note">① 마스트헤드 — 크롬 밴드(--tpl-chrome). 날씨=htmx(load+600s 폴링). 인증 시: 회원명(마이페이지)·로그아웃 으로 교체. 고대비(hc)는 localStorage 복원(FOUC-free nonce 인라인).</span>
+  </div>
+
+  <!-- ② 주 메뉴 밴드 -->
+  <div class="wf-band">
+    <div class="wf-row">
+      <span class="wf-btn ghost sm">소개 ▾</span>
+      <span class="wf-btn ghost sm" style="border-bottom:3px solid #475569">구성원 ▾</span>
+      <span class="wf-btn ghost sm" style="background:#f1f5f9">교육 ▾</span>
+      <span class="wf-btn ghost sm">연구 ▾</span>
+      <span class="wf-btn ghost sm">커뮤니티 ▾</span>
+      <span class="wf-grow"></span>
+      <span class="wf-input">🔍 검색어 입력</span>
+    </div>
+
+    <!-- 드롭다운 해부도 — 「교육」 그룹을 호버로 펼친 상태 -->
+    <div class="wf-row stretch mt-2" style="gap:0;margin-left:170px">
+      <div class="wf-box wf-gray" style="width:180px;padding:6px 0">
+        <div style="padding:4px 12px;font-size:12px;color:#1e293b;background:#e2e8f0;border-left:3px solid #475569"><b>교과과정</b> ›</div>
+        <div style="padding:4px 12px;font-size:12px;color:#64748b">수업계획서</div>
+        <div style="padding:4px 12px;font-size:12px;color:#64748b">학사일정</div>
+        <div style="padding:4px 12px;font-size:11px;color:#94a3b8">└ 2뎁스 목록(tpl-submenu)</div>
+      </div>
+      <div class="wf-box" style="width:200px;padding:6px 0;border-left:none">
+        <div style="padding:4px 12px;font-size:12px;color:#334155">학부</div>
+        <div style="padding:4px 12px;font-size:12px;color:#334155">대학원</div>
+        <div style="padding:4px 12px;font-size:11px;color:#94a3b8">└ 3뎁스 플라이아웃(2열)<br/>&nbsp;&nbsp;&nbsp;하위 없는 2뎁스는 1열로 종료</div>
+      </div>
+    </div>
+
+    <span class="wf-note">② GNB — siteContext.menuTree(tb_menu, depth 1~4 저장) 렌더. 활성 표시 = 색+보더 병행(currentUri prefix 매칭), 호버 열림 = 배경 강조(위 「교육」). 통합검색 = /search?siteCode={sc} + 자동완성(search-autocomplete.js).</span>
+    <span class="wf-note"><b>뎁스 출력 규칙(전 안 공통)</b> — 메뉴(GNB·드롭다운)는 <b>1~3뎁스까지만 노출</b>: 3뎁스가 있는 2뎁스(교과과정 ›)만 플라이아웃 2열 확장. <b>4뎁스</b>(전공필수·전공선택, 석사·박사과정, 휴·복학/졸업 서식)는 메뉴에 노출하지 않고 <b>3뎁스 페이지 내 탭/필터</b>로 처리. 사이트맵(/{sc}/sitemap)만 1~4뎁스 전체 전개 — 동일 menuTree, 렌더 뎁스만 다름.</span>
+  </div>
+
+  <!-- ③ SUB_HERO -->
+  <div class="wf-band" style="padding:0">
+    <div class="wf-img" style="height:90px;border:none;border-bottom:1.5px solid #94a3b8"><span>SUB_HERO 배너 (서브페이지 전용 슬롯)</span></div>
+    <span class="wf-note" style="margin:6px 16px 10px">③ 서브 비주얼 — sub-hero.js 가 GET /api/v1/sites/{sc}/banners?location=SUB_HERO 로 클라이언트 렌더. 홈(/{sc}/home)은 캐러셀 담당이라 슬롯 미출력, 배너 없으면 빈 슬롯(페이지 자체 헤더 폴백).</span>
+  </div>
+
+  <!-- ④ breadcrumb -->
+  <div class="wf-band wf-gray" style="padding:6px 16px">
+    <span style="font-size:12px;color:#64748b">홈 › 구성원 › 교수진</span>
+    <span class="wf-note">④ breadcrumb 밴드 — menuId 해석에 성공한 서브 페이지에서만 노출(fragments/breadcrumb).</span>
+  </div>
+
+  <!-- ⑤ 본문 -->
+  <div class="wf-band" style="padding:0">
+    <div class="wf-slot" style="margin:16px;min-height:220px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+      <b style="font-size:15px">⑤ 본문 — layout:fragment="content"</b>
+      <span>각 페이지(templates/{siteCode}/{slug}.html, prg/program.html, front/board/** …)가 이 슬롯을 채움</span>
+      <span style="font-size:11px">폭·제목 스타일은 템플릿 CSS 가 결정 (program-page-wide 컨테이너 등)</span>
+    </div>
+  </div>
+
+  <!-- ⑥ 좋아요/신고 -->
+  <div class="wf-band wf-gray" style="text-align:center">
+    <span class="wf-btn ghost sm">👍 좋아요 12</span>
+    <span class="wf-btn ghost sm">🚩 신고</span>
+    <span class="wf-note" style="text-align:left">⑥ 좋아요/신고 밴드 — contentId 있는 콘텐츠 페이지에서만(홈·사이트맵·/member/** 제외). bbs-like-report 조각.</span>
+  </div>
+
+  <!-- ⑦ 푸터 -->
+  <div class="wf-band wf-dark" style="border-bottom:none">
+    <div class="wf-grid-3">
+      <div><div class="wf-line w60" style="background:#64748b"></div><div class="wf-line thin w80" style="background:#475569"></div><div class="wf-line thin w60" style="background:#475569"></div></div>
+      <div><div class="wf-line w40" style="background:#64748b"></div><div class="wf-line thin w60" style="background:#475569"></div></div>
+      <div style="text-align:right"><span class="wf-chip">개인정보처리방침</span> <span class="wf-chip">이메일무단수집거부</span></div>
+    </div>
+    <span class="wf-note">⑦ 푸터 — 건양대 표준 공용(fragments/site-footer). 주소·연락처·저작권 + 정책 링크.</span>
+  </div>
+</div>
+
+<div class="wf-doc-header">
+  <h1 style="font-size:15px">오버레이 / 스크립트 계층</h1>
+</div>
+<div class="wf-canvas">
+  <div class="wf-section">
+    <div class="wf-grid-2">
+      <div class="wf-slot" style="min-height:70px">팝업 오버레이 (popup-overlay) — activePopups, 오늘 하루 안 보기</div>
+      <div class="wf-slot" style="min-height:70px">파일 뷰어 팝업 (file-viewer-popup) — 첨부 미리보기</div>
+    </div>
+    <span class="wf-note">스크립트 규약: 인라인 금지 → 외부 .js + CSP nonce, self-host. htmx.min.js + app.js(이벤트 위임: document 1회 + closest('[data-action]')) 공통, 페이지별 스크립트는 layout:fragment="scripts" 슬롯. 요소 초기화는 htmx:load 멱등(data-initialized 가드).</span>
+    <span class="wf-note">테마: &lt;html class="theme-* [hc]"&gt; — tb_site.theme 단일 경로(SiteContextModelAdvice). 템플릿 프리뷰 ?tmpl=KRDS-UNIV-GREEN (세션 sticky, ?tmpl=off 해제).</span>
+  </div>
+</div>
+
+</body>
+</html>

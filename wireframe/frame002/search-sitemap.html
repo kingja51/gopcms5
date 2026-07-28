@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 B안 — 검색 오버레이 · 사이트맵</title>
+<link rel="stylesheet" href="wireframe2.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>통합검색 · 사이트맵 <span class="wf-badge-b">B안</span></h1>
+  <p><span class="route">GET /search?siteCode={sc}&amp;keyword=</span><span class="route">GET /{sc}/sitemap</span> — 검색 진입은 오버레이, 결과는 좌측 필터 패널 2단</p>
+</div>
+
+<!-- 검색 오버레이 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">1) 검색 오버레이 — 헤더 🔍 클릭 시 (&lt;dialog&gt; 전체화면)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-section" style="background:#f0ebe1;padding:28px">
+    <div class="wf-box wf-p" style="max-width:560px;margin:0 auto">
+      <div class="wf-row">
+        <span class="wf-input wf-grow" style="font-size:14px;padding:8px 12px">검색어 입력…</span>
+        <span class="wf-btn">검색</span>
+        <span class="wf-chip">ESC ✕</span>
+      </div>
+      <div class="mt-4">
+        <b style="font-size:12px;color:#78716c">자동완성</b>
+        <div class="wf-slot mt-2" style="text-align:left;padding:8px 12px">
+          <div class="wf-line thin w60"></div><div class="wf-line thin w40"></div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <b style="font-size:12px;color:#78716c">인기 검색어</b>
+        <div class="wf-row mt-2" style="flex-wrap:wrap">
+          <span class="wf-chip">장학</span><span class="wf-chip">수강신청</span><span class="wf-chip">졸업요건</span><span class="wf-chip">현장실습</span>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">A안(GNB 상시 인풋)과 달리 헤더는 🔍 아이콘만 — 클릭 시 전체화면 오버레이. 자동완성은 기존 search-autocomplete.js 재사용, 인기 검색어는 검색 로그 집계(logging DB) 위젯. 제출 시 /search 결과 페이지로 이동.</span>
+  </div>
+</div>
+
+<!-- 검색 결과 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">2) 검색 결과 — 좌측 필터 패널 2단</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/search?siteCode=me&amp;keyword=장학</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 16px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">기계공학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-chip">🔍</span><span class="wf-btn sm">☰</span></div></div>
+  <div class="wf-band wf-dark"><div class="wf-row"><div><b style="font-size:15px">"장학" 검색 결과 <span style="color:#a8a29e">24건</span></b></div><span class="wf-grow"></span><span class="wf-input" style="width:200px">장학</span><span class="wf-btn sm">재검색</span></div></div>
+
+  <div class="wf-section">
+    <div class="wf-row stretch">
+      <!-- 필터 패널 -->
+      <div class="wf-lnb wf-box">
+        <div class="wf-band wf-gray" style="padding:8px 12px"><b>필터</b></div>
+        <div class="wf-band active">전체 <span style="float:right">24</span></div>
+        <div class="wf-band">게시글 <span style="float:right;color:#a8a29e">18</span></div>
+        <div class="wf-band">콘텐츠 <span style="float:right;color:#a8a29e">4</span></div>
+        <div class="wf-band">첨부파일 <span style="float:right;color:#a8a29e">2</span></div>
+        <div class="wf-band" style="border-bottom:none">
+          <b style="font-size:11px;color:#78716c">기간</b><br/>
+          <span class="wf-chip mt-2" style="display:inline-block">전체</span>
+          <span class="wf-chip">1년</span><span class="wf-chip">1개월</span>
+        </div>
+      </div>
+
+      <!-- 결과 -->
+      <div class="wf-grow">
+        <div class="wf-box">
+          <div class="wf-band">
+            <span class="wf-chip">공지사항</span>
+            <div class="wf-line w60 mt-2" style="background:#a8a29e"></div>
+            <div class="wf-line thin w80"></div>
+            <span style="font-size:11px;color:#a8a29e">/bbs/me/notice/… · 2026-07-01</span>
+          </div>
+          <div class="wf-band">
+            <span class="wf-chip">콘텐츠</span>
+            <div class="wf-line w40 mt-2" style="background:#a8a29e"></div>
+            <span style="font-size:11px;color:#a8a29e">/me/about</span>
+          </div>
+          <div class="wf-band" style="border-bottom:none">
+            <span class="wf-chip">자료실</span>
+            <div class="wf-line w60 mt-2" style="background:#a8a29e"></div>
+            <span style="font-size:11px;color:#a8a29e">📎 파일명.pdf</span>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:12px"><span class="wf-btn ghost sm">더보기 (10 / 24) ▾</span></div>
+        <span class="wf-note">A안(상단 탭 + 번호 페이징) → 좌측 필터 패널(유형·기간) + 더보기 append. 필터 변경 = htmx 결과 영역만 갱신. 키워드 하이라이트·siteCode 스코프 동일.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#78716c"></div></div>
+</div>
+
+<!-- 사이트맵 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">3) 사이트맵 — /{sc}/sitemap (아코디언형 · 1~4뎁스 전체 전개, A안: 카드 그리드)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/me/sitemap</span></div>
+  <div class="wf-section">
+    <div class="wf-h1 mb-2">사이트맵</div>
+    <div class="wf-box">
+      <!-- 소개 -->
+      <div class="wf-band" style="background:#f0ebe1"><b>▾ 소개</b>
+        <div class="mt-2" style="font-size:12px">
+          <div><b>학과소개</b> <span class="wf-code">/{sc}/about</span>
+            <div style="margin-left:14px;font-size:11.5px;color:#78716c">└ 인사말 · 비전·인재상 · 연혁 <span style="font-size:10.5px;color:#a8a29e">(3뎁스 — 페이지 내 앵커)</span></div>
+          </div>
+          <div class="mt-2"><b>오시는길</b> <span class="wf-code">/{sc}/location</span></div>
+        </div>
+      </div>
+      <!-- 구성원 -->
+      <div class="wf-band" style="background:#f0ebe1"><b>▾ 구성원</b>
+        <div class="mt-2" style="font-size:12px">
+          <div><b>교수진</b> <span class="wf-code">/prg/faculty/{sc}</span>
+            <div style="margin-left:14px;font-size:11.5px;color:#78716c">└ 전임교원 · 겸임·초빙 · 명예교수</div>
+          </div>
+          <div class="mt-2"><b>직원</b> <span class="wf-code">/prg/staff/{sc}</span></div>
+        </div>
+      </div>
+      <!-- 교육 -->
+      <div class="wf-band" style="background:#f0ebe1"><b>▾ 교육</b>
+        <div class="mt-2" style="font-size:12px">
+          <div><b>교과과정</b> <span class="wf-code">/{sc}/curriculum</span>
+            <div style="margin-left:14px;font-size:11.5px;color:#78716c">└ 학부
+              <div style="margin-left:14px;font-size:11px;color:#a8a29e">└ 전공필수 · 전공선택 <span style="font-size:10.5px">(4뎁스 — 사이트맵에만 노출)</span></div>
+            </div>
+            <div style="margin-left:14px;font-size:11.5px;color:#78716c">└ 대학원
+              <div style="margin-left:14px;font-size:11px;color:#a8a29e">└ 석사과정 · 박사과정</div>
+            </div>
+          </div>
+          <div class="mt-2"><b>수업계획서</b> <span class="wf-code">/prg/syllabus/{sc}</span></div>
+          <div class="mt-2"><b>학사일정</b> <span class="wf-code">/schedule/{master}</span></div>
+        </div>
+      </div>
+      <!-- 연구 -->
+      <div class="wf-band" style="background:#f0ebe1"><b>▾ 연구</b>
+        <div class="mt-2" style="font-size:12px">
+          <div><b>연구실</b> <span class="wf-code">/prg/lab/{sc}</span></div>
+          <div class="mt-2"><b>연구성과</b> <span class="wf-code">/bbs/{sc}/pub</span>
+            <div style="margin-left:14px;font-size:11.5px;color:#78716c">└ 논문 · 특허 · 기술이전 <span style="font-size:10.5px;color:#a8a29e">(3뎁스 — 게시판 카테고리)</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- 커뮤니티 -->
+      <div class="wf-band" style="background:#f0ebe1"><b>▾ 커뮤니티</b>
+        <div class="mt-2" style="font-size:12px">
+          <div><b>공지사항</b> <span class="wf-code">/bbs/{sc}/notice</span>
+            <div style="margin-left:14px;font-size:11.5px;color:#78716c">└ 학사 · 장학 · 취업 <span style="font-size:10.5px;color:#a8a29e">(카테고리 필터)</span></div>
+          </div>
+          <div class="mt-2"><b>학과소식</b> <span class="wf-code">/bbs/{sc}/news</span></div>
+          <div class="mt-2"><b>세미나</b> <span class="wf-code">/bbs/{sc}/seminar</span></div>
+          <div class="mt-2"><b>자료실</b> <span class="wf-code">/bbs/{sc}/archive</span>
+            <div style="margin-left:14px;font-size:11.5px;color:#78716c">└ 학사서식
+              <div style="margin-left:14px;font-size:11px;color:#a8a29e">└ 휴·복학 서식 · 졸업 서식</div>
+            </div>
+            <div style="margin-left:14px;font-size:11.5px;color:#78716c">└ 강의자료</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-band" style="border-bottom:none;color:#78716c"><b>▸ 회원</b> <span style="font-size:11px;color:#a8a29e">/member/** (로그인·가입·마이페이지)</span></div>
+    </div>
+    <span class="wf-note"><b>메뉴는 3뎁스까지, 사이트맵만 4뎁스</b> — 동일 menuTree 재사용(depth 1~4 저장, 메가메뉴·LNB 는 3뎁스에서 렌더 컷). 4뎁스(전공필수·석사과정·휴·복학 서식 등)는 메뉴 미노출 항목이라 사이트맵이 유일한 전체 전개 지점.</span>
+    <span class="wf-note">&lt;details open&gt; 아코디언 — 메가메뉴 오버레이와 동일한 menuTree 데이터·렌더 조각 공유(모바일 전체메뉴로도 재사용). 좋아요/신고 밴드 미출력 대상(A안 동일).</span>
+  </div>
+</div>
+
+</body>
+</html>

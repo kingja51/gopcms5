@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>PCMS 2026 와이어프레임 F안 — 목차 & A~E 비교</title>
+<link rel="stylesheet" href="wireframe6.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="../index.html">← 전체 목차</a>
+  <h1>PCMS 2026-001 사용자 사이트 와이어프레임 <span class="wf-badge-f">F안 (frame006)</span></h1>
+  <p>콘셉트: <b>모바일 퍼스트 앱형</b> — 모든 화면을 모바일 프레임(~390px, 하단 고정 탭바 5개)으로 먼저 그리고,
+     데스크톱은 같은 5탭을 상단 가로 내비로 전개한 <b>센터 협폭(~860px) 1컬럼</b>으로 확장.
+     "모바일이 정본, 데스크톱은 확장" 관점 — 별도 모바일 사이트가 아니라 <b>하나의 Thymeleaf 템플릿이 반응형으로 두 모습</b>을 낸다.</p>
+  <p style="margin-top:6px"><b>{sc}</b> = siteCode(학과코드 = 서브도메인, 예: ai·med·me). 라우트·보안·데이터 구조는 A안과 동일 — 달라지는 것은 프레젠테이션 계층뿐.</p>
+</div>
+
+<div class="wf-canvas solo">
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">① F안 핵심 차이 (vs A~E안)</div>
+    <table class="wf-table">
+      <tr>
+        <th style="width:90px">항목</th>
+        <th>A안<br/><span style="font-weight:400;font-size:10.5px">표준 GNB형</span></th>
+        <th>B안<br/><span style="font-weight:400;font-size:10.5px">콤팩트 헤더+LNB</span></th>
+        <th>C안<br/><span style="font-weight:400;font-size:10.5px">좌측 사이드바+2-pane</span></th>
+        <th>D안<br/><span style="font-weight:400;font-size:10.5px">풀블리드 원페이지 에디토리얼</span></th>
+        <th>E안<br/><span style="font-weight:400;font-size:10.5px">포털형 벤토 카드 대시보드</span></th>
+        <th style="background:#0284c7;color:#fff">F안 (이번)<br/><span style="font-weight:400;font-size:10.5px">모바일 퍼스트 앱형</span></th>
+      </tr>
+      <tr>
+        <td>글로벌 내비</td>
+        <td>상단 GNB 밴드 + 호버 드롭다운</td>
+        <td>콤팩트 헤더 + ☰ 메가메뉴 오버레이</td>
+        <td>좌측 사이드바 상주 내비</td>
+        <td>미니멀 헤더 + 풀스크린 메뉴</td>
+        <td>포털 상단바 + 카드 진입</td>
+        <td><b>하단 고정 탭바 5개(홈·학과·게시판·검색·MY)</b> — 데스크톱은 같은 5탭이 상단 가로 내비</td>
+      </tr>
+      <tr>
+        <td>서브페이지 구조</td>
+        <td>본문 1단 와이드 + breadcrumb</td>
+        <td>페이지 타이틀 밴드 + 좌측 LNB 2단</td>
+        <td>2-pane(좌 목록 · 우 상세)</td>
+        <td>섹션 스크롤 원페이지</td>
+        <td>대시보드 → 카드 상세</td>
+        <td><b>콤팩트 앱바(뒤로가기/타이틀) + 협폭 1컬럼</b>, 긴 콘텐츠는 아코디언 분절</td>
+      </tr>
+      <tr>
+        <td>홈</td>
+        <td>풀폭 캐러셀 + 바로가기 타일</td>
+        <td>스플릿 히어로 + 탭 위젯 + 통계 밴드</td>
+        <td>사이드바 + 콘텐츠 피드</td>
+        <td>에디토리얼 히어로 + 매거진 섹션</td>
+        <td>벤토 카드 그리드</td>
+        <td><b>가로 스와이프 히어로 카드 + 아이콘 퀵메뉴 2행 + 공지 피드 + 일정 스트립</b></td>
+      </tr>
+      <tr>
+        <td>게시판</td>
+        <td>테이블형 목록</td>
+        <td>카드형 리스트 + LNB</td>
+        <td>2-pane 마스터·디테일</td>
+        <td>매거진형 리스트</td>
+        <td>위젯 카드 목록</td>
+        <td><b>피드형 카드 무한스크롤(hx-trigger="revealed") + 글쓰기 FAB</b>, 상세는 하단 고정 액션바</td>
+      </tr>
+      <tr>
+        <td>검색</td>
+        <td>독립 결과 페이지</td>
+        <td>전체화면 검색 오버레이</td>
+        <td>사이드바 필터 결과</td>
+        <td>커맨드 팔레트형</td>
+        <td>대시보드 검색 위젯</td>
+        <td><b>탭바의 "검색" 탭 자체가 검색 홈</b> — 최근/인기 칩 → 자동완성 → 결과 무한스크롤</td>
+      </tr>
+      <tr>
+        <td>마이페이지</td>
+        <td>좌측 메뉴 + 대시보드</td>
+        <td>상단 탭 + 카드 대시보드</td>
+        <td>2-pane 설정</td>
+        <td>프로필 원페이지</td>
+        <td>위젯 보드</td>
+        <td><b>MY 탭 — 프로필 헤더 + iOS 설정 스타일 리스트 그룹</b></td>
+      </tr>
+    </table>
+    <span class="wf-note">여섯 안 모두 KRDS 규약(시맨틱 토큰·htmx+순수JS·네이티브 요소 우선·CSP nonce·self-host) 안에서 구현 가능.
+    F안의 하단 탭바는 CSS(position:fixed)만으로 구성 — JS 프레임워크 금지 규약 그대로. 탭 active 판정은 서버 렌더(현재 URL 매칭)라 JS 불필요.
+    <b>메뉴 뎁스 출력 규칙(전 안 공통)</b> — 메뉴("학과" 탭 전체메뉴·데스크톱 드롭 패널)는 <b>1~3뎁스까지만 노출</b>, 4뎁스는 3뎁스 페이지 내 탭/필터로 처리. <b>사이트맵만 1~4뎁스 전체 전개</b>. 데이터는 siteContext.menuTree 하나(depth 1~4 저장) — 렌더 뎁스만 달리함.</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">② 와이어프레임 목차</div>
+    <table class="wf-table">
+      <tr><th style="width:200px">파일</th><th>화면</th><th style="width:280px">대표 라우트</th></tr>
+      <tr><td><a href="layout.html" style="color:#0284c7">layout.html</a></td><td>공용 프레임 해부도 — 모바일(앱바+탭바 5개) / 데스크톱(상단 5탭+협폭 컬럼) · "학과" 탭 전체메뉴·드롭 패널(1~3뎁스)</td><td><span class="wf-code">전 페이지 공통 프레임</span></td></tr>
+      <tr><td><a href="home.html" style="color:#0284c7">home.html</a></td><td>홈 — 인사/검색 스트립·스와이프 히어로 카드·퀵메뉴 2행·공지 피드·포토앨범 스트립·일정 스트립</td><td><span class="wf-code">/{sc}/home</span></td></tr>
+      <tr><td><a href="content.html" style="color:#0284c7">content.html</a></td><td>콘텐츠 — 아코디언 분절 학과소개·풀폭 지도 오시는길</td><td><span class="wf-code">/{sc}/about · /{sc}/location</span></td></tr>
+      <tr><td><a href="program.html" style="color:#0284c7">program.html</a></td><td>프로그램 — 연락처 앱형 교수진 리스트·ㄱㄴㄷ 인덱스·바텀 시트 프로필</td><td><span class="wf-code">/prg/{program}/{sc}</span></td></tr>
+      <tr><td><a href="board.html" style="color:#0284c7">board.html</a></td><td>게시판 — 피드형 무한스크롤 + FAB · 상세 하단 액션바</td><td><span class="wf-code">/bbs/{sc}/{bbsCode}</span></td></tr>
+      <tr><td><a href="member.html" style="color:#0284c7">member.html</a></td><td>회원 — 풀페이지 로그인(소셜)·한 화면 한 질문 가입·MY 탭 설정 리스트</td><td><span class="wf-code">/member/**</span></td></tr>
+      <tr><td><a href="search-sitemap.html" style="color:#0284c7">search-sitemap.html</a></td><td>검색 탭(최근·인기·자동완성·결과) · 사이트맵 풀 뷰(1~4뎁스 전체 전개)</td><td><span class="wf-code">/search · /{sc}/sitemap?view=full</span></td></tr>
+      <tr><td><a href="common.html" style="color:#0284c7">common.html</a></td><td>공통 프로그램·보조 화면 (학사일정·알림함·계정찾기·설문·민원·파일뷰어·오류)</td><td><span class="wf-code">/schedule · /notification · /member/find-* · /survey · /complaint</span></td></tr>
+    </table>
+    <span class="wf-note">표기 규칙: 회색 실선 = 정적 마크업, 하늘색 점선 = htmx/JS 동적 슬롯, 스카이블루 주석 = 구현 메모.
+    각 페이지는 <b>모바일 프레임(정본)</b>과 <b>데스크톱 캔버스(확장)</b>를 나란히 병기. 브라우저에서 직접 열면 됨(서버 불필요).</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">③ 하단 탭바 5개 ↔ 라우트 매핑</div>
+    <table class="wf-table">
+      <tr><th style="width:110px">탭</th><th style="width:280px">라우트</th><th>비고</th></tr>
+      <tr><td>🏠 홈</td><td><span class="wf-code">/{sc}/home</span></td><td>스와이프 히어로 + 퀵메뉴 + 공지 피드</td></tr>
+      <tr><td>🎓 학과</td><td><span class="wf-code">/{sc}/sitemap</span></td><td>전체메뉴(메뉴 5그룹 아코디언, <b>1~3뎁스 노출</b>) — tb_menu 트리를 앱의 "둘러보기" 탭으로 렌더. 사이트맵 풀 뷰(<span class="wf-code">?view=full</span>)만 1~4뎁스 전체</td></tr>
+      <tr><td>📋 게시판</td><td><span class="wf-code">/bbs/{sc}/notice</span></td><td>커뮤니티 그룹 첫 게시판으로 진입, 상단 칩으로 게시판 전환</td></tr>
+      <tr><td>🔍 검색</td><td><span class="wf-code">/search?siteCode={sc}</span></td><td>검색 홈(최근/인기) → 자동완성 → 결과</td></tr>
+      <tr><td>👤 MY</td><td><span class="wf-code">/member/mypage</span></td><td>비로그인 시 <span class="wf-code">/member/login</span> 으로 — 무매칭 DENY 아닌 인증 리다이렉트</td></tr>
+    </table>
+    <span class="wf-note"><b>IA·라우트·tb_menu 시드는 A안과 동일 — 달라지는 것은 프레젠테이션 계층뿐.</b>
+    메뉴 5그룹(소개·구성원·교육·연구·커뮤니티) 상세 트리는 <a href="../frame001/index.html" style="color:#0284c7">frame001/index.html</a> ② 참조.
+    <b>출력 규칙(전 안 공통): 메뉴 = 1~3뎁스, 사이트맵 = 1~4뎁스</b> — 4뎁스(전공필수·전공선택, 석사·박사과정, 휴·복학/졸업 서식)는 메뉴 미노출, 3뎁스 페이지 내 탭/필터로 처리. siteContext.menuTree 하나로 렌더 뎁스만 달리함.
+    탭바가 새 URL 을 만들지 않으므로 tb_role_url_access 추가 등록도 불필요(기존 규칙 그대로 — ?view=full 은 쿼리 파라미터).</span>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-h2 mb-2">④ 공통(사이트 무관) 라우트 — A안 동일</div>
+    <div class="wf-tree">
+/member/login · /member/join · /member/find-id · /member/find-password · /member/mypage <span class="dim">(profile·password·withdraw)</span><br/>
+/search?siteCode={sc}&keyword= · /{sc}/sitemap · /notification · /schedule/{master}<br/>
+/weather/widget · /api/v1/sites/{sc}/banners <span class="dim">(MAIN_HERO / SUB_HERO / 팝업)</span> · /api/v1/search/suggest <span class="dim">(자동완성)</span>
+    </div>
+    <span class="wf-note">브라우저바/앱 URL 예시는 개발 서버 형식 <span class="wf-code">http://127.0.0.1:8080/{sc}/…</span> 로 표기.
+    siteCode 예시: <b>ai</b>(인공지능학과) · <b>med</b>(의학과) · <b>me</b>(기계공학과).</span>
+  </div>
+</div>
+
+</body>
+</html>

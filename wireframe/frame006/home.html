@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 F안 — 사이트 홈</title>
+<link rel="stylesheet" href="wireframe6.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>사이트 홈 <span class="wf-badge-f">F안</span></h1>
+  <p><span class="route">GET /{sc}/home</span> — 인사/검색 스트립 → 가로 스와이프 히어로 카드 → 아이콘 퀵메뉴 2행 → 공지 피드(무한 카드) → 일정 스트립. 앱 첫 화면 문법.</p>
+</div>
+
+<div class="wf-duo">
+
+  <!-- ══════════ 모바일 (정본) ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 모바일 (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/ai/home</div>
+
+      <!-- 인사/검색 스트립 -->
+      <div class="wf-appbar" style="border-bottom:none">
+        <div>
+          <b>인공지능학과</b>
+          <div style="font-size:10.5px;color:#64748b">안녕하세요, 무엇을 찾으세요?</div>
+        </div>
+        <span class="wf-grow"></span>
+        <span class="wf-chip">🔔<span style="color:#0284c7">•</span></span>
+      </div>
+      <div style="padding:0 14px 8px;border-bottom:1.5px solid #e2e8f0">
+        <span class="wf-input" style="display:block;border-radius:18px">🔍 교수님 성함, 공지, 강의명 검색…</span>
+      </div>
+      <div style="padding:0 12px">
+        <span class="wf-note">인사/검색 스트립 — 홈 전용 헤더(뒤로가기 없음). 검색 인풋은 실제 입력이 아니라 탭 시 검색 탭(/search?siteCode=ai)으로 이동하는 가짜 인풋(앱 관례). 🔔 배지 = 미읽음 알림.</span>
+      </div>
+
+      <!-- 스와이프 히어로 카드 -->
+      <div class="wf-p" style="padding:12px 0 12px 14px">
+        <div class="wf-row stretch" style="gap:8px;overflow:hidden">
+          <div class="wf-img" style="width:290px;height:130px;flex-shrink:0;border-radius:14px"><span>MAIN_HERO 배너 1</span></div>
+          <div class="wf-img" style="width:290px;height:130px;flex-shrink:0;border-radius:14px"><span>배너 2 (다음 카드 살짝 노출)</span></div>
+        </div>
+        <div class="wf-row mt-2" style="justify-content:center;gap:4px">
+          <span style="font-size:8px;color:#0284c7">●</span><span style="font-size:8px;color:#cbd5e1">●</span><span style="font-size:8px;color:#cbd5e1">●</span>
+          <span class="wf-chip" style="font-size:9px;padding:0 6px">⏸ 정지</span>
+        </div>
+        <span class="wf-note" style="margin-right:14px">가로 스와이프 히어로 — GET /api/v1/sites/{sc}/banners?location=MAIN_HERO 를 카드 캐러셀로.
+        <b>CSS scroll-snap 만으로 스와이프 구현(JS 자동재생 없음)</b> — 자동 로테이션이 없으니 접근성 정지 버튼은 장식 아닌 필수 아님(넣으면 CSS 애니메이션 정지용). 배너 0건이면 섹션 자체 미출력.</span>
+      </div>
+
+      <!-- 아이콘 퀵메뉴 2행 -->
+      <div class="wf-band wf-gray" style="padding:12px 14px">
+        <div class="wf-grid-3">
+          <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:18px">📷</div><b style="font-size:11px">포토앨범</b></div>
+          <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:18px">🔬</div><b style="font-size:11px">연구실</b></div>
+          <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:18px">📚</div><b style="font-size:11px">수업계획서</b></div>
+          <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:18px">📅</div><b style="font-size:11px">학사일정</b></div>
+          <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:18px">📢</div><b style="font-size:11px">공지</b></div>
+          <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:18px">📍</div><b style="font-size:11px">오시는길</b></div>
+        </div>
+        <span class="wf-note">아이콘 퀵메뉴 3×2 — 포토앨범(/bbs/ai/photo)·연구실(/prg/lab/ai)·수업계획서(/prg/syllabus/ai)·학사일정(/schedule/{master})·공지(/bbs/ai/notice)·오시는길(/ai/location).
+        tb_menu 와 별개인 홈 전용 바로가기(관리자 노출설정) — 아이콘은 self-host SVG. <b>교수진은 홈 노출 제거(2026-07-10 요청)</b> — "학과" 탭 전체메뉴 구성원 › 교수진으로 접근.</span>
+      </div>
+
+      <!-- 공지 피드 -->
+      <div class="wf-p" style="padding:12px 14px">
+        <div class="wf-row"><span class="wf-h2">공지 피드</span><span class="wf-chip on">공지</span><span class="wf-chip">소식</span><span class="wf-chip">세미나</span></div>
+        <div class="wf-box mt-2">
+          <div class="wf-band" style="padding:10px 12px">
+            <div class="wf-row"><span class="wf-chip on" style="font-size:9px">공지</span><b style="font-size:12px">2026-2학기 수강신청 안내 ─────</b></div>
+            <div class="wf-line thin w80" style="margin:4px 0"></div>
+            <span style="font-size:10.5px;color:#94a3b8">07-01 · 조회 132 · 📎</span>
+          </div>
+          <div class="wf-band" style="padding:10px 12px">
+            <div class="wf-row"><b style="font-size:12px">게시글 제목 ────────</b></div>
+            <div class="wf-line thin w60" style="margin:4px 0"></div>
+            <span style="font-size:10.5px;color:#94a3b8">06-30 · 조회 45</span>
+          </div>
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px">
+            <div class="wf-row"><b style="font-size:12px">게시글 제목 ──────────</b></div>
+            <div class="wf-line thin w80" style="margin:4px 0"></div>
+            <span style="font-size:10.5px;color:#94a3b8">06-28 · 조회 67</span>
+          </div>
+        </div>
+        <div class="wf-slot mt-2" style="padding:6px">▼ 스크롤 도달 시 다음 카드 로드 (hx-trigger="revealed")</div>
+        <span class="wf-note">공지 피드 — 첫 5건 SSR, 이후 마지막 카드의 센티널 div 가 hx-get="/bbs/ai/notice/feed?page=2" hx-trigger="revealed" hx-swap="afterend" 로 이어붙임.
+        칩 전환(공지/소식/세미나) = hx-get 부분갱신. 홈 피드는 hx-history="false"(복원 시 중복 append 방지).</span>
+      </div>
+
+      <!-- 포토앨범 스와이프 스트립 (2026-07-10 신규) -->
+      <div class="wf-p" style="padding:12px 14px">
+        <div class="wf-row"><span class="wf-h2">포토앨범</span><span class="wf-grow"></span><span class="wf-chip">+ 더보기</span></div>
+        <div class="wf-row mt-2" style="gap:8px;overflow:hidden">
+          <div style="flex-shrink:0;width:130px"><div class="wf-img" style="height:80px;min-height:80px;border-radius:10px"><span>썸네일</span></div><b style="font-size:10.5px">졸업작품 전시회</b></div>
+          <div style="flex-shrink:0;width:130px"><div class="wf-img" style="height:80px;min-height:80px;border-radius:10px"><span>썸네일</span></div><b style="font-size:10.5px">학과 MT</b></div>
+          <div style="flex-shrink:0;width:130px"><div class="wf-img" style="height:80px;min-height:80px;border-radius:10px"><span>썸네일</span></div><b style="font-size:10.5px">경진대회 수상</b></div>
+        </div>
+        <span class="wf-note">포토앨범 스트립(2026-07-10 신규) — GALLERY 게시판 /bbs/ai/photo 최신 N건 가로 스와이프(scroll-snap, 히어로와 동일 문법). hx-trigger="revealed" 지연 로드, 탭 → 게시글 상세. alt = 게시글 제목.</span>
+      </div>
+
+      <!-- 일정 스트립 -->
+      <div class="wf-band wf-sky" style="padding:12px 14px;border-bottom:none">
+        <div class="wf-h2 mb-2">다가오는 일정</div>
+        <div class="wf-row" style="gap:8px;overflow:hidden">
+          <div class="wf-box wf-p" style="padding:8px 10px;flex-shrink:0;width:120px"><b style="font-size:12px;color:#0284c7">07.15</b><div class="wf-line thin w80"></div></div>
+          <div class="wf-box wf-p" style="padding:8px 10px;flex-shrink:0;width:120px"><b style="font-size:12px;color:#0284c7">07.21</b><div class="wf-line thin w60"></div></div>
+          <div class="wf-box wf-p" style="padding:8px 10px;flex-shrink:0;width:120px"><b style="font-size:12px;color:#0284c7">08.01</b><div class="wf-line thin w80"></div></div>
+        </div>
+        <span class="wf-note">일정 스트립 — /schedule/{master} 최근 3건 가로 카드(scroll-snap). 탭 시 일정 상세로.</span>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab active"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+    <span class="wf-note" style="max-width:390px">홈 진입 레이어 팝업(activePopups) — A안 동일: 네이티브 &lt;dialog&gt;, "오늘 하루 안 보기", 모바일에서는 하단 시트형으로 출력.</span>
+  </div>
+
+  <!-- ══════════ 데스크톱 (확장) ══════════ -->
+  <div class="wf-col" style="flex:1;min-width:560px">
+    <div class="wf-caption">🖥 데스크톱 (확장) — 같은 섹션이 협폭 컬럼으로 세로 전개</div>
+    <div class="wf-canvas">
+      <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="url">http://127.0.0.1:8080/ai/home</span></div>
+
+      <div class="wf-band wf-gray" style="padding:4px 16px"><div class="wf-deskcol"><div class="wf-row" style="font-size:11px"><span class="wf-chip">건양대학교</span><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div></div>
+      <div class="wf-band"><div class="wf-deskcol"><div class="wf-row"><b style="font-size:16px">인공지능학과</b><span class="wf-grow"></span><span class="wf-btn sky sm">🏠 홈</span><span class="wf-btn ghost sm">🎓 학과</span><span class="wf-btn ghost sm">📋 게시판</span><span class="wf-btn ghost sm">🔍 검색</span><span class="wf-btn ghost sm">👤 MY</span></div></div></div>
+
+      <div class="wf-band" style="padding:16px">
+        <div class="wf-deskcol">
+          <!-- 히어로: 카드 2.5장 노출 -->
+          <div class="wf-row stretch" style="gap:10px;overflow:hidden">
+            <div class="wf-img" style="flex:1;height:150px"><span>MAIN_HERO 배너 1</span></div>
+            <div class="wf-img" style="flex:1;height:150px"><span>배너 2</span></div>
+            <div class="wf-img" style="width:80px;height:150px;flex-shrink:0"><span>3</span></div>
+          </div>
+          <span class="wf-note">데스크톱 히어로 — 같은 scroll-snap 트랙이 넓어져 카드 2.5장 노출(마크업 동일, CSS 카드폭만 변경).</span>
+
+          <!-- 퀵메뉴 1행 -->
+          <div class="wf-grid-6 mt-4">
+            <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:16px">📷</div><b style="font-size:11px">포토앨범</b></div>
+            <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:16px">🔬</div><b style="font-size:11px">연구실</b></div>
+            <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:16px">📚</div><b style="font-size:11px">수업계획서</b></div>
+            <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:16px">📅</div><b style="font-size:11px">학사일정</b></div>
+            <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:16px">📢</div><b style="font-size:11px">공지</b></div>
+            <div class="wf-box" style="text-align:center;padding:10px 4px"><div style="font-size:16px">📍</div><b style="font-size:11px">오시는길</b></div>
+          </div>
+
+          <!-- 피드 + 일정 -->
+          <div class="wf-row stretch mt-4">
+            <div style="flex:2">
+              <div class="wf-row"><span class="wf-h2">공지 피드</span><span class="wf-chip on">공지</span><span class="wf-chip">소식</span><span class="wf-chip">세미나</span></div>
+              <div class="wf-box mt-2">
+                <div class="wf-band" style="padding:8px 12px"><div class="wf-row"><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#94a3b8">07-01</span></div></div>
+                <div class="wf-band" style="padding:8px 12px"><div class="wf-row"><div class="wf-line thin w60" style="margin:0;flex:1"></div><span style="font-size:11px;color:#94a3b8">06-30</span></div></div>
+                <div class="wf-band" style="border-bottom:none;padding:8px 12px"><div class="wf-row"><div class="wf-line thin w80" style="margin:0;flex:1"></div><span style="font-size:11px;color:#94a3b8">06-28</span></div></div>
+              </div>
+              <div class="wf-slot mt-2" style="padding:6px;font-size:11px">hx-trigger="revealed" 무한 피드 (모바일과 동일 조각)</div>
+            </div>
+            <div style="flex:1">
+              <div class="wf-h2">다가오는 일정</div>
+              <div class="wf-box mt-2 wf-p" style="padding:10px">
+                <div class="wf-row"><span class="wf-chip">07.15</span><div class="wf-line thin w60" style="margin:0;flex:1"></div></div>
+                <div class="wf-row mt-2"><span class="wf-chip">07.21</span><div class="wf-line thin w80" style="margin:0;flex:1"></div></div>
+                <div class="wf-row mt-2"><span class="wf-chip">08.01</span><div class="wf-line thin w40" style="margin:0;flex:1"></div></div>
+              </div>
+            </div>
+          </div>
+          <span class="wf-note">데스크톱에서만 피드(2)+일정(1) 2컬럼 — 그 외 구조·조각·엔드포인트는 모바일과 100% 동일. "모바일이 정본, 데스크톱은 확장"의 실체 = 같은 fragment 를 CSS 그리드로 재배열.</span>
+        </div>
+      </div>
+
+      <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-deskcol"><div class="wf-line w40" style="background:#475569"></div></div></div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

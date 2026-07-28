@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<!-- gopcms5 · KRDS 순정 스타일가이드 — 빌드: npx @tailwindcss/cli -i ./SG-krds-input.css -o ./SG-krds-output.css -->
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SG · KRDS 순정 (범정부 디자인시스템) — 개발용 스타일가이드</title>
+<link rel="stylesheet" href="./SG-krds-output.css"/>
+<style>
+  /* 가이드 문서 전용 크롬(콘텐츠 데모와 무관) */
+  .sg-wrap{max-width:1080px;margin:0 auto;padding:24px 24px 96px}
+  .sg-toolbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:12px 24px;background:var(--color-surface,#fff);border-bottom:2px solid var(--color-line,#cdd1d5)}
+  .sg-toolbar h1{font-size:17px;font-weight:700;margin-right:auto}
+  .sg-toolbar button{min-height:36px;padding:4px 12px;font-size:13px;font-weight:700;cursor:pointer;
+    border:1px solid var(--color-line,#cdd1d5);border-radius:6px;background:var(--color-surface,#fff);color:var(--color-fg,#1e2124)}
+  .sg-toolbar button[aria-pressed="true"]{background:var(--brand-50);border-color:var(--brand-50);color:var(--color-fg-on,#fff)}
+  .sg-section{border-top:1px solid var(--color-divider,#e6e8ea);margin-top:48px;padding-top:32px}
+  .sg-h2{font-size:24px;font-weight:700;line-height:1.4}
+  .sg-h3{font-size:17px;font-weight:700;margin-bottom:8px}
+  .sg-note{font-size:13px;color:var(--color-fg-subtle,#464c53);margin-bottom:8px}
+  .sg-demo{margin-top:24px}
+  .sg-canvas{padding:24px;border:1px dashed var(--color-line,#cdd1d5);border-radius:8px;background:var(--color-bg)}
+  .sg-code summary{cursor:pointer;font-size:13px;color:var(--color-fg-subtle,#464c53);margin-top:6px}
+  .sg-code pre{overflow-x:auto;background:var(--color-surface-subtler,#e6e8ea);padding:12px 16px;border-radius:6px;
+    font-size:12.5px;line-height:1.6;margin-top:6px}
+  .sg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+  .sg-swatch{display:flex;flex-direction:column;gap:4px;font-size:12px}
+  .sg-chip{display:block;height:44px;border-radius:6px;border:1px solid var(--color-line,#cdd1d5)}
+  .sg-inline{font-size:12px;color:var(--color-fg-subtle,#464c53)}
+  .sg-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .sg-space{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
+  .sg-space i{display:block;background:var(--brand-30);font-style:normal}
+</style>
+</head>
+<body>
+
+<div class="sg-toolbar">
+  <h1>SG · KRDS 순정 (범정부 디자인시스템) <span class="sg-inline">(gopcms5)</span></h1>
+  <span class="sg-inline">테마:</span>
+      <button type="button" data-sg-theme="" aria-pressed="true">blue(기본)</button>
+      <button type="button" data-sg-theme="theme-teal" aria-pressed="false">teal</button>
+      <button type="button" data-sg-theme="theme-indigo" aria-pressed="false">indigo</button>
+      <button type="button" data-sg-theme="theme-green" aria-pressed="false">green</button>
+  <button type="button" data-sg-hc aria-pressed="false">◐ 선명한 화면(hc)</button>
+</div>
+
+<main class="sg-wrap">
+  <p class="sg-note" style="margin-top:16px">토큰 원전 <code>src/krds.css</code> · 레시피 <code>SG-krds.md</code> · 출처 <code>github.com/KRDS-uiux/krds-uiux</code></p>
+
+  <section class="sg-section" id="usage">
+    <h2 class="sg-h2">0. 사용법 — 빌드 &amp; 로드</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">Tailwind v4 CLI 빌드</h3>
+  <p class="sg-note">이 가이드 페이지 자체가 아래 명령의 산출물(SG-krds-output.css) 하나만 로드한다.</p>
+  <div class="sg-canvas"><pre style="margin:0;font-size:13px"># 전역(실서비스) — src/krds.css → dist/krds.css
+npx @tailwindcss/cli -i ./src/krds.css -o ./dist/krds.css --minify
+
+# 스타일가이드(이 페이지) — design-md/styleguide 에서
+npx @tailwindcss/cli -i ./SG-krds-input.css -o ./SG-krds-output.css</pre></div>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">실서비스 레이아웃 &lt;head&gt; 로드 순서</h3>
+  <div class="sg-canvas"><pre style="margin:0;font-size:13px">&lt;link rel="stylesheet" href="/css/output.css"/&gt;   &lt;!-- KRDS 토큰+유틸+프리셋 (단일 파일) --&gt;
+&lt;!-- 테마: &lt;html class="theme-indigo"&gt; · 고대비: &lt;html class="hc"&gt; — 사이트 설정 연동 --&gt;</pre></div>
+</div>
+  </section>
+
+  <section class="sg-section" id="color">
+    <h2 class="sg-h2">1. 색상 — 브랜드 램프 · 강조(point) · 시맨틱 · 상태</h2>
+    <p class="sg-note">스와치는 CSS 변수 라이브 렌더 — 상단 테마/hc 토글에 따라 실시간 변경. 사용은 유틸 클래스로.</p>
+
+    <div class="sg-demo"><h3 class="sg-h3">브랜드 램프 (bg-brand-* / text-brand-*) — 리브랜딩 스왑 대상</h3>
+      <div class="sg-grid">
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-5)"></span><code>brand-5</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-10)"></span><code>brand-10</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-20)"></span><code>brand-20</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-30)"></span><code>brand-30</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-40)"></span><code>brand-40</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-50)"></span><code>brand-50 (주)</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-60)"></span><code>brand-60 (hover)</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-70)"></span><code>brand-70 (active)</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-80)"></span><code>brand-80</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-90)"></span><code>brand-90</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--brand-95)"></span><code>brand-95</code></div>
+      </div></div>
+
+    <div class="sg-demo"><h3 class="sg-h3">강조 램프 (bg-point-* / text-point-*) — 강조·주의 전용</h3>
+      <div class="sg-grid">
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--point-5)"></span><code>point-5</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--point-10)"></span><code>point-10</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--point-30)"></span><code>point-30</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--point-50)"></span><code>point-50 (주)</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--point-60)"></span><code>point-60</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--point-70)"></span><code>point-70</code></div>
+      </div></div>
+
+    <div class="sg-demo"><h3 class="sg-h3">시맨틱 표면·텍스트·선 — 모드(hc) 자동 전환</h3>
+      <div class="sg-grid">
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--color-bg)"></span><code>bg-bg</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--color-surface)"></span><code>bg-surface</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--color-surface-subtle)"></span><code>bg-surface-subtle</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--color-surface-subtler)"></span><code>bg-surface-subtler</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--color-fg)"></span><code>text-fg</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--color-fg-strong)"></span><code>text-fg-strong</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--color-fg-subtle)"></span><code>text-fg-subtle</code></div>
+    <div class="sg-swatch"><span class="sg-chip" style="background:var(--color-line)"></span><code>border-line</code></div>
+      </div></div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">상태색(시스템) — 조합 고정 (surface+fg 세트로만 사용)</h3>
+  <div class="sg-canvas"><div class="sg-row">
+  <span class="krds-badge bg-danger-surface text-danger-fg">✕ 오류</span>
+  <span class="krds-badge bg-warning-surface text-warning-fg">! 주의</span>
+  <span class="krds-badge bg-success-surface text-success-fg">✓ 완료</span>
+  <span class="krds-badge bg-info-surface text-info-fg">i 안내</span>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;span class="krds-badge bg-danger-surface text-danger-fg"&gt;✕ 오류&lt;/span&gt;
+&lt;span class="krds-badge bg-warning-surface text-warning-fg"&gt;! 주의&lt;/span&gt;
+&lt;span class="krds-badge bg-success-surface text-success-fg"&gt;✓ 완료&lt;/span&gt;
+&lt;span class="krds-badge bg-info-surface text-info-fg"&gt;i 안내&lt;/span&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="typography">
+    <h2 class="sg-h2">2. 타이포그래피 — KRDS 스케일 토큰만 사용</h2>
+    <p class="sg-note">raw <code>text-xl</code> 금지 — 아래 토큰이 KRDS 크기·행간(1.5)·굵기 규격을 내장한다. 글꼴은 Pretendard GOV(자체 호스팅).</p>
+    <div class="sg-canvas" style="display:flex;flex-direction:column;gap:12px">
+    <p class="text-display-lg">디스플레이 LG <code class="sg-inline">.text-display-lg (60px)</code></p>
+    <p class="text-display-md">디스플레이 MD — 히어로 <code class="sg-inline">.text-display-md (44px)</code></p>
+    <p class="text-heading-xl">헤딩 XL — 페이지 제목 <code class="sg-inline">.text-heading-xl (40px)</code></p>
+    <p class="text-heading-lg">헤딩 LG — 대섹션 <code class="sg-inline">.text-heading-lg (32px)</code></p>
+    <p class="text-heading-md">헤딩 MD — 소섹션 <code class="sg-inline">.text-heading-md (24px)</code></p>
+    <p class="text-heading-sm">헤딩 SM — 카드 제목 <code class="sg-inline">.text-heading-sm (19px)</code></p>
+    <p class="text-body-lg">본문 LG — 리드 문단 <code class="sg-inline">.text-body-lg (19px)</code></p>
+    <p class="text-body-md">본문 MD — 기본 읽기 텍스트 <code class="sg-inline">.text-body-md (17px)</code></p>
+    <p class="text-body-sm">본문 SM — 보조 본문 <code class="sg-inline">.text-body-sm (15px)</code></p>
+    <p class="text-body-xs">본문 XS — 캡션·메타 <code class="sg-inline">.text-body-xs (14px)</code></p>
+    <p class="text-label-md font-bold">레이블 MD — 폼 라벨·내비 <code class="sg-inline">.text-label-md (17px)</code></p>
+    <p class="text-label-sm font-bold">레이블 SM <code class="sg-inline">.text-label-sm (15px)</code></p>
+    </div>
+  </section>
+
+  <section class="sg-section" id="shape">
+    <h2 class="sg-h2">3. 형태(radius) — KRDS xsmall~xlarge</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">radius 토큰 (최대 12px, 원형은 rounded-max)</h3>
+  <div class="sg-canvas"><div class="sg-row">
+  <span class="krds-badge bg-brand-5 text-brand-60 rounded-xsmall">rounded-xsmall 2px</span>
+  <span class="krds-badge bg-brand-5 text-brand-60 rounded-small">rounded-small 4px</span>
+  <span class="krds-badge bg-brand-5 text-brand-60 rounded-medium">rounded-medium 6px</span>
+  <span class="krds-badge bg-brand-5 text-brand-60 rounded-large">rounded-large 10px</span>
+  <span class="krds-badge bg-brand-5 text-brand-60 rounded-xlarge">rounded-xlarge 12px</span>
+  <span class="krds-badge bg-brand-5 text-brand-60 rounded-max">rounded-max 원형</span>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;span class="krds-badge bg-brand-5 text-brand-60 rounded-small"&gt;rounded-small&lt;/span&gt;
+&lt;span class="krds-badge bg-brand-5 text-brand-60 rounded-medium"&gt;rounded-medium&lt;/span&gt;
+&lt;span class="krds-badge bg-brand-5 text-brand-60 rounded-xlarge"&gt;rounded-xlarge&lt;/span&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="spacing">
+    <h2 class="sg-h2">4. 간격 — 8px 그리드</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">스페이싱 스케일(표준 Tailwind, p-2=8px)</h3>
+  <p class="sg-note">4px는 미세조정 전용 — 컴포넌트·레이아웃 간격은 8px 배수로.</p>
+  <div class="sg-canvas"><div class="sg-space">
+  <span><i class="w-1 h-8"></i><br/><code>1=4px</code></span>
+  <span><i class="w-2 h-8"></i><br/><code>2=8px</code></span>
+  <span><i class="w-3 h-8"></i><br/><code>3=12px</code></span>
+  <span><i class="w-4 h-8"></i><br/><code>4=16px</code></span>
+  <span><i class="w-6 h-8"></i><br/><code>6=24px</code></span>
+  <span><i class="w-8 h-8"></i><br/><code>8=32px</code></span>
+  <span><i class="w-12 h-8"></i><br/><code>12=48px</code></span>
+  <span><i class="w-16 h-8"></i><br/><code>16=64px</code></span>
+</div></div>
+</div>
+  </section>
+
+  <section class="sg-section" id="elevation">
+    <h2 class="sg-h2">5. 엘리베이션 — 보더 우선, 그림자는 부유 요소</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">shadow-e1 ~ e4 (KRDS 4단계)</h3>
+  <p class="sg-note">e1 카드 · e2 드롭다운 · e3 플로팅 · e4 모달 — 평면 콘텐츠는 border-line 우선.</p>
+  <div class="sg-canvas"><div class="sg-row">
+  <div class="krds-card shadow-e1" style="width:150px">e1 카드</div>
+  <div class="krds-card shadow-e2" style="width:150px">e2 드롭다운</div>
+  <div class="krds-card shadow-e3" style="width:150px">e3 플로팅</div>
+  <div class="krds-card shadow-e4" style="width:150px">e4 모달</div>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;div class="krds-card shadow-e1"&gt;e1 카드&lt;/div&gt;
+&lt;div class="krds-card shadow-e4"&gt;e4 모달&lt;/div&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="layout">
+    <h2 class="sg-h2">6. 레이아웃 — 컨테이너 · 12컬럼</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">컨테이너 + 그리드</h3>
+  <p class="sg-note">본문 최대 1200px(max-w-content) · 읽기 영역 ~720–800px 제한 · 브레이크포인트 sm 360 / md 768 / lg 1024 / xl 1280 / 2xl 1440.</p>
+  <div class="sg-canvas"><div class="max-w-content mx-auto" style="outline:1px dashed var(--brand-30)">
+  <div class="grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-8 bg-surface-subtle p-4 rounded-medium">본문 8col</div>
+    <div class="col-span-12 md:col-span-4 bg-surface-subtle p-4 rounded-medium">사이드 4col</div>
+  </div>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;div class="max-w-content mx-auto"&gt;
+  &lt;div class="grid grid-cols-12 gap-4"&gt;
+    &lt;div class="col-span-12 md:col-span-8"&gt;본문 8col&lt;/div&gt;
+    &lt;div class="col-span-12 md:col-span-4"&gt;사이드 4col&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="buttons">
+    <h2 class="sg-h2">7. 버튼 &amp; 링크</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">버튼 위계 — primary / secondary / tertiary / text / point</h3>
+  <p class="sg-note">화면당 primary 1개 원칙 · point 는 삭제 등 파괴적 확정 액션 전용 · 포커스 링 내장.</p>
+  <div class="sg-canvas"><div class="sg-row">
+  <button class="krds-btn krds-btn-primary">주 액션</button>
+  <button class="krds-btn krds-btn-secondary">보조</button>
+  <button class="krds-btn krds-btn-tertiary">3차</button>
+  <button class="krds-btn krds-btn-text">텍스트</button>
+  <button class="krds-btn krds-btn-point">삭제</button>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;button class="krds-btn krds-btn-primary"&gt;주 액션&lt;/button&gt;
+&lt;button class="krds-btn krds-btn-secondary"&gt;보조&lt;/button&gt;
+&lt;button class="krds-btn krds-btn-tertiary"&gt;3차&lt;/button&gt;
+&lt;button class="krds-btn krds-btn-text"&gt;텍스트&lt;/button&gt;
+&lt;button class="krds-btn krds-btn-point"&gt;삭제&lt;/button&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">버튼 크기 &amp; 상태 — lg 48px / 기본 40px / sm 32px</h3>
+  <div class="sg-canvas"><div class="sg-row">
+  <button class="krds-btn krds-btn-primary krds-btn-lg">크게 (48px)</button>
+  <button class="krds-btn krds-btn-primary">기본 (40px)</button>
+  <button class="krds-btn krds-btn-primary krds-btn-sm">작게 (32px)</button>
+  <button class="krds-btn krds-btn-primary" disabled>비활성</button>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;button class="krds-btn krds-btn-primary krds-btn-lg"&gt;크게&lt;/button&gt;
+&lt;button class="krds-btn krds-btn-primary krds-btn-sm"&gt;작게&lt;/button&gt;
+&lt;button class="krds-btn krds-btn-primary" disabled&gt;비활성&lt;/button&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">링크 — 색+밑줄 병행 (색만으로 구분 금지)</h3>
+  <div class="sg-canvas"><p class="text-body-md">자세한 내용은 <a class="krds-link" href="#">모집요강 안내</a>를 확인하세요.</p></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;a class="krds-link" href="#"&gt;모집요강 안내&lt;/a&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="badge">
+    <h2 class="sg-h2">8. 배지 · 태그 · 알림</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">배지·태그</h3>
+  <div class="sg-canvas"><div class="sg-row">
+  <span class="krds-badge bg-brand-5 text-brand-60">브랜드 배지</span>
+  <span class="krds-badge bg-brand-50 text-fg-on">강조 배지</span>
+  <span class="krds-tag border-line text-fg-subtle">태그</span>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;span class="krds-badge bg-brand-5 text-brand-60"&gt;브랜드 배지&lt;/span&gt;
+&lt;span class="krds-badge bg-brand-50 text-fg-on"&gt;강조 배지&lt;/span&gt;
+&lt;span class="krds-tag border-line text-fg-subtle"&gt;태그&lt;/span&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">시스템 알림(role 필수 — 오류 role="alert", 상태 role="status")</h3>
+  <div class="sg-canvas"><div role="alert" class="krds-alert krds-alert-danger"><span aria-hidden="true">✕</span><p>필수 항목을 입력해 주세요.</p></div>
+<div role="status" class="krds-alert krds-alert-warning" style="margin-top:8px"><span aria-hidden="true">!</span><p>저장하지 않은 변경 사항이 있습니다.</p></div>
+<div role="status" class="krds-alert krds-alert-success" style="margin-top:8px"><span aria-hidden="true">✓</span><p>정상 처리되었습니다.</p></div>
+<div role="status" class="krds-alert krds-alert-info" style="margin-top:8px"><span aria-hidden="true">i</span><p>점검 시간에는 일부 기능이 제한됩니다.</p></div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;div role="alert" class="krds-alert krds-alert-danger"&gt;&lt;span aria-hidden="true"&gt;✕&lt;/span&gt;&lt;p&gt;필수 항목을 입력해 주세요.&lt;/p&gt;&lt;/div&gt;
+&lt;div role="status" class="krds-alert krds-alert-success"&gt;&lt;span aria-hidden="true"&gt;✓&lt;/span&gt;&lt;p&gt;정상 처리되었습니다.&lt;/p&gt;&lt;/div&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="forms">
+    <h2 class="sg-h2">9. 폼 컨트롤 — 라벨 필수 · 오류는 색+아이콘+텍스트</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">입력·셀렉트·텍스트영역·오류</h3>
+  <div class="sg-canvas"><div style="display:grid;gap:16px;max-width:420px">
+  <div><label for="sg-name" class="text-label-sm font-bold">이름 <span class="text-danger-fg">*</span></label>
+    <input id="sg-name" class="krds-input" placeholder="홍길동"/></div>
+  <div><label for="sg-sel" class="text-label-sm font-bold">구분</label>
+    <select id="sg-sel" class="krds-select"><option>전체</option><option>공지</option></select></div>
+  <div><label for="sg-ta" class="text-label-sm font-bold">문의 내용</label>
+    <textarea id="sg-ta" class="krds-textarea" placeholder="내용을 입력해 주세요."></textarea></div>
+  <div><label for="sg-err" class="text-label-sm font-bold">이메일</label>
+    <input id="sg-err" class="krds-input krds-input-error" value="abc@" aria-describedby="sg-err-msg"/>
+    <p id="sg-err-msg" class="text-body-xs text-danger-fg">✕ 이메일 형식(name@domain)으로 입력해 주세요.</p></div>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;label for="name" class="text-label-sm font-bold"&gt;이름 &lt;span class="text-danger-fg"&gt;*&lt;/span&gt;&lt;/label&gt;
+&lt;input id="name" class="krds-input" placeholder="홍길동"/&gt;
+
+&lt;select class="krds-select"&gt;&lt;option&gt;전체&lt;/option&gt;&lt;/select&gt;
+&lt;textarea class="krds-textarea"&gt;&lt;/textarea&gt;
+
+&lt;input class="krds-input krds-input-error" aria-describedby="err-msg"/&gt;
+&lt;p id="err-msg" class="text-body-xs text-danger-fg"&gt;✕ 이메일 형식으로 입력해 주세요.&lt;/p&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">체크박스 · 라디오 · 토글 스위치</h3>
+  <div class="sg-canvas"><fieldset style="border:0;padding:0"><legend class="text-label-sm font-bold">수신 동의</legend>
+  <div class="sg-row" style="margin-top:8px">
+    <label class="text-body-sm" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="krds-check" checked/> 이메일</label>
+    <label class="text-body-sm" style="display:flex;align-items:center;gap:8px"><input type="radio" class="krds-check" name="sg-r" checked/> 즉시</label>
+    <label class="text-body-sm" style="display:flex;align-items:center;gap:8px"><input type="radio" class="krds-check" name="sg-r"/> 주간</label>
+    <label class="text-body-sm" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="krds-switch" role="switch" checked/> 알림 켜기</label>
+  </div></fieldset></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;input type="checkbox" class="krds-check" checked/&gt;
+&lt;input type="radio" class="krds-check" name="r"/&gt;
+&lt;input type="checkbox" class="krds-switch" role="switch"/&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="cards">
+    <h2 class="sg-h2">10. 카드 · 테이블</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">카드와 표면 레이어</h3>
+  <div class="sg-canvas"><div class="sg-row">
+  <div class="krds-card" style="width:220px"><h3 class="text-heading-sm">카드 제목</h3>
+    <p class="text-body-sm text-fg-subtle">보더+e1, hover 연출은 선택</p></div>
+  <div class="bg-surface-subtle p-6 rounded-large" style="width:220px">surface-subtle 밴드</div>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;div class="krds-card"&gt;&lt;h3 class="text-heading-sm"&gt;카드 제목&lt;/h3&gt;
+  &lt;p class="text-body-sm text-fg-subtle"&gt;설명&lt;/p&gt;&lt;/div&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">테이블 — caption 필수(sr-only 자동) · 숫자는 .num</h3>
+  <div class="sg-canvas"><table class="krds-table krds-table-zebra">
+  <caption>2026년 공지사항 목록</caption>
+  <thead><tr><th scope="col">번호</th><th scope="col">제목</th><th scope="col">작성일</th><th scope="col" class="num">조회</th></tr></thead>
+  <tbody>
+    <tr><td>3</td><td><a class="krds-link" href="#">2학기 수강신청 안내</a></td><td>2026-07-06</td><td class="num">1,204</td></tr>
+    <tr><td>2</td><td>연구윤리 교육 일정</td><td>2026-07-01</td><td class="num">872</td></tr>
+    <tr><td>1</td><td>홈페이지 개편 안내</td><td>2026-06-22</td><td class="num">3,015</td></tr>
+  </tbody>
+</table></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;table class="krds-table krds-table-zebra"&gt;
+  &lt;caption&gt;2026년 공지사항 목록&lt;/caption&gt;
+  &lt;thead&gt;&lt;tr&gt;&lt;th scope="col"&gt;번호&lt;/th&gt;&lt;th scope="col"&gt;제목&lt;/th&gt;&lt;th scope="col" class="num"&gt;조회&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+  &lt;tbody&gt;&lt;tr&gt;&lt;td&gt;1&lt;/td&gt;&lt;td&gt;제목&lt;/td&gt;&lt;td class="num"&gt;1,204&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;
+&lt;/table&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="nav">
+    <h2 class="sg-h2">11. 내비게이션 — 탭 · 브레드크럼 · 페이지네이션 · 스텝</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">탭 (role="tablist" / aria-selected)</h3>
+  <div class="sg-canvas"><div class="krds-tabs" role="tablist">
+  <button class="krds-tab" role="tab" aria-selected="true">공지사항</button>
+  <button class="krds-tab" role="tab" aria-selected="false">보도자료</button>
+  <button class="krds-tab" role="tab" aria-selected="false">행사안내</button>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;div class="krds-tabs" role="tablist"&gt;
+  &lt;button class="krds-tab" role="tab" aria-selected="true"&gt;공지사항&lt;/button&gt;
+  &lt;button class="krds-tab" role="tab" aria-selected="false"&gt;보도자료&lt;/button&gt;
+&lt;/div&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">브레드크럼 (aria-current="page")</h3>
+  <div class="sg-canvas"><nav aria-label="현재 위치"><ol class="krds-breadcrumb">
+  <li><a href="#">홈</a></li>
+  <li><a href="#">알림마당</a></li>
+  <li><span aria-current="page">공지사항</span></li>
+</ol></nav></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;nav aria-label="현재 위치"&gt;&lt;ol class="krds-breadcrumb"&gt;
+  &lt;li&gt;&lt;a href="#"&gt;홈&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href="#"&gt;알림마당&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;span aria-current="page"&gt;공지사항&lt;/span&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;/nav&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">페이지네이션 (aria-current="page")</h3>
+  <div class="sg-canvas"><nav aria-label="페이지 이동"><div class="krds-pagination">
+  <button class="krds-page" aria-disabled="true">‹</button>
+  <a class="krds-page" href="#" aria-current="page">1</a>
+  <a class="krds-page" href="#">2</a>
+  <a class="krds-page" href="#">3</a>
+  <span class="krds-page-dots">…</span>
+  <a class="krds-page" href="#">12</a>
+  <button class="krds-page">›</button>
+</div></nav></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;nav aria-label="페이지 이동"&gt;&lt;div class="krds-pagination"&gt;
+  &lt;a class="krds-page" href="#" aria-current="page"&gt;1&lt;/a&gt;
+  &lt;a class="krds-page" href="#"&gt;2&lt;/a&gt;
+  &lt;span class="krds-page-dots"&gt;…&lt;/span&gt;
+  &lt;a class="krds-page" href="#"&gt;12&lt;/a&gt;
+&lt;/div&gt;&lt;/nav&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">스텝 인디케이터 (aria-current="step" / .krds-step-done)</h3>
+  <div class="sg-canvas"><ol class="krds-steps">
+  <li class="krds-step krds-step-done">약관 동의</li>
+  <li class="krds-step" aria-current="step">정보 입력</li>
+  <li class="krds-step">완료</li>
+</ol></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;ol class="krds-steps"&gt;
+  &lt;li class="krds-step krds-step-done"&gt;약관 동의&lt;/li&gt;
+  &lt;li class="krds-step" aria-current="step"&gt;정보 입력&lt;/li&gt;
+  &lt;li class="krds-step"&gt;완료&lt;/li&gt;
+&lt;/ol&gt;</code></pre></details>
+</div>
+  </section>
+
+  <section class="sg-section" id="disclosure">
+    <h2 class="sg-h2">12. 아코디언 · 모달 · 스피너</h2>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">아코디언 — 네이티브 &lt;details&gt;</h3>
+  <div class="sg-canvas"><div class="krds-accordion">
+  <details open><summary>수강신청은 언제부터인가요?</summary>
+    <div class="krds-accordion-body">2026년 8월 10일(월) 10:00부터 학사포털에서 가능합니다.</div></details>
+  <details><summary>증명서 발급 방법이 궁금합니다.</summary>
+    <div class="krds-accordion-body">온라인 증명서 발급 메뉴에서 즉시 발급됩니다.</div></details>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;div class="krds-accordion"&gt;
+  &lt;details&gt;&lt;summary&gt;질문&lt;/summary&gt;
+    &lt;div class="krds-accordion-body"&gt;답변&lt;/div&gt;&lt;/details&gt;
+&lt;/div&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">모달 — 네이티브 &lt;dialog&gt;</h3>
+  <div class="sg-canvas">
+  <button class="krds-btn krds-btn-secondary" onclick="document.getElementById('sg-modal').showModal()">모달 열기</button>
+  <dialog id="sg-modal" class="krds-modal">
+    <div class="krds-modal-header"><h2 class="krds-modal-title">삭제 확인</h2>
+      <button class="krds-btn krds-btn-text krds-btn-sm" onclick="this.closest('dialog').close()" aria-label="닫기">✕</button></div>
+    <div class="krds-modal-body"><p>선택한 게시글 1건을 삭제할까요? 이 작업은 되돌릴 수 없습니다.</p></div>
+    <div class="krds-modal-footer">
+      <button class="krds-btn krds-btn-tertiary" onclick="this.closest('dialog').close()">취소</button>
+      <button class="krds-btn krds-btn-point" onclick="this.closest('dialog').close()">삭제</button></div>
+  </dialog></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;dialog class="krds-modal"&gt;
+  &lt;div class="krds-modal-header"&gt;&lt;h2 class="krds-modal-title"&gt;제목&lt;/h2&gt;&lt;/div&gt;
+  &lt;div class="krds-modal-body"&gt;&lt;p&gt;내용&lt;/p&gt;&lt;/div&gt;
+  &lt;div class="krds-modal-footer"&gt;
+    &lt;button class="krds-btn krds-btn-tertiary"&gt;취소&lt;/button&gt;
+    &lt;button class="krds-btn krds-btn-point"&gt;삭제&lt;/button&gt;&lt;/div&gt;
+&lt;/dialog&gt;
+&lt;script&gt;dialog.showModal() / dialog.close()&lt;/script&gt;</code></pre></details>
+</div>
+
+<div class="sg-demo">
+  <h3 class="sg-h3">스피너 (aria-label 필수)</h3>
+  <div class="sg-canvas"><div class="sg-row">
+  <span class="krds-spinner" role="status" aria-label="불러오는 중"></span>
+  <span class="krds-spinner krds-spinner-lg" role="status" aria-label="불러오는 중"></span>
+</div></div>
+  <details class="sg-code"><summary>코드 복사</summary><pre><code>&lt;span class="krds-spinner" role="status" aria-label="불러오는 중"&gt;&lt;/span&gt;</code></pre></details>
+</div>
+  </section>
+</main>
+
+<script>
+/* 테마/고대비 토글 — html 클래스 스왑 (실서비스는 사이트 설정 연동) */
+(function(){
+  var root=document.documentElement;
+  var themeBtns=document.querySelectorAll('[data-sg-theme]');
+  themeBtns.forEach(function(btn){
+    btn.addEventListener('click',function(){
+      themeBtns.forEach(function(b){root.classList.remove(b.dataset.sgTheme||'x');b.setAttribute('aria-pressed','false');});
+      if(btn.dataset.sgTheme)root.classList.add(btn.dataset.sgTheme);
+      btn.setAttribute('aria-pressed','true');
+    });
+  });
+  var hcBtn=document.querySelector('[data-sg-hc]');
+  hcBtn.addEventListener('click',function(){
+    var on=root.classList.toggle('hc');
+    hcBtn.setAttribute('aria-pressed',String(on));
+  });
+})();
+</script>
+</body>
+</html>

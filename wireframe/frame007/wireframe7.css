@@ -1,0 +1,225 @@
+/* ============================================================
+   PCMS 2026-001 와이어프레임 G안(frame007) 공용 스타일
+   - 콘셉트: 공공기관 정석 3단 헤더 + 좌 LNB 3뎁스 + 우측 플로팅 퀵메뉴
+   - 시각 아이덴티티: 네이비/인디고(#1e3a8a) 주석, 중성 회색 배경,
+     격자감 있는 반듯한 구성(radius 0~6px) — 공공 웹 표준 사이트 무드
+   - 그레이스케일 = 화면 구조, 네이비 = 주석/설명, 점선 = 동적 슬롯
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+  background: #e8eaef;              /* 차분한 중성 회색 */
+  color: #374151;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 24px;
+}
+
+/* ── 페이지 머리말 ── */
+.wf-doc-header { max-width: 1080px; margin: 0 auto 20px; }
+.wf-doc-header h1 { font-size: 20px; color: #111827; margin-bottom: 4px; }
+.wf-doc-header p  { color: #4b5563; font-size: 13px; }
+.wf-doc-header .route { display:inline-block; font-family: Consolas, monospace; background:#1e3a8a; color:#e0e7ff; padding:2px 8px; border-radius:2px; font-size:12px; margin:4px 4px 0 0; }
+.wf-back { display:inline-block; margin-bottom:12px; color:#1e3a8a; text-decoration:none; font-size:12px; font-weight:700; }
+.wf-back:hover { text-decoration:underline; }
+.wf-badge-g { display:inline-block; background:#1e3a8a; color:#fff; font-size:11px; padding:2px 10px; border-radius:2px; vertical-align:middle; margin-left:8px; letter-spacing:.5px; }
+
+/* ── 브라우저 프레임(캔버스) — 반듯한 격자 프레임 ── */
+.wf-canvas {
+  max-width: 1080px; margin: 0 auto 40px; background: #fff;
+  border: 2px solid #4b5563; border-radius: 0; overflow: hidden;
+  box-shadow: 0 2px 10px rgba(17,24,39,.14);
+  position: relative;               /* 플로팅 퀵메뉴 absolute 기준 */
+}
+.wf-browserbar {
+  display: flex; align-items: center; gap: 8px;
+  background: #d1d5db; padding: 8px 12px; border-bottom: 2px solid #4b5563;
+}
+.wf-browserbar .dot { width: 10px; height: 10px; border-radius: 50%; background: #9ca3af; }
+.wf-browserbar .url {
+  flex: 1; background: #f3f4f6; border: 1px solid #9ca3af; border-radius: 2px;
+  padding: 2px 12px; font-family: Consolas, monospace; font-size: 12px; color: #374151;
+}
+
+/* ── 기본 박스 — 직각/최소 radius ── */
+.wf-box  { border: 1.5px solid #9ca3af; background: #fff; border-radius: 0; }
+.wf-band { border-bottom: 1.5px solid #9ca3af; padding: 10px 16px; }
+.wf-gray { background: #f3f4f6; }
+.wf-dark { background: #1f2937; color: #e5e7eb; }
+.wf-navy { background: #1e3a8a; color: #e0e7ff; }        /* GNB 바 등 브랜드 밴드 */
+
+/* 동적 슬롯(htmx/JS 렌더) — 점선 */
+.wf-slot {
+  border: 2px dashed #93a3c4; background: #f6f8fc; color: #64748b;
+  padding: 10px 14px; text-align: center; border-radius: 0;
+}
+
+/* 이미지 자리표시(X 박스) */
+.wf-img {
+  position: relative; background: #e5e7eb; border: 1.5px solid #9ca3af;
+  display: flex; align-items: center; justify-content: center;
+  color: #6b7280; font-size: 11px; overflow: hidden; min-height: 60px;
+  border-radius: 0;
+}
+.wf-img::before, .wf-img::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to top right, transparent calc(50% - .75px), #9ca3af, transparent calc(50% + .75px));
+}
+.wf-img::after { transform: scaleX(-1); }
+.wf-img span { position: relative; z-index: 1; background: #e5e7eb; padding: 1px 6px; }
+
+/* ── 컨트롤 목업 ── */
+.wf-btn {
+  display: inline-block; border: 1.5px solid #1f2937; background: #1f2937; color: #fff;
+  padding: 5px 14px; font-size: 12px; border-radius: 2px; white-space: nowrap;
+}
+.wf-btn.ghost { background: #fff; color: #1f2937; }
+.wf-btn.navy  { background: #1e3a8a; border-color: #1e3a8a; color: #fff; }
+.wf-btn.sm { padding: 2px 8px; font-size: 11px; }
+.wf-input {
+  border: 1.5px solid #9ca3af; background: #fff; border-radius: 2px;
+  padding: 5px 10px; color: #9ca3af; font-size: 12px; display: inline-block;
+}
+.wf-chip { display:inline-block; border:1px solid #9ca3af; border-radius:2px; padding:1px 8px; font-size:11px; color:#4b5563; background:#f9fafb; }
+.wf-chip.on { background:#1e3a8a; color:#fff; border-color:#1e3a8a; }
+
+/* ── 텍스트 목업 ── */
+.wf-h1 { font-size: 20px; font-weight: 700; color: #111827; }
+.wf-h2 { font-size: 15px; font-weight: 700; color: #111827; }
+.wf-line { height: 8px; background: #d1d5db; border-radius: 2px; margin: 6px 0; }
+.wf-line.w40 { width: 40%; } .wf-line.w60 { width: 60%; } .wf-line.w80 { width: 80%; }
+.wf-line.thin { height: 5px; background: #e5e7eb; }
+
+/* ── 주석(설명) — 네이비 ── */
+.wf-note {
+  color: #1e3a8a; font-size: 11px;
+  background: #eef2ff; border-left: 3px solid #1e3a8a; padding: 3px 8px;
+  display: block; margin-top: 6px; border-radius: 0;
+}
+.wf-tag {
+  display: inline-block; background: #1e3a8a; color: #fff; font-size: 10px;
+  padding: 1px 6px; border-radius: 2px; vertical-align: middle; margin-left: 6px;
+  font-weight: 400;
+}
+.wf-code { font-family: Consolas, monospace; font-size: 11px; background:#eef0f4; padding:0 4px; border-radius:2px; color:#111827; }
+
+/* ── 레이아웃 유틸 ── */
+.wf-row  { display: flex; gap: 10px; align-items: center; }
+.wf-row.stretch { align-items: stretch; }
+.wf-grow { flex: 1; }
+.wf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wf-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.wf-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.wf-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.wf-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.wf-p { padding: 16px; }
+.wf-section { padding: 16px; border-bottom: 1.5px solid #d1d5db; }
+.wf-section:last-child { border-bottom: none; }
+.mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mb-2 { margin-bottom: 8px; }
+
+/* ── 테이블 목업 — 공공 정석 테이블(가운데 정렬 헤더) ── */
+.wf-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.wf-table th, .wf-table td { border: 1px solid #d1d5db; padding: 6px 10px; text-align: left; }
+.wf-table th { background: #eef0f4; color: #374151; border-top: 2px solid #1e3a8a; }
+.wf-table td { color: #6b7280; }
+.wf-table.center th, .wf-table.center td { text-align: center; }
+.wf-table.center td.tl { text-align: left; }
+
+/* ── IA 트리(index 전용) ── */
+.wf-tree { font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.9; color: #374151; }
+.wf-tree a { color: #1e3a8a; text-decoration: none; }
+.wf-tree a:hover { text-decoration: underline; }
+.wf-tree .dim { color: #9ca3af; }
+
+/* ============================================================
+   G안 전용 패턴
+   ============================================================ */
+
+/* ── ① 최상단 유틸바 ── */
+.wf-util { background:#f3f4f6; padding: 4px 16px; font-size: 11px; }
+
+/* ── ③ 풀폭 GNB 바(네이비) ── */
+.wf-gnbbar { background:#1e3a8a; color:#e0e7ff; padding: 0 16px; border-bottom: 1.5px solid #16265c; }
+.wf-gnbbar .gnb-item { display:inline-block; padding: 9px 22px; font-size: 13px; font-weight: 700; color:#e0e7ff; }
+.wf-gnbbar .gnb-item.on { background:#16265c; box-shadow: inset 0 -3px 0 #fff; }
+
+/* GNB 전체 펼침 패널(full-width 드롭다운) */
+.wf-gnb-panel {
+  border-bottom: 2px solid #1e3a8a; background:#fff;
+  display:grid; grid-template-columns: repeat(5, 1fr);
+}
+.wf-gnb-panel .col { border-right: 1px solid #e5e7eb; padding: 12px 16px; }
+.wf-gnb-panel .col:last-child { border-right: none; }
+.wf-gnb-panel .col b { display:block; font-size:12.5px; color:#1e3a8a; border-bottom:2px solid #1e3a8a; padding-bottom:4px; margin-bottom:6px; }
+.wf-gnb-panel .col span { display:block; font-size:11.5px; color:#4b5563; padding:2px 0; }
+/* GNB 패널 3뎁스 들여쓰기 — 메뉴는 3뎁스까지만 노출(4뎁스는 페이지 내 탭/필터) */
+.wf-gnb-panel .col span.s3 { padding:1px 0 1px 14px; font-size:10.5px; color:#9ca3af; }
+.wf-gnb-panel .col span.s3::before { content:"· "; color:#93a3c4; }
+
+/* ── 서브페이지 타이틀 밴드(SUB_HERO 배경) ── */
+.wf-hero-band {
+  position: relative; min-height: 84px; border-bottom: 1.5px solid #9ca3af;
+  background: repeating-linear-gradient(45deg, #dbe1ec, #dbe1ec 8px, #e8ecf4 8px, #e8ecf4 16px);
+  display:flex; align-items:center; justify-content:center; flex-direction:column; gap:2px;
+}
+.wf-hero-band b { font-size: 18px; color: #111827; background:rgba(255,255,255,.75); padding: 2px 14px; }
+.wf-hero-band .sub { font-size: 11px; color:#4b5563; background:rgba(255,255,255,.7); padding: 0 8px; }
+
+/* ── breadcrumb + 본문 유틸(인쇄·URL복사·공유) 행 ── */
+.wf-crumb { border-bottom: 1px solid #d1d5db; background:#fff; padding: 6px 16px; }
+.wf-crumb .path { font-size: 11.5px; color:#6b7280; }
+.wf-crumb .path b { color:#1e3a8a; }
+
+/* ── 좌측 LNB 2~3뎁스 트리 ── */
+.wf-lnb { width: 210px; flex-shrink: 0; }
+.wf-lnb .lnb-title {
+  background:#1e3a8a; color:#fff; font-weight:700; font-size:14px;
+  text-align:center; padding: 14px 12px; border-bottom: 1.5px solid #16265c;
+}
+.wf-lnb .d2 { padding: 8px 14px; font-size: 12.5px; border-bottom: 1px solid #e5e7eb; color:#374151; }
+.wf-lnb .d2.open { font-weight:700; color:#1e3a8a; }
+.wf-lnb .d2.active { background:#16265c; color:#fff; font-weight:700; }
+.wf-lnb .d3 { padding: 5px 14px 5px 28px; font-size: 11.5px; border-bottom: 1px solid #f3f4f6; color:#6b7280; background:#f9fafb; }
+.wf-lnb .d3.active { color:#1e3a8a; font-weight:700; background:#eef2ff; box-shadow: inset 3px 0 0 #1e3a8a; }
+.wf-lnb .fold { float:right; color:#9ca3af; font-size:10px; }
+
+/* ── 우측 화면 고정 플로팅 퀵메뉴 ── */
+.wf-quick {
+  position: absolute; right: 10px; top: 300px; width: 86px; z-index: 5;
+  border: 1.5px solid #1e3a8a; background:#fff; text-align:center;
+  box-shadow: 0 2px 8px rgba(30,58,138,.25);
+}
+.wf-quick .q-title { background:#1e3a8a; color:#fff; font-size:10.5px; font-weight:700; padding:5px 4px; }
+.wf-quick .q-item { font-size:10.5px; color:#374151; padding:7px 4px; border-bottom:1px solid #e5e7eb; }
+.wf-quick .q-item .ico { display:block; font-size:14px; }
+.wf-quick .q-top { background:#1f2937; color:#fff; font-size:10.5px; padding:6px 4px; }
+.wf-quick.inline { position: static; width: 86px; }   /* 해부도 설명용 정적 배치 */
+
+/* ── 푸터: 풀 사이트맵형 ── */
+.wf-footmap { display:grid; grid-template-columns: repeat(5,1fr); gap: 0; }
+.wf-footmap .col { border-right: 1px solid #374151; padding: 10px 14px; }
+.wf-footmap .col:last-child { border-right:none; }
+.wf-footmap .col b { display:block; font-size:12px; color:#e5e7eb; margin-bottom:4px; }
+.wf-footmap .col span { display:block; font-size:11px; color:#9ca3af; padding:1px 0; }
+
+/* ── 가입 가로 스텝 인디케이터 ── */
+.wf-steps { display:flex; gap:0; }
+.wf-steps .step { flex:1; text-align:center; padding:8px 4px; font-size:12px; border:1.5px solid #9ca3af; border-left:none; background:#f3f4f6; color:#6b7280; }
+.wf-steps .step:first-child { border-left:1.5px solid #9ca3af; }
+.wf-steps .step.on { background:#1e3a8a; color:#fff; border-color:#1e3a8a; font-weight:700; }
+.wf-steps .step.done { background:#e0e7ff; color:#1e3a8a; }
+
+/* ── 사이트맵 페이지 뎁스 행(1~4뎁스 전체 전개 — 사이트맵 페이지 전용) ── */
+.wf-map2 { padding:6px 12px; font-size:11.5px; color:#374151; }
+.wf-map3 { padding:3px 12px 3px 24px; font-size:11px; color:#6b7280; background:#f9fafb; }
+.wf-map3::before { content:"· "; color:#93a3c4; }
+.wf-map4 { padding:2px 12px 2px 38px; font-size:10.5px; color:#9ca3af; background:#f9fafb; }
+.wf-map4::before { content:"– "; color:#c3cad9; }
+
+/* ── 미니 캘린더 ── */
+.wf-cal { width:100%; border-collapse:collapse; font-size:11px; text-align:center; }
+.wf-cal th, .wf-cal td { border:1px solid #e5e7eb; padding:3px 2px; color:#6b7280; }
+.wf-cal th { background:#eef0f4; color:#374151; }
+.wf-cal td.ev { background:#eef2ff; color:#1e3a8a; font-weight:700; }
+.wf-cal td.today { background:#1e3a8a; color:#fff; font-weight:700; }

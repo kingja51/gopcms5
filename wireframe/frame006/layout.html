@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 F안 — 공용 프레임 해부도</title>
+<link rel="stylesheet" href="wireframe6.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>공용 프레임 F — 앱바 + 하단 탭바 5개(모바일) / 상단 5탭 + 협폭 컬럼(데스크톱) <span class="wf-badge-f">F안</span></h1>
+  <p><span class="route">전 페이지 공통 프레임</span> — A안과 동일하게 <span class="wf-code">front/layouts/KRDS/krds.html</span> 1개 파일 체계 유지.
+     <b>하나의 Thymeleaf 템플릿이 미디어쿼리로 두 모습(모바일 앱형 / 데스크톱 협폭)을 내는 반응형</b>이며, 별도 모바일 사이트·별도 템플릿이 아니다.</p>
+</div>
+
+<div class="wf-duo">
+
+  <!-- ══════════ 모바일 프레임 (정본) ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 모바일 프레임 (정본) — 폭 ~390px</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/ai/home</div>
+
+      <!-- ① 앱바 -->
+      <div class="wf-appbar">
+        <span class="wf-chip">←</span>
+        <b>인공지능학과</b>
+        <span class="wf-grow"></span>
+        <span class="wf-chip">🔍</span><span class="wf-chip">🔔</span>
+      </div>
+      <div style="padding:0 12px">
+        <span class="wf-note">① 콤팩트 앱바 — 좌: 뒤로가기(홈에서는 미출력, 대신 사이트 로고), 중: 페이지 타이틀(= 현재 메뉴명), 우: 검색(검색 탭 이동)·알림(🔔 → /notification, 배지 = 미읽음 수).
+        breadcrumb 은 모바일에서 생략 — 타이틀+뒤로가기가 대체. 스킵링크(본문 바로가기)는 sr-only 로 앱바 앞에 유지.</span>
+      </div>
+
+      <!-- ② 본문 슬롯 -->
+      <div class="wf-p">
+        <div class="wf-slot" style="min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+          <b style="font-size:14px">② 본문 — layout:fragment="content"</b>
+          <span>페이지별 콘텐츠 (홈·콘텐츠·프로그램·게시판·회원·검색)</span>
+          <span style="font-size:11px">긴 콘텐츠는 아코디언(&lt;details&gt;)으로 분절</span>
+          <span style="font-size:11px">SUB_HERO 배너는 모바일에서 미출력(협폭 낭비) — 데스크톱만</span>
+        </div>
+        <span class="wf-note">② 본문 밑에는 탭바 높이만큼 padding-bottom 확보(콘텐츠 가림 방지, env(safe-area-inset-bottom) 가산).
+        contentId 있는 페이지는 본문 끝에 👍 좋아요/🚩 신고 밴드(A안 동일 조각).</span>
+      </div>
+
+      <!-- ③ 푸터(축약) -->
+      <div class="wf-band wf-gray" style="border-top:1.5px solid #94a3b8;border-bottom:none;font-size:11px">
+        <div class="wf-row"><span class="wf-chip">개인정보처리방침</span><span class="wf-chip">이메일무단수집거부</span><span class="wf-chip">◐ 고대비</span></div>
+        <div class="wf-line thin w60 mt-2"></div>
+        <span class="wf-note" style="margin-bottom:6px">③ 모바일 푸터 — 주소/연락처는 1줄 축약, 필수 링크만. 고대비(hc) 토글은 푸터로 이동(앱바 혼잡 방지).</span>
+      </div>
+
+      <!-- ④ 하단 고정 탭바 -->
+      <div class="wf-tabbar">
+        <div class="wf-tab active"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+    <span class="wf-note" style="max-width:390px">④ 하단 탭바 — <b>CSS 만으로 구성: position:fixed; bottom:0</b> + safe-area 패딩. JS 프레임워크 금지 규약 그대로(탭 전환 = 일반 &lt;a&gt; 내비게이션).
+    active 판정은 <b>서버 렌더</b>(Thymeleaf 에서 현재 요청 URL ↔ 탭 라우트 prefix 매칭) — 클라이언트 JS 불필요.
+    아이콘은 self-host SVG 스프라이트(이모지는 자리표시). 데스크톱(≥1024px)에서는 display:none → 상단 가로 내비로 전환.</span>
+  </div>
+
+  <!-- ══════════ 모바일: "학과" 탭 전체메뉴 (1~3뎁스) ══════════ -->
+  <div class="wf-col">
+    <div class="wf-caption">📱 "학과" 탭 전체메뉴 — 1~3뎁스 메뉴 뷰 (정본)</div>
+    <div class="wf-phone">
+      <div class="wf-status"><span>9:41</span><span class="wf-notch"></span><span>📶 🔋</span></div>
+      <div class="wf-phone-url">http://127.0.0.1:8080/ai/sitemap</div>
+
+      <div class="wf-appbar">
+        <b>학과 전체메뉴</b><span class="wf-grow"></span><span class="wf-chip">사이트맵 전체 펼치기</span><span class="wf-chip">🔍</span>
+      </div>
+
+      <div class="wf-p" style="padding:12px 14px">
+        <div class="wf-box">
+          <div class="wf-band" style="padding:10px 12px"><b style="font-size:12.5px">▸ 소개</b> <span style="font-size:10px;color:#94a3b8">학과소개 · 오시는길</span></div>
+          <div class="wf-band" style="padding:10px 12px"><b style="font-size:12.5px">▸ 구성원</b> <span style="font-size:10px;color:#94a3b8">교수진 · 직원</span></div>
+          <div class="wf-band" style="padding:10px 12px">
+            <div class="wf-row"><b style="font-size:12.5px">▾ 교육</b><span class="wf-grow"></span><span class="wf-chip" style="font-size:9px">열림</span></div>
+            <!-- 2뎁스 행 -->
+            <div style="font-size:12px;color:#334155;padding:6px 0 0 12px">교과과정 <span style="font-size:10px;color:#94a3b8">/ai/curriculum</span></div>
+            <!-- 3뎁스 들여쓰기 서브 행 -->
+            <div style="font-size:11px;color:#64748b;padding:4px 0 0 26px">└ 학부 <span style="font-size:9.5px;color:#94a3b8">페이지 내 탭</span></div>
+            <div style="font-size:11px;color:#64748b;padding:3px 0 0 26px">└ 대학원 <span style="font-size:9.5px;color:#94a3b8">페이지 내 탭</span></div>
+            <div style="font-size:12px;color:#334155;padding:6px 0 0 12px">수업계획서 <span style="font-size:10px;color:#94a3b8">/prg/syllabus/ai</span></div>
+            <div style="font-size:12px;color:#334155;padding:5px 0 0 12px">학사일정 <span style="font-size:10px;color:#94a3b8">/schedule/academic</span></div>
+          </div>
+          <div class="wf-band" style="padding:10px 12px"><b style="font-size:12.5px">▸ 연구</b> <span style="font-size:10px;color:#94a3b8">연구실 · 연구성과</span></div>
+          <div class="wf-band" style="border-bottom:none;padding:10px 12px"><b style="font-size:12.5px">▸ 커뮤니티</b> <span style="font-size:10px;color:#94a3b8">공지 · 소식 · 세미나 · 자료실</span></div>
+        </div>
+        <span class="wf-note"><b>출력 규칙(전 안 공통)</b> — 메뉴("학과" 탭 전체메뉴·데스크톱 드롭 패널)는 <b>1~3뎁스까지만 노출</b>.
+        4뎁스(전공필수·전공선택, 석사·박사과정, 휴·복학/졸업 서식)는 메뉴에 노출하지 않고 <b>3뎁스 페이지 내 탭/필터</b>로 처리.
+        사이트맵 풀 뷰(search-sitemap.html, ?view=full)만 1~4뎁스 전체 전개. 데이터는 <b>siteContext.menuTree 하나</b>(tb_menu depth 1~4 저장) — 전체메뉴·사이트맵이 렌더 뎁스만 달리함.
+        1뎁스 그룹 = 네이티브 &lt;details&gt;/&lt;summary&gt; 아코디언, 3뎁스 = 앵커/탭/카테고리 직링크.</span>
+      </div>
+
+      <div class="wf-tabbar">
+        <div class="wf-tab"><span class="ico">🏠</span>홈</div>
+        <div class="wf-tab active"><span class="ico">🎓</span>학과</div>
+        <div class="wf-tab"><span class="ico">📋</span>게시판</div>
+        <div class="wf-tab"><span class="ico">🔍</span>검색</div>
+        <div class="wf-tab"><span class="ico">👤</span>MY</div>
+      </div>
+      <div class="wf-homebar"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ 데스크톱 캔버스 (확장) ══════════ -->
+  <div class="wf-col" style="flex:1;min-width:560px">
+    <div class="wf-caption">🖥 데스크톱 캔버스 (확장) — 같은 템플릿, 센터 협폭 ~860px 컬럼</div>
+    <div class="wf-canvas">
+      <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="url">http://127.0.0.1:8080/ai/home  (모든 페이지 공통 프레임)</span></div>
+
+      <!-- 유틸바 -->
+      <div class="wf-band wf-gray" style="padding:4px 16px">
+        <div class="wf-deskcol">
+          <div class="wf-row" style="font-size:11px">
+            <span class="wf-chip">건양대학교</span><span class="wf-chip">관련 사이트 ▾</span>
+            <span class="wf-grow"></span>
+            <span class="wf-slot" style="padding:1px 8px;font-size:11px">☀ 날씨</span>
+            <span class="wf-chip">🔔</span><span class="wf-chip">로그인</span><span class="wf-chip">◐ 고대비</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 상단 5탭 내비 -->
+      <div class="wf-band">
+        <div class="wf-deskcol">
+          <div class="wf-row">
+            <b style="font-size:16px">인공지능학과 <span style="font-size:10px;color:#94a3b8">KONYANG UNIV.</span></b>
+            <span class="wf-grow"></span>
+            <span class="wf-btn sky sm">🏠 홈</span>
+            <span class="wf-btn ghost sm">🎓 학과</span>
+            <span class="wf-btn ghost sm">📋 게시판</span>
+            <span class="wf-btn ghost sm">🔍 검색</span>
+            <span class="wf-btn ghost sm">👤 MY</span>
+          </div>
+        </div>
+        <div class="wf-deskcol"><span class="wf-note">데스크톱 = <b>같은 5탭이 상단 가로 내비로 전개</b>(마크업 재사용, CSS 만 다름). "학과" 탭 호버/클릭 시 메뉴 5그룹 드롭 패널(아래) — 사이트맵과 동일 데이터 siteContext.menuTree 를 <b>1~3뎁스로 렌더</b>. GNB 밴드·메가메뉴는 없음 — 내비 어휘를 모바일과 통일.</span></div>
+        <div class="wf-deskcol mt-2">
+          <div class="wf-box wf-sky" style="padding:10px 12px">
+            <div class="wf-row" style="font-size:10px;color:#0369a1"><b>"학과" 탭 드롭 패널 — 1~3뎁스</b><span class="wf-grow"></span><span class="wf-chip" style="font-size:9px">✕ 닫기</span></div>
+            <div class="wf-grid-4 mt-2" style="grid-template-columns:repeat(5,1fr);gap:8px;font-size:10.5px">
+              <div><b style="font-size:11px">소개</b>
+                <div style="color:#334155;margin-top:4px">학과소개</div>
+                <div style="color:#94a3b8;padding-left:8px">인사말 · 비전·인재상 · 연혁</div>
+                <div style="color:#334155;margin-top:2px">오시는길</div>
+              </div>
+              <div><b style="font-size:11px">구성원</b>
+                <div style="color:#334155;margin-top:4px">교수진</div>
+                <div style="color:#94a3b8;padding-left:8px">전임교원 · 겸임·초빙 · 명예교수</div>
+                <div style="color:#334155;margin-top:2px">직원</div>
+              </div>
+              <div><b style="font-size:11px">교육</b>
+                <div style="color:#334155;margin-top:4px">교과과정</div>
+                <div style="color:#94a3b8;padding-left:8px">학부 · 대학원</div>
+                <div style="color:#334155;margin-top:2px">수업계획서</div>
+                <div style="color:#334155;margin-top:2px">학사일정</div>
+              </div>
+              <div><b style="font-size:11px">연구</b>
+                <div style="color:#334155;margin-top:4px">연구실</div>
+                <div style="color:#334155;margin-top:2px">연구성과</div>
+                <div style="color:#94a3b8;padding-left:8px">논문 · 특허·기술이전</div>
+              </div>
+              <div><b style="font-size:11px">커뮤니티</b>
+                <div style="color:#334155;margin-top:4px">공지사항</div>
+                <div style="color:#94a3b8;padding-left:8px">학사 · 장학 · 취업</div>
+                <div style="color:#334155;margin-top:2px">학과소식 · 세미나</div>
+                <div style="color:#334155;margin-top:2px">자료실</div>
+                <div style="color:#94a3b8;padding-left:8px">학사서식 · 강의자료</div>
+              </div>
+            </div>
+            <span class="wf-note" style="margin-top:8px">드롭 패널도 <b>1~3뎁스까지만 노출</b>(회색 = 3뎁스 — 앵커/탭/카테고리 직링크). 4뎁스는 3뎁스 페이지 내 탭/필터로 처리 — 사이트맵 풀 뷰만 1~4뎁스 전체 전개(동일 menuTree, 렌더 뎁스만 상이).</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 협폭 본문 -->
+      <div class="wf-band" style="padding:16px">
+        <div class="wf-deskcol">
+          <div class="wf-row" style="font-size:11px;color:#64748b"><span>홈 › 구성원 › 교수진</span><span class="wf-grow"></span><div class="wf-img" style="width:180px;height:40px;min-height:40px"><span>SUB_HERO</span></div></div>
+          <div class="wf-slot mt-2" style="min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+            <b style="font-size:14px">본문 — layout:fragment="content" (모바일과 동일 마크업)</b>
+            <span>max-width 860px 센터 컬럼 — 모바일 1컬럼이 그대로 넓어진 형태</span>
+            <span style="font-size:11px">LNB·2단 분할 없음. 서브페이지 내 이동은 본문 상단 칩/아코디언으로</span>
+          </div>
+          <span class="wf-note">데스크톱 협폭 컬럼 — 읽기 폭을 860px 로 제한해 모바일과 같은 세로 흐름 유지("모바일이 정본, 데스크톱은 확장").
+          breadcrumb·SUB_HERO(GET /api/v1/sites/{sc}/banners?location=SUB_HERO)는 데스크톱에서만 노출.</span>
+        </div>
+      </div>
+
+      <!-- 푸터 -->
+      <div class="wf-band wf-dark" style="border-bottom:none">
+        <div class="wf-deskcol">
+          <div class="wf-row">
+            <div class="wf-grow"><div class="wf-line w40" style="background:#475569"></div><div class="wf-line thin w60" style="background:#334155"></div></div>
+            <span class="wf-chip">개인정보처리방침</span><span class="wf-chip">이메일무단수집거부</span><span class="wf-chip">TOP ↑</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-canvas mt-4" style="min-width:0">
+      <div class="wf-section">
+        <div class="wf-h2 mb-2">A안 → F안 구현 시 바뀌는 것</div>
+        <table class="wf-table">
+          <tr><th style="width:210px">변경 지점</th><th>내용</th></tr>
+          <tr><td>krds.html 헤더부</td><td>마스트헤드+GNB 밴드 → 모바일 앱바 + 데스크톱 유틸바/5탭 헤더. 같은 마크업을 미디어쿼리로 전환(템플릿 분기 없음)</td></tr>
+          <tr><td>fragments/tabbar (신설)</td><td>하단 탭바 5개 — 현재 URL prefix 로 active 서버 판정, position:fixed 는 모바일 브레이크포인트에서만</td></tr>
+          <tr><td>본문 컨테이너</td><td>와이드 컨테이너 → max-width 860px 센터 컬럼. LNB/2단 그리드 조각 미사용</td></tr>
+          <tr><td>breadcrumb·SUB_HERO</td><td>데스크톱 전용(모바일 display:none) — 모바일은 앱바 타이틀+뒤로가기가 대체</td></tr>
+          <tr><td>메뉴 노출 뎁스</td><td><b>전체메뉴("학과" 탭)·드롭 패널 = 1~3뎁스, 사이트맵 풀 뷰 = 1~4뎁스 전체</b>(전 안 공통 원칙). siteContext.menuTree 하나로 렌더 뎁스만 달리함 — 4뎁스는 3뎁스 페이지 내 탭/필터</td></tr>
+          <tr><td>변경 없음</td><td>라우트·컨트롤러·tb_menu·<b>tb_role_url_access(무매칭 DENY — 새 URL 없어 추가 등록 불필요)</b>·팝업/좋아요/푸터 조각·CSP nonce·htmx 규약</td></tr>
+        </table>
+        <span class="wf-note">스크립트 계층은 A안과 동일 규약 — 외부 .js + CSP nonce, 이벤트 위임(document 1회 + closest('[data-action]')), htmx:load 멱등 초기화(data-initialized 가드), 인라인 스크립트/핸들러 금지, self-host(CDN 금지). 뒤로가기 민감 화면(검색 결과·무한스크롤 피드)은 hx-history="false".</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>와이어프레임 E안 — 프로그램 페이지</title>
+<link rel="stylesheet" href="wireframe5.css"/>
+</head>
+<body>
+
+<div class="wf-doc-header">
+  <a class="wf-back" href="index.html">← 목차로</a>
+  <h1>프로그램 — 필터 카드 + 카드 그리드 <span class="wf-badge-e">E안</span></h1>
+  <p><span class="route">GET /prg/faculty/{sc}</span><span class="route">GET /prg/lab/{sc}</span><span class="route">GET /prg/syllabus/{sc}</span>
+     — secondary 조각(다학과 공용 제네릭 dept 도메인). 교수진 = 인물 카드 그리드, 연구실 = 와이드 카드, 수업계획서 = 테이블 카드.</p>
+</div>
+
+<!-- 교수진 -->
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/prg/faculty/ai</span></div>
+
+  <div class="wf-band wf-gray" style="padding:4px 20px"><div class="wf-row" style="font-size:11px"><span class="wf-chip">관련 사이트 ▾</span><span class="wf-grow"></span><span class="wf-chip">🔔 알림</span><span class="wf-chip">로그인</span><span class="wf-chip">◐</span></div></div>
+  <div class="wf-band"><div class="wf-row"><b style="font-size:16px">인공지능학과</b><span class="wf-grow"></span><span class="wf-btn ghost sm">소개</span><span class="wf-btn ghost sm" style="border-color:#e11d48;color:#e11d48">구성원</span><span class="wf-btn ghost sm">교육</span><span class="wf-btn ghost sm">연구</span><span class="wf-btn ghost sm">커뮤니티</span><span class="wf-input" style="width:150px">🔍 통합검색</span></div></div>
+
+  <div class="wf-section">
+    <div class="wf-card">
+      <div class="wf-card-body" style="display:flex;align-items:center;gap:12px">
+        <div class="wf-grow"><span style="font-size:11px;color:#a8a29e">홈 › 구성원 › 교수진</span><div class="wf-h1">교수진</div>
+          <div class="wf-row mt-2"><span class="wf-chip on">교수진</span><span class="wf-chip">직원</span></div></div>
+        <div class="wf-img" style="width:220px;height:56px;min-height:56px"><span>SUB_HERO</span></div>
+      </div>
+    </div>
+
+    <!-- 필터 카드 -->
+    <div class="wf-card mt-4">
+      <div class="wf-card-body" style="padding:10px 14px">
+        <div class="wf-row">
+          <span class="wf-chip on">전체</span><span class="wf-chip">전임교원</span><span class="wf-chip">겸임·초빙</span><span class="wf-chip">명예교수</span>
+          <span class="wf-grow"></span>
+          <span class="wf-input" style="width:150px">전공분야 전체 ▾</span>
+          <span class="wf-input" style="width:180px">이름·연구분야 검색</span>
+          <span class="wf-btn sm">검색</span>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">필터 카드 — 구분 탭 칩(전임교원·겸임·초빙·명예교수) = <b>메뉴 3뎁스를 페이지 내 필터 탭으로 렌더</b>(메뉴 뎁스 출력 규칙 — GNB 드롭 카드 3뎁스 클릭 시 /prg/faculty/ai?type= 진입). 칩·셀렉트 변경·검색 입력(300ms debounce) 시 hx-get="/prg/faculty/ai?type=…&amp;field=…&amp;keyword=…" 으로 <b>아래 그리드 카드만 부분갱신</b>(hx-target). URL 쿼리 동기(hx-push-url)로 새로고침·공유 시 필터 유지, hx-history="false" 불필요(민감정보 없음).</span>
+
+    <!-- 인물 카드 그리드 -->
+    <div class="wf-slot mt-4" style="text-align:left;padding:14px">
+      <div class="wf-grid-3">
+        <div class="wf-card">
+          <div class="wf-img" style="height:110px;border:none;border-radius:0"><span>프로필 사진 3:4</span></div>
+          <div class="wf-card-body">
+            <b style="font-size:13px">김○○ 교수</b> <span class="wf-chip" style="font-size:10px">학과장</span>
+            <div style="font-size:11px;color:#78716c;margin-top:4px">042-600-**** · k**@konyang.ac.kr</div>
+            <div class="wf-row mt-2" style="gap:4px;flex-wrap:wrap"><span class="wf-chip" style="font-size:10px">머신러닝</span><span class="wf-chip" style="font-size:10px">컴퓨터비전</span></div>
+          </div>
+        </div>
+        <div class="wf-card">
+          <div class="wf-img" style="height:110px;border:none;border-radius:0"><span>프로필 사진</span></div>
+          <div class="wf-card-body"><b style="font-size:13px">이○○ 교수</b>
+            <div style="font-size:11px;color:#78716c;margin-top:4px">042-600-**** · l**@konyang.ac.kr</div>
+            <div class="wf-row mt-2" style="gap:4px"><span class="wf-chip" style="font-size:10px">자연어처리</span></div>
+          </div>
+        </div>
+        <div class="wf-card">
+          <div class="wf-img" style="height:110px;border:none;border-radius:0"><span>프로필 사진</span></div>
+          <div class="wf-card-body"><b style="font-size:13px">박○○ 조교수</b>
+            <div style="font-size:11px;color:#78716c;margin-top:4px">042-600-**** · p**@konyang.ac.kr</div>
+            <div class="wf-row mt-2" style="gap:4px"><span class="wf-chip" style="font-size:10px">강화학습</span><span class="wf-chip" style="font-size:10px">로보틱스</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-row mt-4"><span class="wf-grow"></span><span class="wf-chip">‹</span><span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">›</span><span class="wf-grow"></span></div>
+    </div>
+    <span class="wf-note">인물 카드 = 사진 + 이름·직위 + 연락처 + 연구분야 칩. 데이터 = tb_faculty(secondary, site_code 스코프 — FAC_ 접두 PK). 전화·이메일은 <b>MaskUtils 마스킹 출력</b>(원문 노출 금지), 상세는 카드 클릭 → /prg/faculty/ai/{id}. 사진 없는 교원은 이니셜 플레이스홀더 — 카드 높이 유지. 모바일 1컬럼.</span>
+    <span class="wf-note">직원(/prg/staff/{sc})은 동일 골격에서 연구분야 칩 → 담당업무 텍스트로 치환 — 스킨 공유. 제네릭 /prg 라 학과 추가 시 복사 불필요(학과추가가이드), tb_role_url_access 에 /prg/** 규칙 기등록.</span>
+  </div>
+
+  <div class="wf-band wf-dark" style="border-bottom:none"><div class="wf-line w40" style="background:#57534e"></div></div>
+</div>
+
+<!-- 연구실 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">연구실 — /prg/lab/{sc} (가로 와이드 카드 리스트)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/prg/lab/ai</span></div>
+  <div class="wf-section">
+    <div class="wf-card">
+      <div class="wf-card-body" style="display:flex;gap:0;padding:0">
+        <div class="wf-img" style="width:200px;min-height:110px;border:none;border-radius:0"><span>연구실 대표사진</span></div>
+        <div class="wf-p wf-grow">
+          <div class="wf-row"><b style="font-size:13px">지능형 로봇 연구실 (IRL)</b><span class="wf-chip" style="font-size:10px">지도교수 김○○</span></div>
+          <div class="wf-line thin w80"></div><div class="wf-line thin w60"></div>
+          <div class="wf-row mt-2"><span class="wf-chip" style="font-size:10px">📍 ○○관 402호</span><span class="wf-chip" style="font-size:10px">🔗 홈페이지</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="wf-card mt-4">
+      <div class="wf-card-body" style="display:flex;gap:0;padding:0">
+        <div class="wf-img" style="width:200px;min-height:110px;border:none;border-radius:0"><span>연구실 대표사진</span></div>
+        <div class="wf-p wf-grow">
+          <div class="wf-row"><b style="font-size:13px">비전 AI 연구실</b><span class="wf-chip" style="font-size:10px">지도교수 이○○</span></div>
+          <div class="wf-line thin w60"></div><div class="wf-line thin w80"></div>
+        </div>
+      </div>
+    </div>
+    <span class="wf-note">와이드 카드 = 사진(좌 200px) + 연구실명·지도교수·소개 요약·위치/링크 칩(우). 데이터 = tb_lab(secondary, LAB_ 접두). 외부 홈페이지 링크는 rel="noopener" + 새 창 아이콘. 모바일은 사진이 카드 상단으로.</span>
+  </div>
+</div>
+
+<!-- 수업계획서 -->
+<div class="wf-doc-header"><h1 style="font-size:15px">수업계획서 — /prg/syllabus/{sc} (필터 카드 + 테이블 카드)</h1></div>
+<div class="wf-canvas">
+  <div class="wf-browserbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="url">http://127.0.0.1:8080/prg/syllabus/ai</span></div>
+  <div class="wf-section">
+    <div class="wf-card">
+      <div class="wf-card-body" style="padding:10px 14px">
+        <div class="wf-row">
+          <span class="wf-input" style="width:110px">2026년 ▾</span>
+          <span class="wf-input" style="width:110px">1학기 ▾</span>
+          <span class="wf-input wf-grow">과목명 검색</span>
+          <span class="wf-btn sm">조회</span>
+        </div>
+      </div>
+    </div>
+    <div class="wf-card mt-4">
+      <div class="wf-card-body" style="padding:0">
+        <table class="wf-table" style="border:none">
+          <tr><th>이수구분</th><th>과목명</th><th>담당교수</th><th>학점</th><th>계획서</th></tr>
+          <tr><td>전공필수</td><td>기계학습개론 ─────</td><td>김○○</td><td>3</td><td><span class="wf-chip">📄 보기</span></td></tr>
+          <tr><td>전공선택</td><td>딥러닝응용 ───</td><td>이○○</td><td>3</td><td><span class="wf-chip">📄 보기</span></td></tr>
+          <tr><td>전공선택</td><td>로봇제어 ────</td><td>박○○</td><td>3</td><td><span class="wf-chip">📄 보기</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="wf-row mt-2"><span class="wf-grow"></span><span class="wf-chip">‹</span><span class="wf-chip on">1</span><span class="wf-chip">2</span><span class="wf-chip">›</span><span class="wf-grow"></span></div>
+    <span class="wf-note">테이블 카드 — 카드 안에 테이블을 넣되 카드 radius 가 테이블 모서리를 감쌈(overflow:hidden). 연도/학기 셀렉트 변경 = hx-get 부분갱신(PageRequest 공통 파라미터). 계획서 보기 = PDF 뷰어(6중 방어 통과 파일, 재인코딩본 서빙). 데이터 = tb_syllabus(secondary, SYL_ 접두). 모바일은 행을 카드로 접는 스킨(테이블 → dl 변환).</span>
+  </div>
+</div>
+
+</body>
+</html>
