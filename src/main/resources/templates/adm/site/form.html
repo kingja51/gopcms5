@@ -33,7 +33,7 @@
         <div class="ladm-form-row">
             <div class="ladm-field">
                 <label for="templateId">템플릿 (시각 언어)</label>
-                <select id="templateId" name="templateId">
+                <select id="templateId" name="templateId" class="krds-select">
                     <option value="">선택 안 함 — 기본(krds)</option>
                     <option th:each="t : ${templates}" th:value="${t.templateId}"
                             th:selected="${t.templateId == siteForm.templateId}"
@@ -42,7 +42,7 @@
             </div>
             <div class="ladm-field">
                 <label for="themeId">테마 (색)</label>
-                <select id="themeId" name="themeId">
+                <select id="themeId" name="themeId" class="krds-select">
                     <option value="">선택 안 함 — 템플릿 기본 브랜드</option>
                     <option th:each="th : ${themes}" th:value="${th.themeId}"
                             th:selected="${th.themeId == siteForm.themeId}"
@@ -55,7 +55,7 @@
         <div class="ladm-form-row">
             <div class="ladm-field">
                 <label for="layoutId">레이아웃 (구조)</label>
-                <select id="layoutId" name="layoutId">
+                <select id="layoutId" name="layoutId" class="krds-select">
                     <option value="">선택 안 함 — 템플릿 기본 레이아웃</option>
                     <option th:each="l : ${layouts}" th:value="${l.layoutId}"
                             th:selected="${l.layoutId == siteForm.layoutId}"
@@ -64,7 +64,7 @@
             </div>
             <div class="ladm-field">
                 <label for="parentSiteId">상위 사이트</label>
-                <select id="parentSiteId" name="parentSiteId">
+                <select id="parentSiteId" name="parentSiteId" class="krds-select">
                     <option value="">없음 (최상위)</option>
                     <option th:each="s : ${sites}" th:value="${s.siteId}"
                             th:selected="${s.siteId == siteForm.parentSiteId}"
@@ -95,7 +95,7 @@
             </div>
             <div class="ladm-field">
                 <label for="useYn">상태</label>
-                <select id="useYn" name="useYn">
+                <select id="useYn" name="useYn" class="krds-select">
                     <option value="Y" th:selected="${siteForm.useYn == 'Y'}">사용</option>
                     <option value="N" th:selected="${siteForm.useYn == 'N'}">중지</option>
                 </select>
@@ -104,7 +104,7 @@
 
         <div class="ladm-field">
             <label for="defaultYn">기본 사이트</label>
-            <select id="defaultYn" name="defaultYn">
+            <select id="defaultYn" name="defaultYn" class="krds-select">
                 <option value="N" th:selected="${siteForm.defaultYn == 'N'}">아니오</option>
                 <option value="Y" th:selected="${siteForm.defaultYn == 'Y'}">예 — 루트(/) 접속 시 이 사이트로</option>
             </select>
@@ -131,16 +131,12 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/site}" class="krds-btn krds-btn-secondary">목록</a>
+            <button type="submit" th:if="${siteForm.siteId}"
+                    th:formaction="@{/adm/site/delete}" formnovalidate
+                    class="krds-btn krds-btn-tertiary"
+                    data-confirm="이 사이트를 삭제할까요? 메뉴·컨텐츠는 남지만 화면은 열리지 않습니다.">삭제</button>
             <span class="grow"></span>
         </div>
-    </form>
-
-    <!-- 삭제는 별도 폼 — 저장 폼 안에 두면 엔터 입력으로 오작동할 수 있다 -->
-    <form th:if="${siteForm.siteId}" th:action="@{/adm/site/delete}" method="post"
-          style="margin-top:12px">
-        <input type="hidden" name="siteId" th:value="${siteForm.siteId}"/>
-        <button type="submit" class="krds-btn krds-btn-tertiary"
-                data-confirm="이 사이트를 삭제할까요? 메뉴·컨텐츠는 남지만 화면은 열리지 않습니다.">삭제</button>
     </form>
 </div>
 </body>

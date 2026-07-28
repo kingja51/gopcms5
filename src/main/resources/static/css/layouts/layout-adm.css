@@ -74,54 +74,44 @@ a.ladm-lnb-link:hover { background: var(--color-gray-5, #f3f4f6); }
 .ladm-search { display: flex; gap: 8px; flex: 1; max-width: 420px; }
 .ladm-search .krds-input { flex: 1; }
 
-/* 목록 테이블 — 행 높이·구분선만 담당(색은 전역 토큰) */
-.ladm-table { width: 100%; border-collapse: collapse; }
-.ladm-table th, .ladm-table td {
-    padding: 10px 12px; text-align: left;
-    border-bottom: 1px solid var(--color-line, #e5e7eb);
-    font-size: 14px;
-}
-.ladm-table thead th {
-    background: var(--color-gray-95, #f3f4f6);
-    border-top: 2px solid var(--color-gray-70, #4b5563);
-    font-weight: 700; white-space: nowrap;
-}
-.ladm-table tbody tr:hover { background: var(--color-gray-98, #fafafa); }
-.ladm-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-.ladm-table .center { text-align: center; }
+/* 목록 표·페이저는 전역 프리셋(.krds-table / .krds-pagination / .krds-page)을 그대로 쓴다.
+   ※ 여기서 색을 다시 칠하지 않는다 — KRDS 그레이 스케일은 <b>숫자가 클수록 어둡다</b>
+     (gray-5 #f4f5f6 … gray-95 #131416). 이걸 반대로 알고 thead 에 gray-95 를 깔아
+     검은 배경에 검은 글씨가 나왔다(P7 실측). 색이 필요하면 시맨틱 토큰
+     (--c-surface-subtle / --c-fg-strong / --c-line)만 쓴다. */
 
-/* 상태 배지 — 사용/미사용·공개/초안 */
-.ladm-badge {
-    display: inline-block; padding: 2px 8px; border-radius: 999px;
-    font-size: 12px; font-weight: 700;
-    background: var(--color-gray-90, #e5e7eb); color: var(--color-gray-50, #6b7280);
-}
-.ladm-badge-on { background: var(--color-primary-95, #e0e7ff); color: var(--color-primary-50, #4f46e5); }
-.ladm-badge-off { background: var(--color-gray-90, #e5e7eb); color: var(--color-gray-50, #6b7280); }
+/* 표 가로 스크롤 컨테이너 — 좁은 화면에서 본문이 밀리지 않게 */
+.ladm-tablewrap { overflow-x: auto; }
+.ladm-tablewrap .krds-table { min-width: 720px; }
+.krds-table .center { text-align: center; }
 
-/* 페이저 */
-.ladm-pager { display: flex; gap: 4px; justify-content: center; align-items: center; margin-top: 20px; }
-.ladm-page {
-    min-width: 32px; padding: 6px 8px; text-align: center; text-decoration: none;
-    border-radius: 6px; color: var(--color-fg, #111827); font-size: 14px;
+/* 상태 배지 색 — .krds-badge(모양) 위에 의미만 얹는다 */
+.ladm-badge-on {
+    background-color: var(--c-surface-subtle);
+    color: var(--brand-50);
+    border: 1px solid var(--brand-50);
 }
-.ladm-page:hover { background: var(--color-gray-95, #f3f4f6); }
-.ladm-page-current {
-    background: var(--color-primary-60, #3730a3); color: #fff; font-weight: 700;
+.ladm-badge-off {
+    background-color: var(--c-surface-subtle);
+    color: var(--c-fg-subtle);
+    border: 1px solid var(--c-line);
 }
 
 /* 폼 — 라벨 위, 입력 아래. 2열 그리드는 넓은 화면에서만 */
 .ladm-form { display: grid; gap: 16px; max-width: 760px; margin-top: 20px; }
 .ladm-form-row { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
 .ladm-field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-.ladm-field .krds-input, .ladm-field select, .ladm-field textarea { width: 100%; }
-.ladm-field select {
-    padding: 8px 10px; border: 1px solid var(--color-line, #d1d5db);
-    border-radius: 6px; background: #fff; font-size: 14px;
+.ladm-field .krds-input, .ladm-field .krds-select, .ladm-field textarea { width: 100%; }
+.ladm-field textarea {
+    min-height: 120px; font-family: inherit; width: 100%;
+    padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--c-line);
+    background-color: var(--c-surface); color: var(--c-fg);
 }
-.ladm-field textarea { min-height: 120px; font-family: inherit; }
-.ladm-hint { font-size: 12px; color: var(--color-fg-subtle, #6b7280); margin-top: 4px; }
-.ladm-actions { display: flex; gap: 8px; margin-top: 8px; }
+.ladm-hint { font-size: 12px; color: var(--c-fg-subtle); margin-top: 4px; }
+
+/* 저장·목록·삭제를 한 줄에 — 삭제는 formaction 으로 같은 폼에서 보낸다(폼 중첩 불가) */
+.ladm-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
 .ladm-actions .grow { flex: 1; }
 
 /* 화면에서만 숨김(스크린리더는 읽음) */
@@ -135,7 +125,6 @@ a.ladm-lnb-link:hover { background: var(--color-gray-5, #f3f4f6); }
     .ladm-shell { grid-template-columns: 1fr; }
     .ladm-form-row { grid-template-columns: 1fr; }
     .ladm-listbar { flex-wrap: wrap; }
-    .ladm-table { display: block; overflow-x: auto; }
     .ladm-lnb {
         display: flex; overflow-x: auto; white-space: nowrap;
         border-right: 0; border-bottom: 1px solid var(--color-line, #e5e7eb);

@@ -16,7 +16,7 @@
 
         <div class="ladm-field">
             <label for="templateId">소속 템플릿 *</label>
-            <select id="templateId" name="templateId" required>
+            <select id="templateId" name="templateId" class="krds-select" required>
                 <option value="">선택하세요</option>
                 <option th:each="t : ${templates}" th:value="${t.templateId}"
                         th:selected="${t.templateId == theme.templateId}"
@@ -54,7 +54,7 @@
 
         <div class="ladm-field">
             <label for="useYn">상태</label>
-            <select id="useYn" name="useYn">
+            <select id="useYn" name="useYn" class="krds-select">
                 <option value="Y" th:selected="${theme.useYn == 'Y'}">사용</option>
                 <option value="N" th:selected="${theme.useYn == 'N'}">중지</option>
             </select>
@@ -63,14 +63,11 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/theme}" class="krds-btn krds-btn-secondary">목록</a>
+            <button type="submit" th:if="${theme.themeId}"
+                    th:formaction="@{/adm/theme/delete}" formnovalidate
+                    class="krds-btn krds-btn-tertiary"
+                    data-confirm="이 테마를 삭제할까요?">삭제</button>
         </div>
-    </form>
-
-    <form th:if="${theme.themeId}" th:action="@{/adm/theme/delete}" method="post"
-          style="margin-top:12px">
-        <input type="hidden" name="themeId" th:value="${theme.themeId}"/>
-        <button type="submit" class="krds-btn krds-btn-tertiary"
-                data-confirm="이 테마를 삭제할까요?">삭제</button>
     </form>
 </div>
 </body>

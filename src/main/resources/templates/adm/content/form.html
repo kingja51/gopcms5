@@ -20,7 +20,7 @@
         <div class="ladm-form-row">
             <div class="ladm-field">
                 <label for="siteId">사이트 *</label>
-                <select id="siteId" name="siteId" required>
+                <select id="siteId" name="siteId" class="krds-select" required>
                     <option th:each="s : ${sites}" th:value="${s.siteId}"
                             th:selected="${s.siteId == content.siteId}"
                             th:text="${s.siteCode + ' — ' + s.siteName}">site</option>
@@ -28,7 +28,7 @@
             </div>
             <div class="ladm-field">
                 <label for="menuId">연결 메뉴</label>
-                <select id="menuId" name="menuId">
+                <select id="menuId" name="menuId" class="krds-select">
                     <option value="">연결 안 함</option>
                     <option th:each="m : ${menus}" th:value="${m.menuId}"
                             th:selected="${m.menuId == content.menuId}"
@@ -66,7 +66,7 @@
         <div class="ladm-form-row">
             <div class="ladm-field">
                 <label for="status">상태 *</label>
-                <select id="status" name="status" required>
+                <select id="status" name="status" class="krds-select" required>
                     <option value="DRAFT" th:selected="${content.status == 'DRAFT'}">초안 (비공개)</option>
                     <option value="PUBLISHED" th:selected="${content.status == 'PUBLISHED'}">게시</option>
                     <option value="ARCHIVED" th:selected="${content.status == 'ARCHIVED'}">보관</option>
@@ -76,7 +76,7 @@
             <div class="ladm-field">
                 <label for="unpublishAt">게시 종료 일시</label>
                 <input id="unpublishAt" name="unpublishAt" type="datetime-local" class="krds-input"
-                       th:value="${content.unpublishAt} != null ? ${#temporals.format(content.unpublishAt, 'yyyy-MM-dd''T''HH:mm')} : ''"/>
+                       th:value="${content.unpublishAt != null ? #temporals.format(content.unpublishAt, 'yyyy-MM-dd''T''HH:mm') : ''}"/>
             </div>
         </div>
 
@@ -96,15 +96,11 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/content(siteId=${content.siteId})}" class="krds-btn krds-btn-secondary">목록</a>
+            <button type="submit" th:if="${content.contentId}"
+                    th:formaction="@{/adm/content/delete}" formnovalidate
+                    class="krds-btn krds-btn-tertiary"
+                    data-confirm="이 컨텐츠를 삭제할까요?">삭제</button>
         </div>
-    </form>
-
-    <form th:if="${content.contentId}" th:action="@{/adm/content/delete}" method="post"
-          style="margin-top:12px">
-        <input type="hidden" name="contentId" th:value="${content.contentId}"/>
-        <input type="hidden" name="siteId" th:value="${content.siteId}"/>
-        <button type="submit" class="krds-btn krds-btn-tertiary"
-                data-confirm="이 컨텐츠를 삭제할까요?">삭제</button>
     </form>
 </div>
 </body>

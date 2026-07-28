@@ -18,7 +18,7 @@
         <div class="ladm-form-row">
             <div class="ladm-field">
                 <label for="siteId">사이트 *</label>
-                <select id="siteId" name="siteId" required>
+                <select id="siteId" name="siteId" class="krds-select" required>
                     <option th:each="s : ${sites}" th:value="${s.siteId}"
                             th:selected="${s.siteId == menu.siteId}"
                             th:text="${s.siteCode + ' — ' + s.siteName}">site</option>
@@ -34,7 +34,7 @@
         <div class="ladm-form-row">
             <div class="ladm-field">
                 <label for="parentMenuId">상위 메뉴</label>
-                <select id="parentMenuId" name="parentMenuId">
+                <select id="parentMenuId" name="parentMenuId" class="krds-select">
                     <option value="">없음 (1단계)</option>
                     <option th:each="p : ${parents}" th:value="${p.menuId}"
                             th:if="${p.menuId != menu.menuId}"
@@ -45,7 +45,7 @@
             </div>
             <div class="ladm-field">
                 <label for="menuType">메뉴 유형 *</label>
-                <select id="menuType" name="menuType" required>
+                <select id="menuType" name="menuType" class="krds-select" required>
                     <option value="FOLDER" th:selected="${menu.menuType == 'FOLDER'}">폴더 (링크 없음)</option>
                     <option value="CONTENT" th:selected="${menu.menuType == 'CONTENT'}">컨텐츠 연결</option>
                     <option value="URL" th:selected="${menu.menuType == 'URL'}">직접 URL</option>
@@ -56,7 +56,7 @@
 
         <div class="ladm-field">
             <label for="linkTargetId">연결 컨텐츠 <span class="text-fg-subtle">(유형=컨텐츠 연결일 때)</span></label>
-            <select id="linkTargetId" name="linkTargetId">
+            <select id="linkTargetId" name="linkTargetId" class="krds-select">
                 <option value="">선택 안 함</option>
                 <option th:each="c : ${contents}" th:value="${c.contentId}"
                         th:selected="${c.contentId == menu.linkTargetId}"
@@ -78,7 +78,7 @@
             </div>
             <div class="ladm-field">
                 <label for="useYn">상태</label>
-                <select id="useYn" name="useYn">
+                <select id="useYn" name="useYn" class="krds-select">
                     <option value="Y" th:selected="${menu.useYn == 'Y'}">사용</option>
                     <option value="N" th:selected="${menu.useYn == 'N'}">중지</option>
                 </select>
@@ -87,7 +87,7 @@
 
         <div class="ladm-field">
             <label for="authRequiredYn">로그인 필요</label>
-            <select id="authRequiredYn" name="authRequiredYn">
+            <select id="authRequiredYn" name="authRequiredYn" class="krds-select">
                 <option value="N" th:selected="${menu.authRequiredYn == 'N'}">아니오</option>
                 <option value="Y" th:selected="${menu.authRequiredYn == 'Y'}">예</option>
             </select>
@@ -96,15 +96,11 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/menu(siteId=${menu.siteId})}" class="krds-btn krds-btn-secondary">목록</a>
+            <button type="submit" th:if="${menu.menuId}"
+                    th:formaction="@{/adm/menu/delete}" formnovalidate
+                    class="krds-btn krds-btn-tertiary"
+                    data-confirm="이 메뉴를 삭제할까요?">삭제</button>
         </div>
-    </form>
-
-    <form th:if="${menu.menuId}" th:action="@{/adm/menu/delete}" method="post"
-          style="margin-top:12px">
-        <input type="hidden" name="menuId" th:value="${menu.menuId}"/>
-        <input type="hidden" name="siteId" th:value="${menu.siteId}"/>
-        <button type="submit" class="krds-btn krds-btn-tertiary"
-                data-confirm="이 메뉴를 삭제할까요?">삭제</button>
     </form>
 </div>
 </body>

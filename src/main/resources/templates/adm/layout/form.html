@@ -51,7 +51,7 @@
 
         <div class="ladm-field">
             <label for="useYn">상태</label>
-            <select id="useYn" name="useYn">
+            <select id="useYn" name="useYn" class="krds-select">
                 <option value="Y" th:selected="${layout.useYn == 'Y'}">사용</option>
                 <option value="N" th:selected="${layout.useYn == 'N'}">중지</option>
             </select>
@@ -60,14 +60,11 @@
         <div class="ladm-actions">
             <button type="submit" class="krds-btn krds-btn-primary">저장</button>
             <a th:href="@{/adm/layout}" class="krds-btn krds-btn-secondary">목록</a>
+            <button type="submit" th:if="${layout.layoutId}"
+                    th:formaction="@{/adm/layout/delete}" formnovalidate
+                    class="krds-btn krds-btn-tertiary"
+                    data-confirm="이 레이아웃을 삭제할까요?">삭제</button>
         </div>
-    </form>
-
-    <form th:if="${layout.layoutId}" th:action="@{/adm/layout/delete}" method="post"
-          style="margin-top:12px">
-        <input type="hidden" name="layoutId" th:value="${layout.layoutId}"/>
-        <button type="submit" class="krds-btn krds-btn-tertiary"
-                data-confirm="이 레이아웃을 삭제할까요?">삭제</button>
     </form>
 </div>
 </body>

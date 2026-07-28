@@ -30,7 +30,9 @@
         <a th:href="@{/adm/content/form(siteId=${siteId})}" class="krds-btn krds-btn-primary">등록</a>
     </div>
 
-    <table class="ladm-table">
+    <div class="ladm-tablewrap">
+
+      <table class="krds-table">
         <thead>
         <tr>
             <th>제목</th><th>slug</th><th>연결 메뉴</th><th class="center">상태</th>
@@ -44,11 +46,11 @@
             <td><code th:text="${c.slug}">about</code></td>
             <td th:text="${c.menuName} ?: '-'">-</td>
             <td class="center">
-                <span class="ladm-badge"
+                <span class="krds-badge"
                       th:classappend="${c.status == 'PUBLISHED'} ? 'ladm-badge-on' : 'ladm-badge-off'"
-                      th:text="${c.status == 'PUBLISHED'} ? '게시' : (${c.status == 'DRAFT'} ? '초안' : '보관')">초안</span>
+                      th:text="${c.status == 'PUBLISHED' ? '게시' : (c.status == 'DRAFT' ? '초안' : '보관')}">초안</span>
             </td>
-            <td th:text="${c.publishedAt} != null ? ${#temporals.format(c.publishedAt, 'yyyy-MM-dd HH:mm')} : '-'">-</td>
+            <td th:text="${c.publishedAt != null ? #temporals.format(c.publishedAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
             <td class="num" th:text="${c.viewCount}">0</td>
             <td class="num" th:text="${c.versionNo}">1</td>
             <td class="center">
@@ -57,10 +59,11 @@
                    class="krds-btn krds-btn-tertiary krds-btn-sm">보기</a>
             </td>
         </tr>
-        <tr th:if="${page.content().isEmpty()}"
-            th:replace="~{adm/fragments/adm-ui :: empty(8)}"></tr>
+        <tr
+            th:replace="~{adm/fragments/adm-ui :: empty(8, ${page.content().isEmpty()})}"></tr>
         </tbody>
-    </table>
+      </table>
+    </div>
 
     <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/content')}"></nav>
 </div>

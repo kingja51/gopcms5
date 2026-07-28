@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<!-- 관리자 화면 공통 조각 — 목록 헤더(검색·등록)·페이저·플래시 메시지.
-     6개 관리 모듈이 같은 조작 감각을 갖도록 여기 한 곳만 고친다. -->
+<!-- 관리자 화면 공통 조각 — 목록 헤더(검색·등록)·페이저·플래시 메시지·빈 목록.
+     6개 관리 모듈이 같은 조작 감각을 갖도록 여기 한 곳만 고친다.
+     표·페이저·배지는 전역 KRDS 프리셋(.krds-table/.krds-pagination/.krds-page/.krds-badge)을
+     쓰고, .ladm-* 는 배치만 담당한다 (CLAUDE.md — 프리셋 우선·raw hex 금지). -->
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
@@ -27,24 +29,35 @@
 
 <!-- 페이저. 검색어를 유지한 채 페이지만 바꾼다 -->
 <nav th:fragment="pager(listUrl)" th:if="${page != null and page.totalPages() > 1}"
-     class="ladm-pager" aria-label="페이지 이동">
-    <a th:if="${page.hasPrev()}" class="krds-btn krds-btn-tertiary krds-btn-sm"
+     class="krds-pagination" style="margin-top:20px" aria-label="페이지 이동">
+    <a th:if="${page.hasPrev()}" class="krds-page"
        th:href="@{${listUrl}(page=${page.page() - 1}, keyword=${cond?.keyword})}">이전</a>
     <a th:each="p : ${page.blockPages()}"
        th:href="@{${listUrl}(page=${p}, keyword=${cond?.keyword})}"
-       th:text="${p}"
-       th:classappend="${p == page.page()} ? 'ladm-page-current'"
-       class="ladm-page">1</a>
-    <a th:if="${page.hasNext()}" class="krds-btn krds-btn-tertiary krds-btn-sm"
+       th:text="${p}" class="krds-page"
+       th:attr="aria-current=${p == page.page()} ? 'page' : null">1</a>
+    <a th:if="${page.hasNext()}" class="krds-page"
        th:href="@{${listUrl}(page=${page.page() + 1}, keyword=${cond?.keyword})}">다음</a>
 </nav>
 
-<!-- 목록이 비었을 때 -->
-<tr th:fragment="empty(colspan)">
+<!--
+  목록이 비었을 때의 안내 행.
+
+  ⚠ 조건은 <b>프래그먼트 안</b>에 둔다. 호출 지점에 th:if 와 th:replace 를 같이 걸면
+  th:replace(우선순위 100)가 th:if(300)보다 먼저 실행돼 조건이 무시되고 안내가 항상 뜬다
+  (P7 실측 — 자료가 있는데 "등록된 자료가 없습니다"가 보이던 원인).
+  그래서 호출측은 조건 없이 부르고, 비었는지는 empty 인자로 넘긴다.
+-->
+<tr th:fragment="empty(colspan, empty)" th:if="${empty}">
     <td th:attr="colspan=${colspan}" class="text-center text-fg-subtle" style="padding:32px">
         등록된 자료가 없습니다.
     </td>
 </tr>
+
+<!-- 사용/중지 배지 — 목록 공통 -->
+<span th:fragment="useBadge(useYn)" class="krds-badge"
+      th:classappend="${useYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+      th:text="${useYn == 'Y'} ? '사용' : '중지'">사용</span>
 
 </body>
 </html>
