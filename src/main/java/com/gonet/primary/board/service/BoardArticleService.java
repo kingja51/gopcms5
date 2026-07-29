@@ -32,8 +32,25 @@ public interface BoardArticleService {
      */
     void requireRead(BbsMasterAdmDto master);
 
+    /**
+     * 이 게시판을 볼 수 있는지 — 예외 없이 묻는다.
+     *
+     * <p>합본이 대상 목록을 추릴 때 쓴다. 볼 수 없는 게시판을 합치면 <b>목록에 제목이
+     * 새어 나간다</b> — 상세를 막아도 소용없다(실측 발견).
+     */
+    boolean isReadable(BbsMasterAdmDto master);
+
     /** 글을 고치거나 지울 수 있는지 — 작성자 본인 또는 담당자 이상. */
     boolean canManage(BbsArticleAdmDto article);
+
+    /**
+     * 통합 게시판 문맥까지 반영한 관리 권한.
+     *
+     * <p>합본(B7)은 <b>읽기 전용</b>이다. 통합 URL 로 들어온 글은 작성자 본인이라도 여기서
+     * 고칠 수 없다 — 어느 게시판의 정책으로 저장할지가 모호해지기 때문이다. 원 게시판으로
+     * 가면 평소대로 수정할 수 있다.
+     */
+    boolean canManage(BbsArticleAdmDto article, BbsMasterAdmDto context);
 
     /**
      * 글쓰기 버튼을 보여줄지 — 화면 판단용.

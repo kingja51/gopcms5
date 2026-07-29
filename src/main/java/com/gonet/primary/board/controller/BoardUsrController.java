@@ -16,6 +16,7 @@ import com.gonet.primary.file.service.FileService;
 import com.gonet.primary.site.dto.SiteContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
@@ -64,6 +65,16 @@ public class BoardUsrController {
 
         cond.setBbsMasterId(master.getBbsMasterId());
         cond.setStatus("PUBLISHED");            // 숨김·신고보류는 사용자에게 보이지 않는다
+        if (master.isAggregator()) {
+            // 합본 — 살아 있고 <b>이 사용자가 볼 수 있는</b> 대상만 모은다.
+            // 볼 수 없는 게시판을 합치면 상세를 막아도 목록에 제목이 새어 나간다(실측 발견).
+            // 대상이 하나도 없으면 빈 목록이 되어야지 조건 없는 전체 조회가 되면 안 된다
+            // (빈 IN 절 방지용 sentinel).
+            List<String> ids = boardMasterService.getGroupedTargets(master).stream()
+                    .filter(boardArticleService::isReadable)
+                    .map(BbsMasterAdmDto::getBbsMasterId).toList();
+            cond.setBbsMasterIds(ids.isEmpty() ? List.of("-") : ids);
+        }
         model.addAttribute("master", master);
         model.addAttribute("page", boardArticleService.getPage(cond));
         model.addAttribute("categories", boardCategoryService.getByBoard(master.getBbsMasterId()));
@@ -80,11 +91,18 @@ public class BoardUsrController {
         boardArticleService.requireRead(master);
 
         BbsArticleAdmDto article = boardArticleService.get(articleId);
-        if (article == null || !master.getBbsMasterId().equals(article.getBbsMasterId())
-                || !"PUBLISHED".equals(article.getStatus())) {
+        if (article == null || !"PUBLISHED".equals(article.getStatus())
+                || !belongsTo(master, article)) {
             throw new NoResourceFoundException(
                     org.springframework.http.HttpMethod.valueOf(request.getMethod()),
                     request.getRequestURI());
+        }
+        // 합본은 원 게시판의 읽기 권한을 그대로 물려받는다 — 통합이 ALL 이라고 해서
+        // 회원 전용 게시판의 글이 공개되면 통합 게시판이 우회 통로가 된다
+        BbsMasterAdmDto origin = master;
+        if (master.isAggregator()) {
+            origin = boardMasterService.getAdm(article.getBbsMasterId());
+            boardArticleService.requireRead(origin);
         }
 
         boolean readable = boardArticleService.canRead(article);
@@ -101,7 +119,9 @@ public class BoardUsrController {
         model.addAttribute("master", master);
         model.addAttribute("article", article);
         model.addAttribute("readable", readable);
-        model.addAttribute("canManage", boardArticleService.canManage(article));
+        model.addAttribute("canManage", boardArticleService.canManage(article, master));
+        model.addAttribute("origin", origin);
+        model.addAttribute("originBase", base(siteCode, origin.getBbsCode()));
         model.addAttribute("boardBase", base(siteCode, bbsCode));
         return "front/board/detail";
     }
@@ -124,7 +144,7 @@ public class BoardUsrController {
             article.setSecretYn("N");
         } else {
             article = boardArticleService.get(articleId);
-            if (article == null || !boardArticleService.canManage(article)) {
+            if (article == null || !boardArticleService.canManage(article, master)) {
                 throw new AccessDeniedException("본인이 쓴 글만 수정할 수 있습니다.");
             }
             if (article.getFileGroupId() != null) {
@@ -157,8 +177,9 @@ public class BoardUsrController {
     @PostMapping("/delete")
     public String delete(@PathVariable String siteCode, @PathVariable String bbsCode,
             @RequestParam String articleId, RedirectAttributes redirect) {
+        BbsMasterAdmDto master = requireMaster(bbsCode);
         BbsArticleAdmDto article = boardArticleService.get(articleId);
-        if (article == null || !boardArticleService.canManage(article)) {
+        if (article == null || !boardArticleService.canManage(article, master)) {
             throw new AccessDeniedException("본인이 쓴 글만 삭제할 수 있습니다.");
         }
         boardArticleService.delete(articleId);
@@ -212,6 +233,16 @@ public class BoardUsrController {
             throw new IllegalArgumentException("게시판을 찾을 수 없습니다.");
         }
         return master;
+    }
+
+    /** 이 URL 로 열 수 있는 글인지 — 일반 게시판은 자기 글만, 합본은 대상 게시판의 글까지. */
+    private boolean belongsTo(BbsMasterAdmDto master, BbsArticleAdmDto article) {
+        if (master.getBbsMasterId().equals(article.getBbsMasterId())) {
+            return true;
+        }
+        return master.isAggregator()
+                && boardMasterService.getGroupedTargets(master).stream()
+                        .anyMatch(t -> t.getBbsMasterId().equals(article.getBbsMasterId()));
     }
 
     private String base(String siteCode, String bbsCode) {

@@ -11,7 +11,10 @@
         <thead>
         <tr>
             <th scope="col" class="bbs-col-no">번호</th>
-            <th scope="col" th:if="${!categories.isEmpty()}" class="bbs-col-cat">분류</th>
+            <!-- 합본에서는 어느 게시판 글인지가 분류보다 중요한 정보다 -->
+            <th scope="col" th:if="${master.aggregator}" class="bbs-col-cat">게시판</th>
+            <th scope="col" th:if="${!master.aggregator and !categories.isEmpty()}"
+                class="bbs-col-cat">분류</th>
             <th scope="col">제목</th>
             <th scope="col" class="bbs-col-writer">작성자</th>
             <th scope="col" class="bbs-col-date">등록일</th>
@@ -24,8 +27,10 @@
                 <span th:if="${a.notice}" class="krds-badge bbs-badge-notice">공지</span>
                 <span th:unless="${a.notice}" th:text="${page.firstRowNo() - st.index}">1</span>
             </td>
-            <td th:if="${!categories.isEmpty()}" class="bbs-col-cat text-fg-subtle"
-                th:text="${a.categoryName}">분류</td>
+            <td th:if="${master.aggregator}" class="bbs-col-cat text-fg-subtle"
+                th:text="${a.bbsName}">게시판</td>
+            <td th:if="${!master.aggregator and !categories.isEmpty()}"
+                class="bbs-col-cat text-fg-subtle" th:text="${a.categoryName}">분류</td>
             <td class="bbs-col-title">
                 <a th:href="@{${boardBase} + '/' + ${a.articleId}}" th:text="${a.title}">제목</a>
                 <span th:if="${a.secret}" class="bbs-lock" aria-label="비밀글">🔒</span>
@@ -40,7 +45,8 @@
             <td class="bbs-col-view text-fg-subtle" th:text="${a.viewCount}">0</td>
         </tr>
         <tr th:if="${page.content().isEmpty()}">
-            <td th:attr="colspan=${categories.isEmpty()} ? 5 : 6" class="bbs-empty">
+            <td th:attr="colspan=${master.aggregator or !categories.isEmpty()} ? 6 : 5"
+                class="bbs-empty">
                 등록된 글이 없습니다.
             </td>
         </tr>

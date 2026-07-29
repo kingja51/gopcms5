@@ -14,8 +14,14 @@ import lombok.Setter;
 @Setter
 public class BbsArticleSearch extends PageRequest {
 
-    /** 필수 — 게시글은 항상 한 게시판 안에서 찾는다. */
+    /** 단일 게시판 조회의 기준. 통합 게시판이면 {@link #bbsMasterIds} 가 대신 쓰인다. */
     private String bbsMasterId;
+    /**
+     * 통합 게시판(B7)의 대상 목록 — 채워져 있으면 이 집합에서 찾는다.
+     *
+     * <p>합본은 <b>읽기 전용</b>이다. 어느 게시판의 글인지는 목록에 함께 보여준다.
+     */
+    private java.util.List<String> bbsMasterIds;
     private String categoryId;
     private String status;
     /** TITLE | CONTENT | WRITER — 비우면 제목+본문. */

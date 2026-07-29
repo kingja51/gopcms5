@@ -60,6 +60,12 @@ public class BoardArticleServiceImpl extends AbstractCmsService implements Board
     @Override
     @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
     public void save(BbsArticleAdmDto article, BbsMasterAdmDto master) {
+        // 합본에는 글을 쓸 수 없다 — 화면에서 버튼만 감추면 URL 직접 호출로 뚫린다
+        // (원전이 UI 가드만 두고 서비스 가드를 미뤄 실제로 열려 있던 구멍)
+        if (master.isAggregator()) {
+            throw new AccessDeniedException(
+                    "통합 게시판에는 글을 쓸 수 없습니다. 원래 게시판에서 작성해 주세요.");
+        }
         LoginPrincipal writer = requireWritePermission(master);
         validate(article, master);
         normalize(article, master, writer);
@@ -164,11 +170,38 @@ public class BoardArticleServiceImpl extends AbstractCmsService implements Board
     }
 
     @Override
+    public boolean isReadable(BbsMasterAdmDto master) {
+        try {
+            requireRead(master);
+            return true;
+        } catch (InsufficientAuthenticationException | AccessDeniedException e) {
+            return false;
+        }
+    }
+
+    @Override
     public boolean canWrite(BbsMasterAdmDto master) {
+        if (master.isAggregator()) {
+            return false;                            // 합본은 읽기 전용
+        }
         if (accessGuard.currentPrincipal() == null) {
             return false;                            // 비로그인 작성은 지원하지 않는다
         }
         return !"ADMIN".equals(master.getWriteAuth()) || accessGuard.hasRole(MANAGE_ROLE);
+    }
+
+    @Override
+    public boolean canManage(BbsArticleAdmDto article, BbsMasterAdmDto context) {
+        // 합본으로 들어온 글은 읽기 전용 — 어느 게시판 정책으로 저장할지가 모호하다.
+        // canManage = (context.bbsMasterId == article.bbsMasterId) 라는 원전 규칙과 같다.
+        if (context != null && context.isAggregator()) {
+            return false;
+        }
+        if (context != null && article != null
+                && !context.getBbsMasterId().equals(article.getBbsMasterId())) {
+            return false;
+        }
+        return canManage(article);
     }
 
     @Override

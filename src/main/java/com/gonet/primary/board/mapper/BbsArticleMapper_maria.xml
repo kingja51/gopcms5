@@ -18,7 +18,16 @@
     -->
     <sql id="admWhere">
         WHERE a.delete_yn = 'N'
-          AND a.bbs_master_id = #{bbsMasterId}
+        <choose>
+            <!-- 통합 게시판 — 여러 게시판의 글을 한 목록으로 (읽기 전용) -->
+            <when test="bbsMasterIds != null and !bbsMasterIds.isEmpty()">
+                AND a.bbs_master_id IN
+                <foreach item="id" collection="bbsMasterIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>AND a.bbs_master_id = #{bbsMasterId}</otherwise>
+        </choose>
         <if test="status != null and status != ''">AND a.status = #{status}</if>
         <if test="categoryId != null and categoryId != ''">AND a.category_id = #{categoryId}</if>
         <if test="noticeYn != null and noticeYn != ''">AND a.notice_yn = #{noticeYn}</if>
@@ -44,7 +53,7 @@
     <!-- 공지는 항상 위로 — notice_top_yn 판단은 서비스가 하고, 여기서는 정렬만 제공한다 -->
     <select id="findPage" resultType="com.gonet.primary.board.dto.BbsArticleAdmDto">
         SELECT <include refid="cols"/>,
-               c.category_name,
+               c.category_name, m.bbs_name, m.bbs_code,
                a.created_at AS created_at_view,
                (SELECT COUNT(*) FROM tb_file f
                  WHERE f.file_group_id = a.file_group_id AND f.delete_yn = 'N') AS file_count,
@@ -53,6 +62,7 @@
                    AND f2.is_image_yn = 'Y'
                  ORDER BY f2.sort_order, f2.file_id LIMIT 1) AS thumb_file_id
         FROM tb_bbs_article a
+        JOIN tb_bbs_master m ON m.bbs_master_id = a.bbs_master_id
         LEFT JOIN tb_bbs_category c ON c.category_id = a.category_id
         <include refid="admWhere"/>
         ORDER BY a.notice_yn DESC, a.created_at DESC, a.article_id DESC

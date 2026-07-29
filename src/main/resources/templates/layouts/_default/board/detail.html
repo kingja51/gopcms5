@@ -23,7 +23,13 @@
 
     <article class="bbs-article">
         <header class="bbs-article-head">
-            <p class="text-body-xs text-fg-subtle bbs-article-board" th:text="${master.bbsName}">게시판</p>
+            <p class="text-body-xs text-fg-subtle bbs-article-board">
+                <span th:text="${master.bbsName}">게시판</span>
+                <!-- 합본으로 들어온 글은 여기서 고칠 수 없다 — 원 게시판으로 가는 길을 준다 -->
+                <a th:if="${master.aggregator and origin != null}"
+                   th:href="@{${originBase} + '/' + ${article.articleId}}"
+                   th:text="'· ' + ${origin.bbsName} + ' 에서 보기'">· 원 게시판</a>
+            </p>
             <h1 class="text-heading-lg">
                 <span th:if="${article.notice}" class="krds-badge bbs-badge-notice">공지</span>
                 <span th:if="${article.categoryName != null}" class="krds-tag"

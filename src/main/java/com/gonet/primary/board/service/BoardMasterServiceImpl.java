@@ -2,6 +2,7 @@ package com.gonet.primary.board.service;
 
 import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
+import com.gonet.common.util.Csv;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
 import com.gonet.common.web.PageResult;
@@ -14,6 +15,7 @@ import com.gonet.primary.board.mapper.BbsMasterMapper;
 import com.gonet.primary.file.dto.DownloadAuth;
 import com.gonet.primary.site.dto.SiteAdmDto;
 import com.gonet.primary.site.service.SiteService;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,6 +71,26 @@ public class BoardMasterServiceImpl extends AbstractCmsService implements BoardM
     @Override
     public List<BbsMasterAdmDto> getGroupCandidates(String siteId, String selfId) {
         return bbsMasterMapper.findGroupCandidates(siteId, selfId);
+    }
+
+    @Override
+    public List<BbsMasterAdmDto> getGroupedTargets(BbsMasterAdmDto master) {
+        if (master == null) {
+            return List.of();
+        }
+        if (!master.isAggregator()) {
+            return List.of(master);
+        }
+        List<BbsMasterAdmDto> targets = new ArrayList<>();
+        for (String id : Csv.toSet(master.getGroupedBoardIds())) {
+            BbsMasterAdmDto target = bbsMasterMapper.findById(id);
+            // CSV 는 스냅샷이라 대상이 지워지거나 중지돼도 값이 남는다 —
+            // 살아 있고 사용 중인 것만 합친다(닫아 둔 게시판의 글이 계속 보이면 안 된다)
+            if (target != null && "Y".equals(target.getUseYn())) {
+                targets.add(target);
+            }
+        }
+        return targets;
     }
 
     @Override

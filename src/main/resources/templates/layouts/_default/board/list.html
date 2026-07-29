@@ -36,9 +36,11 @@
             <option value="CONTENT" th:selected="${cond.searchType == 'CONTENT'}">내용</option>
             <option value="WRITER" th:selected="${cond.searchType == 'WRITER'}">작성자</option>
         </select>
-        <label class="sr-only" for="categoryId" th:if="${!categories.isEmpty()}">분류</label>
+        <!-- 합본은 분류 필터를 두지 않는다 — 게시판마다 분류 체계가 달라 섞이면 무의미하다 -->
+        <label class="sr-only" for="categoryId"
+               th:if="${!master.aggregator and !categories.isEmpty()}">분류</label>
         <select id="categoryId" name="categoryId" class="krds-select krds-select-sm"
-                th:if="${!categories.isEmpty()}">
+                th:if="${!master.aggregator and !categories.isEmpty()}">
             <option value="">분류 전체</option>
             <option th:each="c : ${categories}" th:value="${c.categoryId}"
                     th:text="${c.categoryName}"
