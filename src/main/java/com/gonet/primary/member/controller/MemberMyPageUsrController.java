@@ -5,6 +5,7 @@ import com.gonet.common.web.SiteContextHolder;
 import com.gonet.primary.auth.service.PasswordService;
 import com.gonet.primary.member.dto.MemberDto;
 import com.gonet.primary.member.dto.MemberProfileForm;
+import com.gonet.primary.member.service.MemberLifecycleService;
 import com.gonet.primary.member.service.MemberProfileService;
 import com.gonet.primary.member.service.StepUpAuth;
 import com.gonet.primary.site.dto.SiteContext;
@@ -43,6 +44,7 @@ public class MemberMyPageUsrController {
     private final PasswordService passwordService;
     private final StepUpAuth stepUpAuth;
     private final PasswordEncoder passwordEncoder;
+    private final MemberLifecycleService lifecycleService;
 
     @GetMapping
     public String mypage(HttpServletRequest request, Model model) {
@@ -130,6 +132,43 @@ public class MemberMyPageUsrController {
         SecurityContextHolder.clearContext();
         redirect.addFlashAttribute("flashOk", "비밀번호를 변경했습니다. 다시 로그인해 주세요.");
         return "redirect:/login?siteCode=" + siteCode();
+    }
+
+    /* ── 셀프 탈퇴 ─────────────────────────────────────────────────────── */
+
+    @GetMapping("/withdraw")
+    public String withdrawForm(HttpServletRequest request) {
+        requireMember();
+        // 되돌릴 수 없는 작업이라 재인증을 반드시 통과해야 한다
+        if (!stepUpAuth.isVerified(request)) {
+            return redirectVerify();
+        }
+        return "front/member/withdraw";
+    }
+
+    @PostMapping("/withdraw")
+    public String withdraw(@RequestParam(required = false) String reason,
+            @RequestParam String confirm, HttpServletRequest request,
+            Model model, RedirectAttributes redirect) {
+        LoginPrincipal me = requireMember();
+        if (!stepUpAuth.isVerified(request)) {
+            return redirectVerify();
+        }
+        // 오클릭 방지 — 문구를 직접 입력해야 진행된다(되돌릴 수 없다)
+        if (!"탈퇴합니다".equals(confirm == null ? "" : confirm.trim())) {
+            model.addAttribute("flashError", "확인 문구를 정확히 입력해 주세요.");
+            return "front/member/withdraw";
+        }
+        // 배치와 <b>같은 경로</b>를 탄다 — 경로가 둘이면 정책이 갈린다
+        lifecycleService.withdraw(me.userId(),
+                reason == null || reason.isBlank() ? "회원 요청(셀프 탈퇴)" : reason.trim(),
+                "USER_REQUEST");
+
+        stepUpAuth.clear(request);
+        request.getSession().invalidate();
+        SecurityContextHolder.clearContext();
+        redirect.addFlashAttribute("flashOk", "탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.");
+        return "redirect:/" + siteCode() + "/index";
     }
 
     /* ── 부속 ─────────────────────────────────────────────────────────── */

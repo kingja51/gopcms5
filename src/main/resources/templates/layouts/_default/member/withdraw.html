@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<!-- 회원 탈퇴 — 되돌릴 수 없다. step-up 재인증을 통과해야 열리고,
+     확인 문구를 직접 입력해야 진행된다(오클릭 방지). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title>회원 탈퇴</title>
+    <link rel="stylesheet" href="/css/board.css"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <header class="bbs-head">
+        <h1 class="text-heading-lg">회원 탈퇴</h1>
+    </header>
+
+    <div th:replace="~{fragments/board/flash :: flash}"></div>
+
+    <div class="krds-alert krds-alert-error" role="alert" style="max-width:880px;margin:0 auto 24px">
+        <span aria-hidden="true">!</span>
+        <p>
+            탈퇴하면 <b>이름·이메일·연락처 등 개인정보가 즉시 파기</b>되며 되돌릴 수 없습니다.<br/>
+            작성하신 게시글과 댓글은 삭제되지 않습니다.<br/>
+            부정 이용 방지를 위해 아이디·본인확인 값의 <b>해시</b>는 일정 기간 보관됩니다.
+        </p>
+    </div>
+
+    <form method="post" class="bbs-form"
+          th:action="@{'/' + ${site.siteCode} + '/member/mypage/withdraw'}">
+        <div class="bbs-form-row">
+            <label class="bbs-form-label" for="reason">탈퇴 사유</label>
+            <div>
+                <input id="reason" name="reason" class="krds-input" maxlength="200"
+                       placeholder="선택 입력"/>
+                <p class="text-body-xs text-fg-subtle">
+                    서비스 개선에 참고합니다. 개인을 식별할 수 있는 내용은 적지 말아 주세요.</p>
+            </div>
+        </div>
+        <div class="bbs-form-row">
+            <label class="bbs-form-label" for="confirm">확인</label>
+            <div>
+                <input id="confirm" name="confirm" class="krds-input" required
+                       placeholder="탈퇴합니다" autocomplete="off"/>
+                <p class="text-body-xs text-fg-subtle">
+                    진행하려면 <b>탈퇴합니다</b> 를 정확히 입력해 주세요.</p>
+            </div>
+        </div>
+        <div class="bbs-actions">
+            <button type="submit" class="krds-btn krds-btn-primary"
+                    data-confirm="정말 탈퇴하시겠습니까? 개인정보가 즉시 파기되며 되돌릴 수 없습니다.">
+                탈퇴하기</button>
+            <a th:href="@{'/' + ${site.siteCode} + '/member/mypage'}"
+               class="krds-btn krds-btn-secondary">취소</a>
+        </div>
+    </form>
+
+</main>
+</body>
+</html>

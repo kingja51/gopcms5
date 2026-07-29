@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  회원 생명주기 — 되돌릴 수 없는 SQL 이 모여 있다. 수정 전 PLAN §P10-4 를 읽을 것.
+  PII 컬럼 조회는 typeHandler 로 복호화한다(메일 발송에 평문 이름·주소가 필요하다).
+-->
+<mapper namespace="com.gonet.primary.member.mapper.MemberLifecycleMapper">
+
+    <resultMap id="targetMap" type="com.gonet.primary.member.dto.MemberLifecycleTarget">
+        <id property="memberId" column="member_id"/>
+        <result property="siteCode" column="site_code"/>
+        <result property="loginId" column="login_id"/>
+        <result property="memberName" column="member_name"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="email" column="email"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="baseAt" column="base_at"/>
+    </resultMap>
+
+    <!--
+      last_login_at 이 NULL 이면 created_at 을 본다 — 가입 후 한 번도 로그인하지 않은
+      계정이 영원히 늙지 않는 것을 막는다(PLAN P10-4).
+    -->
+    <select id="findDormantTargets" resultMap="targetMap">
+        SELECT member_id, site_code, login_id, member_name, email,
+               COALESCE(last_login_at, created_at) AS base_at
+        FROM tb_member
+        WHERE delete_yn = 'N' AND status = 'ACTIVE'
+          AND COALESCE(last_login_at, created_at) &lt; #{cutoff}
+        ORDER BY base_at
+        LIMIT #{limit}
+    </select>
+
+    <!--
+      사전 안내 대상 — 기준 시각이 [from, to) 구간에 든 회원.
+      이미 그 단계를 보낸 회원은 제외한다(UNIQUE 로도 막히지만 미리 걸러 시도를 줄인다).
+    -->
+    <select id="findNoticeTargets" resultMap="targetMap">
+        SELECT m.member_id, m.site_code, m.login_id, m.member_name, m.email,
+               COALESCE(m.last_login_at, m.created_at) AS base_at
+        FROM tb_member m
+        WHERE m.delete_yn = 'N' AND m.status = 'ACTIVE'
+          AND COALESCE(m.last_login_at, m.created_at) &gt;= #{from}
+          AND COALESCE(m.last_login_at, m.created_at) &lt; #{to}
+          AND NOT EXISTS (SELECT 1 FROM tb_member_dormant_notice n
+                           WHERE n.member_id = m.member_id AND n.stage = #{stage})
+        ORDER BY base_at
+        LIMIT #{limit}
+    </select>
+
+    <select id="findWithdrawTargets" resultMap="targetMap">
+        SELECT member_id, site_code, login_id, member_name, email,
+               dormant_at AS base_at
+        FROM tb_member_dormant
+        WHERE delete_yn = 'N' AND restored_at IS NULL AND dormant_at &lt; #{cutoff}
+        ORDER BY dormant_at
+        LIMIT #{limit}
+    </select>
+
+    <!-- 보존기한이 지난 원장 — 이 시점에 자식 행까지 전부 지운다 -->
+    <select id="findPurgeTargets" resultType="string">
+        SELECT member_id FROM tb_member_withdraw
+        WHERE retention_expire_at IS NOT NULL AND retention_expire_at &lt; #{now}
+        ORDER BY retention_expire_at
+        LIMIT #{limit}
+    </select>
+
+    <!-- ── 휴면 ─────────────────────────────────────────────────────────
+         컬럼을 명시 복사한다. SELECT * 로 옮기면 한쪽 테이블에 컬럼이 늘었을 때
+         조용히 어긋난다. 암호문은 그대로 옮긴다(복호화 후 재암호화할 이유가 없다). -->
+    <insert id="copyToDormant">
+        INSERT INTO tb_member_dormant
+            (member_id, member_seq, site_id, site_code, login_id, password,
+             password_changed_at, role_ids, member_name, nickname, email, email_hash,
+             phone, phone_hash, birth_date, birth_year, gender, di, di_hash,
+             parent_name, parent_di, parent_di_hash,
+             address_zipcode, address, address_detail, join_type, status,
+             last_login_at, last_access_at, dormant_at, dormant_reason,
+             created_by, created_ip, created_at)
+        SELECT member_id, member_seq, site_id, site_code, login_id, password,
+               password_changed_at, role_ids, member_name, nickname, email, email_hash,
+               phone, phone_hash, birth_date, birth_year, gender, di, di_hash,
+               parent_name, parent_di, parent_di_hash,
+               address_zipcode, address, address_detail, join_type, status,
+               last_login_at, last_access_at, CURRENT_TIMESTAMP, #{reason},
+               created_by, created_ip, created_at
+        FROM tb_member
+        WHERE member_id = #{memberId} AND delete_yn = 'N'
+    </insert>
+
+    <delete id="deleteMemberRow">
+        DELETE FROM tb_member WHERE member_id = #{memberId}
+    </delete>
+
+    <!-- ── 탈퇴 ─────────────────────────────────────────────────────────
+         원장에는 <b>해시만</b> 남는다. login_id_hash·di_hash 는 재가입 제한·중복가입
+         차단·분쟁 대응의 유일한 근거라 PII NULL 정책의 예외다(PLAN §결정 대기 → 존치). -->
+    <insert id="insertWithdrawLedger">
+        INSERT INTO tb_member_withdraw
+            (member_id, member_seq, site_id, site_code, login_id_hash, di_hash,
+             withdraw_at, withdraw_reason, withdraw_status, retention_expire_at,
+             legal_basis, created_by, created_ip, created_at)
+        SELECT member_id, member_seq, site_id, site_code,
+               SHA2(login_id, 256), di_hash,
+               CURRENT_TIMESTAMP, #{reason}, #{withdrawType}, #{retentionExpireAt},
+               #{legalBasis}, #{actor}, #{clientIp}, CURRENT_TIMESTAMP
+        FROM tb_member
+        WHERE member_id = #{memberId}
+    </insert>
+
+    <insert id="insertWithdrawLedgerFromDormant">
+        INSERT INTO tb_member_withdraw
+            (member_id, member_seq, site_id, site_code, login_id_hash, di_hash,
+             withdraw_at, withdraw_reason, withdraw_status, retention_expire_at,
+             legal_basis, created_by, created_ip, created_at)
+        SELECT member_id, member_seq, site_id, site_code,
+               SHA2(login_id, 256), di_hash,
+               CURRENT_TIMESTAMP, #{reason}, #{withdrawType}, #{retentionExpireAt},
+               #{legalBasis}, #{actor}, #{clientIp}, CURRENT_TIMESTAMP
+        FROM tb_member_dormant
+        WHERE member_id = #{memberId}
+    </insert>
+
+    <!--
+      PII 전부 NULL — <b>되돌릴 수 없다</b>. 반드시 원장 INSERT 이후에 부른다.
+      login_id 는 남긴다(중복 아이디 재사용 방지). status 로 탈퇴 상태를 표시하고
+      delete_yn='Y' 로 모든 조회에서 제외한다.
+    -->
+    <update id="nullifyPii">
+        UPDATE tb_member
+        SET member_name = NULL, nickname = NULL,
+            email = NULL, email_hash = NULL, email_verified_yn = 'N',
+            phone = NULL, phone_hash = NULL,
+            birth_date = NULL, birth_year = NULL, gender = NULL,
+            di = NULL, di_hash = NULL,
+            parent_name = NULL, parent_di = NULL, parent_di_hash = NULL,
+            address_zipcode = NULL, address = NULL, address_detail = NULL,
+            -- password 는 NOT NULL 이라 비울 수 없다(실측). BCrypt 형식이 아닌 값을 넣어
+            -- 어떤 입력과도 매칭되지 않게 한다 — 해시를 남겨 두는 것보다 낫다
+            password = '-', role_ids = NULL,
+            status = 'SUSPENDED', delete_yn = 'Y',
+            updated_by = #{actor}, updated_at = CURRENT_TIMESTAMP
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="nullifyDormantPii">
+        UPDATE tb_member_dormant
+        SET member_name = NULL, nickname = NULL,
+            email = NULL, email_hash = NULL,
+            phone = NULL, phone_hash = NULL,
+            birth_date = NULL, birth_year = NULL, gender = NULL,
+            di = NULL, di_hash = NULL,
+            parent_name = NULL, parent_di = NULL, parent_di_hash = NULL,
+            address_zipcode = NULL, address = NULL, address_detail = NULL,
+            password = '-', role_ids = NULL,
+            delete_yn = 'Y', updated_at = CURRENT_TIMESTAMP
+        WHERE member_id = #{memberId}
+    </update>
+
+    <!-- ── 완전 삭제 — FK 를 가진 자식부터 지운다 ─────────────────────── -->
+    <delete id="deleteConsents">
+        DELETE FROM tb_member_consent WHERE member_id = #{memberId}
+    </delete>
+    <delete id="deletePasswordHistory">
+        DELETE FROM tb_member_password_history WHERE member_id = #{memberId}
+    </delete>
+    <delete id="deleteOauth">
+        DELETE FROM tb_member_oauth WHERE member_id = #{memberId}
+    </delete>
+    <delete id="deleteDormantNotices">
+        DELETE FROM tb_member_dormant_notice WHERE member_id = #{memberId}
+    </delete>
+    <delete id="deleteDormantRow">
+        DELETE FROM tb_member_dormant WHERE member_id = #{memberId}
+    </delete>
+    <delete id="deleteWithdrawLedger">
+        DELETE FROM tb_member_withdraw WHERE member_id = #{memberId}
+    </delete>
+
+    <!-- ── 사전 안내 이력 ───────────────────────────────────────────── -->
+    <insert id="insertNotice">
+        INSERT INTO tb_member_dormant_notice
+            (notice_id, member_id, stage, sent_at, created_by, created_ip, created_at)
+        VALUES (#{noticeId}, #{memberId}, #{stage}, CURRENT_TIMESTAMP,
+                'SYSTEM', '0.0.0.0', CURRENT_TIMESTAMP)
+    </insert>
+
+    <delete id="deleteNoticesByMember">
+        DELETE FROM tb_member_dormant_notice WHERE member_id = #{memberId}
+    </delete>
+
+</mapper>
