@@ -33,6 +33,10 @@ spring:
 # URL·계정은 환경변수 주입(.env.example 키와 1:1). driver 만 MariaDB 기본값 허용.
 gopcms:
   datasource:
+    # 매퍼 XML 벤더 접미어 — 파일명 *Mapper_{vendor}.xml 과 1:1 (conventions §4.4).
+    # 이 값이 고른 한 벌만 로드한다. 두 벌(_maria + _postgres)을 함께 읽으면
+    # 같은 namespace 가 중복 등록돼 기동이 깨지므로, 벤더 전환은 이 키 하나로 한다.
+    vendor: maria
     primary:
       url: ${GOPCMS_DB_PRIMARY_URL}
       username: ${GOPCMS_DB_PRIMARY_USER}

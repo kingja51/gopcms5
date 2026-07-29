@@ -457,21 +457,68 @@ FAIL_2FA 적재 · 접근 로그 actor(ADMIN/MEMBER/ANONYMOUS) · 비밀번호 �
 - [ ] **본문 렌더는 `html_yn` 분기** — `N` 이면 `th:text` 평문, `Y` 면 **저장 시점
       OWASP Sanitizer 통과분**만 `th:utext`
 
-### P9-2b 위지윅 에디터 — Tiptap (2026-07-29 확정)
-- [ ] **Tiptap 도입** (`html_yn='Y'` 게시판 본문 + `tb_content.body` 공용).
-      ProseMirror 기반이라 스키마 밖 마크업이 모델 단계에서 떨어진다 — 서버
-      Sanitizer allowlist 와 **같은 목록으로 맞춰** 두면 "에디터에서 되던 게 저장 후
-      사라지는" 불일치가 안 생긴다
-- [ ] **번들 빌드 도입 필요** — 현재 npm 은 Tailwind CLI 만 돌린다. Tiptap 은 ESM 묶음이
-      필요하므로 esbuild 정도의 번들러를 추가해 `static/js/vendor/editor.js` 한 장으로
-      떨군다. **CDN 금지·self-host 규약 유지**, 산출물은 nonce 없는 외부 스크립트
-- [ ] CSP 실측 확인 — `script-src` 에 `unsafe-eval` 이 없다. Tiptap 이 이를 요구하지
-      않는지 기동 후 콘솔로 검증하고, 요구한다면 CSP 를 여는 대신 다른 에디터로 되돌린다
-- [ ] **에디터 내 업로드는 이미지 전용 + `ROLE_STAFF` 만** — 파일 첨부(file-picker)와
-      **경로를 분리**한다. 별도 엔드포인트(`/api/v1/file/image`)로 두고
-      `uploadImage` 카테고리(확장자×MIME 교차검증 + 재인코딩) 강제
-- [ ] 미리보기에 `blob:` 을 쓰지 않는다 — `img-src` 에 `blob:` 이 없다(실측). **업로드를
-      먼저 끝내고 반환된 `/file/{id}` URL 을 본문에 넣는** 방식이라야 CSP 를 안 열어도 된다
+### P9-2b 위지윅 에디터 — 2종 교체형 (2026-07-29 확정)
+
+**Tiptap(기본) · Namo CrossEditor 4** 두 가지를 두고 `application.yml` 하나로 고른다.
+적용 대상은 `html_yn='Y'` 게시판 본문과 `tb_content.body` 공용이다.
+
+```yaml
+gopcms:
+  editor:
+    provider: tiptap        # tiptap | crosseditor
+```
+
+#### 교체 지점을 3개로 못 박는다
+에디터마다 손대는 곳이 흩어지면 교체가 곧 회귀가 된다. 아래 3개만 provider 별로 갈리고,
+**나머지(저장·정화·업로드·권한)는 provider 와 무관하게 한 벌**이다.
+
+- [ ] `EditorProperties`(`@ConfigurationProperties("gopcms.editor")`) + `EditorProvider` enum —
+      provider 별 자산 목록(js/css)과 프래그먼트 이름만 들고 있는다
+- [ ] `fragments/editor.html` — `th:fragment="editor(field, value)"` 하나가 대외 계약.
+      내부에서 provider 로 분기해 `editor-tiptap` / `editor-crosseditor` 를 include 한다.
+      **폼 화면은 이 프래그먼트만 부르고 provider 를 몰라야 한다**
+- [ ] provider 별 어댑터 JS — 공통 계약은 하나: *제출 직전에 편집 결과 HTML 을
+      `<textarea name="{field}">` 에 써 넣는다*. 폼 쪽 코드는 그대로 두고 어댑터만 갈린다
+- [ ] 기동 검증 — 선택된 provider 의 자산이 실제로 없으면 **fail-fast**
+      (`LayoutSmokeRunner` 와 같은 방식). 폼을 열고 나서야 깨진 걸 알게 되면 늦다
+
+#### provider 와 무관하게 고정할 것 (교체해도 흔들리면 안 되는 축)
+- [ ] **서버 새니타이저 allowlist 는 provider 와 무관하게 하나** — 에디터를 바꿨다고
+      보안 수준이 달라지면 안 된다. 저장 시점 단일 지점에서 정화하고, 프런트 정화는
+      편의 기능으로만 취급
+- [ ] **저장 HTML 은 상호 호환이어야 한다** — provider 를 바꿔도 기존 본문이 열려야 하므로
+      allowlist 는 두 에디터 출력의 **합집합**으로 잡고 저장 시 정규화한다. CrossEditor 는
+      HTML 4.01/XHTML 계열 마크업·인라인 스타일을 뱉으므로(벤더 명세) Tiptap 스키마만
+      기준으로 잡으면 기존 글이 저장할 때마다 깎여 나간다
+- [ ] **업로드는 이미지 전용 + `ROLE_STAFF` 만**, 첨부(file-picker)와 경로 분리.
+      `/api/v1/file/image` 단일 엔드포인트에 `uploadImage` 카테고리(확장자×Tika 교차검증 +
+      재인코딩) 강제 — provider 는 이 엔드포인트에 맞춰 어댑터로 붙인다
+- [ ] **미리보기에 `blob:` 금지** — `img-src` 에 `blob:` 이 없다(실측). 업로드를 먼저
+      끝내고 반환된 `/file/{id}` URL 을 본문에 넣는다
+
+#### Tiptap (기본)
+- [ ] ProseMirror 기반이라 스키마 밖 마크업이 모델 단계에서 떨어진다 — 서버 allowlist 와
+      스키마를 같은 목록으로 맞추면 "에디터에선 되던 게 저장 후 사라지는" 불일치가 없다
+- [ ] **번들 빌드 필요** — 현재 npm 은 Tailwind CLI 만 돌린다. ESM 묶음이라 esbuild 정도를
+      추가해 `static/js/vendor/editor-tiptap.js` 한 장으로 떨군다(CDN 금지·self-host 유지)
+- [ ] CSP 실측 — `script-src` 에 `unsafe-eval` 이 없다. 요구하면 CSP 를 여는 대신 재검토
+
+#### Namo CrossEditor 4 (상용)
+- [ ] **벤더 번들 self-host** — `static/js/vendor/crosseditor/` 아래. 어댑터가
+      공통 계약(제출 직전 textarea 주입)을 구현
+- [ ] **벤더가 주는 Java 업로드 핸들러를 쓰지 않는다.** 이유가 둘이다.
+      ① 보안 — 샘플 핸들러는 우리 다중 방어(확장자·Tika·재인코딩·격리)를 우회한다.
+      웹쉘 침해 이력을 생각하면 업로드 경로가 둘이 되는 것 자체가 위험이다.
+      ② 기술 — 벤더 명세가 **JDK 1.7+** 기준이라 `javax.servlet` 시대 코드다.
+      Tomcat 10.1 / Spring Boot 3.5 는 `jakarta.servlet` 이라 그대로는 로드조차 안 된다.
+      → 업로드는 우리 `/api/v1/file/image` 로 돌리고 응답 형식만 어댑터가 변환한다
+- [ ] **CSP 실측이 도입 조건** — iframe 기반 상용 번들이라 `unsafe-eval`·`frame-src` 를
+      요구할 수 있다. 요구한다면 관리자 전 구간의 CSP 를 여는 셈이므로, 열기 전에
+      "이 provider 를 쓸 것인가" 를 다시 판단한다(§결정 대기)
+- [ ] **라이선스 확인 후 반입** — 1도메인 단위 상용 라이선스다. 구매·적용 도메인이
+      확정되기 전에는 번들을 저장소에 커밋하지 않는다
+- [ ] 접근성 — 공공 사이트 대상 제품이라 접근성을 표방하지만, **KWCAG 판정 기준은
+      에디터 UI 가 아니라 산출 HTML** 이다. 표 머리셀·대체텍스트가 실제로 붙는지 실측
 
 ### P9-3 댓글
 - [ ] 대댓글 depth 2 제한(초과는 부모로 평탄화) · 비밀댓글 · 관리자 모더레이션
@@ -546,6 +593,9 @@ eGov 호환성 확인 신청.
 | ~~ROLE_EMPLOYEE 부재~~ | ✅ 확정: **사용하지 않는다.** 앱 enum·폼에서 제외, V9 CHECK 의 값은 무해한 상위집합으로 존치 | P8 |
 | ~~감사 이벤트 저장소~~ | ✅ 확정: 도입하지 않는다. 6컬럼 감사 + 접속·보안 로그로 충분 | — |
 | ~~한국어 전문검색 방식~~ | ✅ 확정: **LIKE 검색.** 색인 테이블·FULLTEXT·Nori 모두 미도입 | P9-7 |
-| ~~위지윅 에디터 선정~~ | ✅ 확정: **Tiptap.** 에디터 내 업로드는 이미지 전용 + `ROLE_STAFF` 한정 | P9-2b |
-| **Tiptap 번들 빌드** | 현재 npm 은 Tailwind CLI 만 돌린다. ESM 번들러(esbuild 등) 추가가 필요하고, CSP `script-src` 에 `unsafe-eval` 이 없어 실기동 검증 전에는 확정 못 한다 | P9-2b 착수 시 |
+| ~~위지윅 에디터 선정~~ | ✅ 확정: **Tiptap(기본) + Namo CrossEditor 4** 2종을 `gopcms.editor.provider` 로 교체. 업로드는 provider 무관하게 이미지 전용 + `ROLE_STAFF` 한정 | P9-2b |
+| **Tiptap 번들 빌드** | 현재 npm 은 Tailwind CLI 만 돌린다. ESM 번들러(esbuild 등) 추가 필요 | P9-2b 착수 시 |
+| **CrossEditor 도입 가부** | 상용 iframe 번들이라 CSP `unsafe-eval`·`frame-src` 를 요구할 수 있다. 요구하면 **관리자 전 구간 CSP 를 여는 셈** — 실측 후 도입 여부를 다시 판단한다 | P9-2b 착수 시 |
+| **CrossEditor 라이선스** | 1도메인 단위 상용. 구매·적용 도메인 확정 전에는 벤더 번들을 저장소에 커밋하지 않는다 | 도입 전 |
+| **에디터 간 본문 호환** | provider 를 바꿔도 기존 `body` 가 열려야 한다. CrossEditor 는 HTML4.01/XHTML 계열 마크업을 뱉으므로 allowlist 를 두 출력의 합집합으로 잡지 않으면 기존 글이 저장할 때마다 깎인다 | P9-2b |
 | **프로그램 네임스페이스 3중 동기화** | `/bbs/`·`/prg/` 목록이 `SKIP_PREFIXES`·컨텐츠 예약 slug·사이트코드 예약어 세 곳에 흩어지면 라우팅이 조용히 깨진다 — 상수 한 곳을 세 곳이 참조하도록 | P9-0 |
