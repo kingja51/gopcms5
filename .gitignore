@@ -26,6 +26,15 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
+# ── 반입 라이브러리 (라이선스) ───────────────
+# NICE 본인인증 jar 등 벤더 계약 산출물은 저장소에 두지 않는다 —
+# 공개 저장소라 재배포가 곧 라이선스 위반이 된다. 빌드는 로컬 lib/ 의 파일을 쓴다
+# (pom.xml 의 system scope · war include 설정은 그대로).
+# 위지윅 상용 번들도 같은 이유로 커밋하지 않는다.
+lib/*.jar
+src/main/resources/static/js/vendor/crosseditor/
+src/main/resources/static/js/vendor/ckeditor5/
+
 # ── 로컬 설정 / 비밀 ─────────────────────────
 *.local
 .env
