@@ -7,6 +7,7 @@ import com.gonet.primary.content.dto.ContentDto;
 import com.gonet.primary.content.service.ContentService;
 import com.gonet.primary.menu.service.MenuService;
 import com.gonet.primary.site.dto.SiteContext;
+import com.gonet.common.web.UrlNamespaces;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,8 +33,12 @@ public class ContentUsrController {
      * 등록측 검증(ContentServiceImpl)이 이 목록을 그대로 참조한다 — 목록이 갈라지면
      * "등록은 되는데 열리지는 않는" 페이지가 생긴다.
      */
-    public static final Set<String> RESERVED_SLUGS = Set.of(
-            "index", "sitemap", "search", "member", "bbs", "prg", "adm", "api");
+    /**
+     * slug 로 쓸 수 없는 값 — 첫 세그먼트 예약어와 <b>같은 목록</b>이다.
+     * 따로 관리하면 프로그램을 하나 늘릴 때마다 두 곳을 고쳐야 하고, 잊으면
+     * {@code /{siteCode}/bbs} 같은 컨텐츠가 만들어져 프로그램 경로와 헷갈린다.
+     */
+    public static final Set<String> RESERVED_SLUGS = UrlNamespaces.RESERVED;
 
     private final ContentService contentService;
     private final MenuService menuService;

@@ -8,7 +8,7 @@ import com.gonet.common.web.PageRequest;
 import com.gonet.common.web.PageResult;
 import com.gonet.config.CacheConfig;
 import com.gonet.config.datasource.MyBatisConfig;
-import com.gonet.config.web.SiteResolveFilter;
+import com.gonet.common.web.UrlNamespaces;
 import com.gonet.primary.menu.service.MenuService;
 import com.gonet.primary.site.dto.SiteAdmDto;
 import com.gonet.primary.site.dto.SiteContext;
@@ -135,7 +135,7 @@ public class SiteServiceImpl extends AbstractCmsService implements SiteService {
             throw new IllegalArgumentException(
                     "사이트 코드는 소문자·숫자·하이픈 1~30자여야 합니다.");
         }
-        if (SiteResolveFilter.SKIP_PREFIXES.contains(code)) {
+        if (UrlNamespaces.isReserved(code)) {
             throw new IllegalArgumentException(
                     "'" + code + "' 는 시스템 예약 경로라 사이트 코드로 쓸 수 없습니다.");
         }

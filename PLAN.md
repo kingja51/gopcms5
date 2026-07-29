@@ -447,17 +447,30 @@ dry-run 을 끄자 정확히 2건만 삭제(살아 있는 1건은 보존)되고 
 > P8(파일) 이 선행 — 첨부가 file-picker + `ensureGroup` 을 그대로 재사용한다.
 > layout-001~007 의 좋아요/신고 밴드에 이미 자리를 잡아 두었다("게시판 페이즈에서 활성").
 
-### P9-0 사용자 프로그램 라우팅 선행 작업 (2026-07-29 확정)
-- [ ] **URL = `/bbs/{siteCode}/{bbsCode}`** — 사용자 프로그램은 `/bbs/`·`/prg/` 처럼
+### P9-0 사용자 프로그램 라우팅 선행 작업 (완료 2026-07-29)
+- [x] **URL = `/bbs/{siteCode}/{bbsCode}`** — 사용자 프로그램은 `/bbs/`·`/prg/` 처럼
       **프로그램 네임스페이스가 앞**에 오고 siteCode 가 뒤따른다. 컨텐츠 URL
       (`/{siteCode}/{slug}`)과는 자리 순서가 반대이며, 둘 다 유지된다
-- [ ] `SiteResolveFilter` 확장 — 지금은 첫 세그먼트만 사이트코드로 본다. 프로그램
-      네임스페이스(`bbs`·`prg`·향후 추가분)에 한해 **두 번째 세그먼트를 사이트코드로**
-      읽도록 분기한다. 사이트 컨텍스트가 서야 레이아웃·템플릿·테마 3축이 적용되므로
-      단순 SKIP 처리로는 안 된다 (`/file/**` 은 바이너리라 SKIP 이 맞다 — 다르게 다룬다)
-- [ ] 프로그램 네임스페이스 목록을 상수 한 곳에 두고 `SKIP_PREFIXES`·컨텐츠 예약 slug·
-      사이트코드 예약어가 **같은 목록을 참조**하게 한다(세 곳이 어긋나면 라우팅이 깨진다)
-- [ ] `tb_role_url_access` 규칙 INSERT 를 같은 커밋에 — 무매칭 DENY 라 규칙 없이는 안 열린다
+- [x] `SiteResolveFilter` 확장 — 프로그램 네임스페이스에서 **두 번째 세그먼트를 사이트코드로**
+      읽는다. 건너뛰지 않는 이유: 사이트 컨텍스트가 서야 3축(layout·template·theme)이
+      적용된다 (`/file/**` 은 바이너리라 SKIP 이 맞다 — 다르게 다룬다)
+- [x] **`UrlNamespaces` 단일 원천 신설** — SKIP(사이트 개념 없음) / PROGRAM(2번째가 사이트) /
+      RESERVED(둘의 합 + 고정 라우트)를 한 곳에서 정의하고,
+      `SiteResolveFilter`·`SiteServiceImpl`(사이트코드 검증)·`ContentUsrController`
+      (예약 slug)가 전부 이것을 본다. 목록이 흩어져 있으면 하나만 빠졌을 때
+      조용히 깨진다 — `bbs` 를 예약어에서 빠뜨리면 site_code 를 `bbs` 로 만들 수 있고
+      그 순간 `/bbs/…` 가 게시판인지 그 사이트인지 구분되지 않는다
+- [x] 빈 마디를 건너뛰는 세그먼트 파서 — `//bbs//ai//notice` 도 같은 판정을 받아야
+      우회 시도가 다른 결과를 내지 않는다
+- [x] `tb_role_url_access` 규칙(V912) — `/bbs/**`·`/prg/**` PERMIT_ALL(priority 200).
+      여기서 잠그면 공개 게시판이 비로그인에게 닫히고, 없으면 무매칭 DENY 로 아예 안 열린다.
+      실제 판정은 안쪽 두 겹(`tb_bbs_master.read_auth`·`tb_file_group.download_auth`)이 한다
+
+**P9-0 완료 확인(2026-07-29, 8081 실측)**: `/bbs/nursingcollege/free` 가 접속 로그에
+`nursingcollege` 로 기록 — 두 번째 세그먼트 해석 동작 확인. `/bbs/ai/notice`·
+`/prg/ai/professor` 는 404(컨트롤러 미구현)이고 403 이 아니므로 인가 통과.
+`/ai/about`·`/ai/index` 는 200 으로 컨텐츠 경로 영향 없음. 예약어 5종(bbs·prg·file·adm·index)
+사이트코드 등록 거부(사이트 3건 유지). 라우팅 규칙 단위 테스트 11건 신규.
 
 ### P9-1 마스터 + 카테고리
 - [ ] `BoardAdmController` (`/adm/board/**`) — 마스터 CRUD, 사이트 내 `bbs_code` UNIQUE,

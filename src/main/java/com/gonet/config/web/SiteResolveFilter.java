@@ -2,6 +2,7 @@ package com.gonet.config.web;
 
 
 import com.gonet.common.web.ClientIpResolver;
+import com.gonet.common.web.UrlNamespaces;
 import com.gonet.common.web.SiteContextHolder;
 import com.gonet.primary.site.dto.SiteContext;
 import com.gonet.primary.site.service.SiteService;
@@ -32,28 +33,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class SiteResolveFilter extends OncePerRequestFilter {
 
-    /**
-     * 사이트 네임스페이스가 아닌 첫 세그먼트 — 해석 자체를 건너뜀.
-     *
-     * <p>동시에 <b>site_code 로 쓸 수 없는 값</b>이기도 하다(같은 자리를 다투므로) —
-     * 사이트 등록 검증(SiteServiceImpl)이 이 목록을 그대로 참조한다.
-     */
-    public static final Set<String> SKIP_PREFIXES = Set.of(
-            "adm", "api", "actuator", "error", "favicon.ico",
-            "css", "js", "fonts", "images", "tmpl", "webjars",
-            "swagger-ui", "v3",
-            // 파일 스트리밍 — 바이너리 응답이라 사이트 컨텍스트도 템플릿도 필요 없다.
-            // (/bbs·/prg 같은 프로그램 네임스페이스는 반대로 2번째 세그먼트로 사이트를
-            //  해석해야 하므로 여기에 넣지 않는다 — conventions §5.1)
-            "file");
-
     private final SiteService siteService;
     private final ClientIpResolver clientIpResolver;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String first = firstSegment(request.getRequestURI());
-        return first != null && SKIP_PREFIXES.contains(first);
+        // 목록은 UrlNamespaces 단일 원천 — 여기에 따로 두면 예약어·slug 목록과 어긋난다
+        return UrlNamespaces.isSkip(UrlNamespaces.segment(request.getRequestURI(), 1));
     }
 
     @Override
@@ -73,9 +59,16 @@ public class SiteResolveFilter extends OncePerRequestFilter {
         }
     }
 
-    /** 해석 순서: ① 경로 첫 세그먼트 → ② siteCode 쿼리 파라미터(/login?siteCode= 등) → ③ 기본 사이트 */
+    /**
+     * 해석 순서: ① 경로의 사이트코드 자리 → ② siteCode 쿼리 파라미터(/login?siteCode= 등)
+     * → ③ 기본 사이트.
+     *
+     * <p>①의 <b>자리가 경로마다 다르다</b>. 컨텐츠는 첫 세그먼트({@code /{siteCode}/{slug}}),
+     * 프로그램은 두 번째({@code /bbs/{siteCode}/{bbsCode}}) — conventions §5.1.
+     */
     private SiteContext resolve(HttpServletRequest request) {
-        SiteContext context = resolveByCode(firstSegment(request.getRequestURI()));
+        SiteContext context = resolveByCode(
+                UrlNamespaces.siteCodeSegment(request.getRequestURI()));
         if (context == null) {
             context = resolveByCode(request.getParameter("siteCode"));
         }
@@ -84,15 +77,5 @@ public class SiteResolveFilter extends OncePerRequestFilter {
 
     private SiteContext resolveByCode(String siteCode) {
         return siteCode == null || siteCode.isBlank() ? null : siteService.getSiteContext(siteCode);
-    }
-
-    private String firstSegment(String uri) {
-        if (uri == null || uri.length() < 2) {
-            return null;
-        }
-        int start = 1;
-        int end = uri.indexOf('/', start);
-        String segment = end < 0 ? uri.substring(start) : uri.substring(start, end);
-        return segment.isBlank() ? null : segment;
     }
 }
