@@ -85,7 +85,10 @@
 
         <p class="ladm-lnb-group text-label-xs">자료</p>
         <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/board}"
-           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/board')} ? 'ladm-active'">게시판 관리</a>
+           th:classappend="${currentUri != null and (currentUri == '/adm/board'
+                            or #strings.startsWith(currentUri, '/adm/board/'))} ? 'ladm-active'">게시판 관리</a>
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/board-report}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/board-report')} ? 'ladm-active'">신고 관리</a>
         <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/file}"
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/file')} ? 'ladm-active'">파일 관리</a>
 

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     좋아요 · 신고 밴드 — 레이아웃 7종과 게시판 화면이 같은 조각을 쓴다.
+
+     쓰는 법:
+       <th:block th:replace="~{fragments/reaction-band :: band(
+           targetType='ARTICLE', targetId=${article.articleId},
+           likeCount=${article.likeCount}, siteCode=${site?.siteCode})}"/>
+       <th:block layout:fragment="scripts">
+         <script src="/js/board-reaction.js" defer></script>
+       </th:block>
+
+     설계 메모
+       · 숫자는 서버 응답으로만 갱신한다(클라이언트 ±1 금지 — 동시 클릭에 어긋난다)
+       · 신고 창은 네이티브 <dialog> — ESC·포커스 트랩을 브라우저가 준다
+       · 로그인 여부로 버튼을 감추지 않는다. 눌렀을 때 로그인으로 안내하는 편이
+         "왜 버튼이 없지?" 보다 낫고, 판정은 어차피 서버가 한다
+     ============================================================================ -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="band(targetType, targetId, likeCount, siteCode)"
+     class="krds-reaction" data-reaction="true"
+     th:attr="data-target-type=${targetType},
+              data-target-id=${targetId},
+              data-site-code=${siteCode}">
+
+    <!-- CSRF 는 밴드가 직접 들고 있다 — 레이아웃마다 메타 태그를 심는 방식은
+         하나만 빠뜨려도 조용히 403 이 된다(file-picker 와 같은 원천을 쓴다) -->
+    <input type="hidden" th:name="${_csrf?.parameterName} ?: '_csrf'"
+           th:value="${_csrf?.token}"/>
+
+    <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm"
+            data-action="like-toggle" aria-pressed="false">
+        👍 좋아요 <b data-like-count th:text="${likeCount} ?: 0">0</b>
+    </button>
+
+    <button type="button" class="krds-btn krds-btn-text krds-btn-sm"
+            data-action="open-dialog"
+            th:attr="data-target='report-dialog-' + ${targetId}">🚩 신고</button>
+
+    <dialog class="krds-dialog" th:id="'report-dialog-' + ${targetId}">
+        <form method="dialog" class="krds-dialog-body">
+            <h2 class="text-heading-sm text-fg-strong">신고하기</h2>
+            <p class="text-body-sm text-fg-subtle">
+                신고는 관리자 검토 후 조치됩니다. 같은 글은 한 번만 신고할 수 있습니다.</p>
+
+            <label class="text-label-md" th:for="'reason-' + ${targetId}">사유</label>
+            <select class="krds-select" name="reasonCode" th:id="'reason-' + ${targetId}" required>
+                <option value="">선택하세요</option>
+                <option th:each="r : ${T(com.gonet.primary.board.dto.ReportReason).ALL}"
+                        th:value="${r}"
+                        th:text="${T(com.gonet.primary.board.dto.ReportReason).label(r)}">스팸</option>
+            </select>
+
+            <label class="text-label-md" th:for="'detail-' + ${targetId}">상세 내용 (선택)</label>
+            <textarea class="krds-input" name="reasonText" rows="3"
+                      th:id="'detail-' + ${targetId}" maxlength="1000"></textarea>
+
+            <div class="krds-dialog-actions">
+                <button type="button" class="krds-btn krds-btn-primary krds-btn-sm"
+                        data-action="report-submit">신고</button>
+                <button type="button" class="krds-btn krds-btn-secondary krds-btn-sm"
+                        data-action="close-dialog">취소</button>
+            </div>
+        </form>
+    </dialog>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<!-- 신고 검토 큐 — 자동 숨김은 잠정 조치일 뿐이고, 최종 판단은 여기서 사람이 한다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>신고 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('신고 관리',
+            '접수된 신고를 검토합니다. 임계 개수에 도달한 글은 자동으로 숨겨지며, 기각하면 다시 노출됩니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form method="get" th:action="@{/adm/board-report}" class="ladm-search">
+                <label class="sr-only" for="status">처리 상태</label>
+                <select id="status" name="status" class="krds-select krds-select-sm"
+                        data-submit-on-change>
+                    <option value="PENDING" th:selected="${cond.status == 'PENDING'}">처리 대기</option>
+                    <option value="REVIEWED" th:selected="${cond.status == 'REVIEWED'}">처리 완료</option>
+                    <option value="REJECTED" th:selected="${cond.status == 'REJECTED'}">기각</option>
+                    <option value="" th:selected="${cond.status == null or cond.status == ''}">전체</option>
+                </select>
+                <label class="sr-only" for="targetType">대상</label>
+                <select id="targetType" name="targetType" class="krds-select krds-select-sm"
+                        data-submit-on-change>
+                    <option value="">대상 전체</option>
+                    <option th:each="t : ${targetTypes}" th:value="${t}" th:text="${t}"
+                            th:selected="${t == cond.targetType}">ARTICLE</option>
+                </select>
+                <label class="sr-only" for="reasonCode">사유</label>
+                <select id="reasonCode" name="reasonCode" class="krds-select krds-select-sm"
+                        data-submit-on-change>
+                    <option value="">사유 전체</option>
+                    <option th:each="r : ${reasons}" th:value="${r}"
+                            th:text="${T(com.gonet.primary.board.dto.ReportReason).label(r)}"
+                            th:selected="${r == cond.reasonCode}">스팸</option>
+                </select>
+            </form>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">신고 목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="center">대상</th>
+                    <th scope="col">내용</th>
+                    <th scope="col">사유</th>
+                    <th scope="col" class="num">누적</th>
+                    <th scope="col" class="center">현재 상태</th>
+                    <th scope="col" class="center nowrap">접수일</th>
+                    <th scope="col" class="center">처리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${page.content()}">
+                    <td class="center text-body-xs text-fg-subtle" th:text="${r.targetType}">ARTICLE</td>
+                    <td>
+                        <!-- 사유만 보고는 판단할 수 없다 — 대상 본문을 함께 보여준다 -->
+                        <b class="text-body-sm" th:text="${r.targetTitle} ?: '(삭제된 대상)'">제목</b>
+                        <span class="text-body-xs text-fg-subtle"
+                              th:if="${r.bbsName != null}" th:text="' · ' + ${r.bbsName}"> · 게시판</span>
+                        <span class="text-body-xs text-fg-subtle"
+                              th:if="${r.targetWriter != null}" th:text="' · ' + ${r.targetWriter}"> · 작성자</span>
+                        <span class="text-body-xs text-fg-subtle" th:if="${r.reasonText != null}"
+                              th:text="' — ' + ${r.reasonText}"> — 상세</span>
+                    </td>
+                    <td class="text-body-sm"
+                        th:text="${T(com.gonet.primary.board.dto.ReportReason).label(r.reasonCode)}">스팸</td>
+                    <td class="num" th:text="${r.reportCount}">1</td>
+                    <td class="center">
+                        <span class="krds-badge"
+                              th:classappend="${r.targetStatus == 'PUBLISHED'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${r.targetStatus} ?: '—'">PUBLISHED</span>
+                    </td>
+                    <td class="center nowrap text-body-xs text-fg-subtle"
+                        th:text="${r.createdAtView != null}
+                                 ? ${#temporals.format(r.createdAtView, 'yyyy-MM-dd HH:mm')} : ''">접수일</td>
+                    <td class="center nowrap">
+                        <th:block th:if="${r.pending}">
+                            <form method="post" style="display:inline" th:action="@{/adm/board-report/review}">
+                                <input type="hidden" name="reportId" th:value="${r.reportId}"/>
+                                <input type="hidden" name="status" value="REVIEWED"/>
+                                <input type="hidden" name="hideTarget" value="true"/>
+                                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm"
+                                        data-confirm="이 대상을 숨기고 처리 완료로 표시할까요?">숨김 처리</button>
+                            </form>
+                            <form method="post" style="display:inline" th:action="@{/adm/board-report/review}">
+                                <input type="hidden" name="reportId" th:value="${r.reportId}"/>
+                                <input type="hidden" name="status" value="REJECTED"/>
+                                <button type="submit" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                                        data-confirm="문제 없음으로 기각할까요? 숨김 상태였다면 다시 노출됩니다.">기각</button>
+                            </form>
+                        </th:block>
+                        <span th:unless="${r.pending}" class="text-body-xs text-fg-subtle"
+                              th:text="${r.status}">REVIEWED</span>
+                    </td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(7, ${page.content().isEmpty()}, null)}"></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:replace="~{adm/fragments/adm-ui :: pager('/adm/board-report')}"></div>
+    </section>
+</div>
+</body>
+</html>

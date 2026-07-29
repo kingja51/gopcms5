@@ -605,10 +605,32 @@ gopcms:
 > **실측 결함 1건**: 재계산 SQL 이 `delete_yn` 만 봐서 **숨긴 댓글도 세고 있었다** —
 > "댓글 3" 인데 하나도 안 보이는 상태가 된다. 상태 조건을 더해 화면과 일치시켰다.
 
-### P9-4 좋아요 / 신고
-- [ ] `BoardLikeApiController` / `BoardReportApiController` (`/api/v1/board/**`) —
-      토글은 UNIQUE 충돌 시 활성/비활성 swap, 카운트 비정규화 동기
-- [ ] 신고 임계 도달 시 PUBLISHED → REPORTED 자동 전환 + 관리자 검토 큐
+### P9-4 좋아요 / 신고 (완료 2026-07-29)
+- [x] `BoardLikeApiController` / `BoardReportApiController` (`/api/v1/board/**`) — 순수 JSON.
+      **토글은 `ON DUPLICATE KEY UPDATE` 한 문장** — 조회 후 분기하면 연타 시 UNIQUE 충돌로
+      500 이 난다. 취소했다 다시 눌러도 같은 행이 되살아나 행이 늘지 않는다
+- [x] 카운트 비정규화 동기 — **증분이 아니라 재계산**(취소·재클릭이 섞이면 증감은 어긋난다).
+      감사컬럼·`updated_at` 은 건드리지 않는다 — 좋아요는 글의 수정이 아니다
+- [x] 신고 임계(기본 5, `gopcms.board.report-threshold`) 도달 시 PUBLISHED → **REPORTED
+      자동 숨김**. 삭제하지 않는 것이 핵심 — 자동 조치가 최종 판단이 되면 조직적 신고로
+      멀쩡한 글을 내릴 수 있다. `0` 으로 두면 자동 전환이 꺼진다
+- [x] **기각(REJECTED)은 무조건 복원** — 사람 판단이 자동 조치보다 위다. 기각한 신고는
+      유효 신고 수에서도 빠진다(근거 없는 신고를 모아 임계를 채우는 길 차단)
+- [x] 관리자 검토 큐 `/adm/board-report` — 대상 본문·작성자·누적 신고 수를 함께 보여준다
+      (사유만 보고는 판단할 수 없다). 숨김 처리 / 기각 2버튼
+- [x] 신고 응답에 **누적 건수를 담지 않는다** — 신고자가 임계까지 몇 건 남았는지 알면
+      여럿이 맞춰 채우기 쉬워진다. 좋아요는 반대로 숫자를 돌려준다(클라이언트 ±1 금지)
+- [x] 재사용 조각 — `fragments/reaction-band` + `/js/board-reaction.js`(data-action 위임,
+      인라인 스크립트 없음). **CSRF 토큰을 밴드가 직접 들고 있어** 레이아웃 수정 없이 붙는다.
+      P9-5 에서 7종 레이아웃의 반응 밴드와 게시판 화면이 이 한 벌을 쓴다
+- [x] V913 URL 규칙 2건 — 좋아요·신고 모두 `AUTHENTICATED`(priority 72·73 — `/api/**`
+      DENY(80)보다 앞). 익명 좋아요는 중복을 막을 수 없어 숫자가 의미를 잃고,
+      익명 신고는 남용을 추적할 수 없다
+
+**완료 확인(2026-07-29, 8081 실측 + 단위 테스트 8종)**: 토글 on→off→on 왕복에
+`tb_bbs_like` 행은 1개 유지·`like_count` 동기 · 비로그인 401 JSON(P6-2 API 계약 준수) ·
+잘못된 대상 유형/식별자/사유 400 · 중복 신고 409 · **임계 5 도달 시 자동 REPORTED** ·
+전량 기각 시 count 0 + **PUBLISHED 복원** · 숨김 처리 시 HIDDEN. 검증 데이터 전량 제거.
 
 ### P9-5 사용자 화면
 - [ ] `/bbs/{siteCode}/{bbsCode}` 목록 · `/{articleId}` 상세 · `/write`·`/{id}/edit`

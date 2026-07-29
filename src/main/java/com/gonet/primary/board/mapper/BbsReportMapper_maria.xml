@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.board.mapper.BbsReportMapper">
+
+    <sql id="cols">
+        r.report_id, r.target_type, r.target_id, r.reporter_user_id, r.reporter_user_type,
+        r.source_url, r.menu_id, r.reason_code, r.reason_text, r.status,
+        r.reviewed_by, r.reviewed_at, r.review_note,
+        r.created_by, r.created_at, r.updated_by, r.updated_at
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO tb_bbs_report
+            (report_id, target_type, target_id, reporter_user_id, reporter_user_type,
+             source_url, menu_id, reason_code, reason_text, status,
+             created_by, created_ip, created_at, updated_by, updated_ip, updated_at)
+        VALUES
+            (#{reportId}, #{targetType}, #{targetId}, #{reporterUserId}, #{reporterUserType},
+             #{sourceUrl}, #{menuId}, #{reasonCode}, #{reasonText}, 'PENDING',
+             #{createdBy}, #{createdIp}, CURRENT_TIMESTAMP,
+             #{updatedBy}, #{updatedIp}, CURRENT_TIMESTAMP)
+    </insert>
+
+    <select id="countByReporter" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_report
+        WHERE target_type = #{targetType} AND target_id = #{targetId}
+          AND reporter_user_id = #{reporterUserId} AND delete_yn = 'N'
+    </select>
+
+    <!--
+      기각(REJECTED)은 세지 않는다 — 관리자가 "문제 없음" 으로 판단한 신고까지 임계에
+      포함하면, 근거 없는 신고를 모아 멀쩡한 글을 내리는 길이 열린다.
+    -->
+    <select id="countActive" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_report
+        WHERE target_type = #{targetType} AND target_id = #{targetId}
+          AND delete_yn = 'N' AND status &lt;&gt; 'REJECTED'
+    </select>
+
+    <sql id="admWhere">
+        WHERE r.delete_yn = 'N'
+        <if test="status != null and status != ''">AND r.status = #{status}</if>
+        <if test="targetType != null and targetType != ''">AND r.target_type = #{targetType}</if>
+        <if test="reasonCode != null and reasonCode != ''">AND r.reason_code = #{reasonCode}</if>
+    </sql>
+
+    <!--
+      대상 본문을 함께 끌어온다 — 신고 사유만 보고는 판단할 수 없다.
+      다형 참조라 FK 가 없으므로 target_type 으로 갈라 LEFT JOIN 한다.
+    -->
+    <select id="findPage" resultType="com.gonet.primary.board.dto.BbsReportDto">
+        SELECT <include refid="cols"/>,
+               r.created_at AS created_at_view,
+               COALESCE(a.title, LEFT(c.content, 60)) AS target_title,
+               COALESCE(a.writer_name, c.writer_name) AS target_writer,
+               COALESCE(a.status, c.status)           AS target_status,
+               COALESCE(a.article_id, c.article_id)   AS article_id,
+               m.bbs_master_id, m.bbs_name,
+               (SELECT COUNT(*) FROM tb_bbs_report r2
+                 WHERE r2.target_type = r.target_type AND r2.target_id = r.target_id
+                   AND r2.delete_yn = 'N' AND r2.status &lt;&gt; 'REJECTED') AS report_count
+        FROM tb_bbs_report r
+        LEFT JOIN tb_bbs_article a ON r.target_type = 'ARTICLE' AND a.article_id = r.target_id
+        LEFT JOIN tb_bbs_comment c ON r.target_type = 'COMMENT' AND c.comment_id = r.target_id
+        LEFT JOIN tb_bbs_article ca ON ca.article_id = c.article_id
+        LEFT JOIN tb_bbs_master m ON m.bbs_master_id = COALESCE(a.bbs_master_id, ca.bbs_master_id)
+        <include refid="admWhere"/>
+        ORDER BY r.status = 'PENDING' DESC, r.created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_report r
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.board.dto.BbsReportDto">
+        SELECT <include refid="cols"/> FROM tb_bbs_report r
+        WHERE r.report_id = #{reportId} AND r.delete_yn = 'N'
+    </select>
+
+    <update id="review">
+        UPDATE tb_bbs_report
+        SET status = #{status}, review_note = #{reviewNote},
+            reviewed_by = #{reviewedBy}, reviewed_at = CURRENT_TIMESTAMP,
+            updated_by = #{reviewedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE report_id = #{reportId}
+    </update>
+
+    <update id="updateArticleStatus">
+        UPDATE tb_bbs_article
+        SET status = #{status},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE article_id = #{articleId} AND delete_yn = 'N'
+    </update>
+
+    <update id="updateCommentStatus">
+        UPDATE tb_bbs_comment
+        SET status = #{status},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE comment_id = #{commentId} AND delete_yn = 'N'
+    </update>
+
+    <update id="refreshArticleReportCount">
+        UPDATE tb_bbs_article a
+        SET a.report_count = (SELECT COUNT(*) FROM tb_bbs_report r
+                               WHERE r.target_type = 'ARTICLE' AND r.target_id = a.article_id
+                                 AND r.delete_yn = 'N' AND r.status &lt;&gt; 'REJECTED'),
+            a.updated_at = a.updated_at
+        WHERE a.article_id = #{articleId}
+    </update>
+
+    <update id="refreshCommentReportCount">
+        UPDATE tb_bbs_comment c
+        SET c.report_count = (SELECT COUNT(*) FROM tb_bbs_report r
+                               WHERE r.target_type = 'COMMENT' AND r.target_id = c.comment_id
+                                 AND r.delete_yn = 'N' AND r.status &lt;&gt; 'REJECTED'),
+            c.updated_at = c.updated_at
+        WHERE c.comment_id = #{commentId}
+    </update>
+
+</mapper>
