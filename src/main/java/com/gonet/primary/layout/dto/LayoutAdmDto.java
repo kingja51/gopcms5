@@ -1,5 +1,6 @@
 package com.gonet.primary.layout.dto;
 
+import com.gonet.common.audit.Auditable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class LayoutAdmDto {
+public class LayoutAdmDto extends Auditable {
 
     private String layoutId;
     private String layoutCode;

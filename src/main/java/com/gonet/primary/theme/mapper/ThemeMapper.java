@@ -30,7 +30,9 @@ public interface ThemeMapper {
 
     int update(ThemeAdmDto theme);
 
-    int softDelete(@Param("themeId") String themeId);
+    int softDelete(@Param("themeId") String themeId,
+                   @Param("updatedBy") String updatedBy,
+                   @Param("updatedIp") String updatedIp);
 
     List<ThemeAdmDto> findAllForSelect();
 }

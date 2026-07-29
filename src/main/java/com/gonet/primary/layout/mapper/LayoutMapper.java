@@ -25,7 +25,9 @@ public interface LayoutMapper {
 
     int update(LayoutAdmDto layout);
 
-    int softDelete(@Param("layoutId") String layoutId);
+    int softDelete(@Param("layoutId") String layoutId,
+                   @Param("updatedBy") String updatedBy,
+                   @Param("updatedIp") String updatedIp);
 
     List<LayoutAdmDto> findAllForSelect();
 }

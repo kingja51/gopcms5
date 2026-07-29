@@ -1,5 +1,6 @@
 package com.gonet.primary.layout.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
@@ -84,6 +85,7 @@ public class LayoutServiceImpl extends AbstractCmsService implements LayoutServi
             throw new IllegalArgumentException(
                     "사이트·템플릿 " + references + "건이 이 레이아웃을 참조 중이라 삭제할 수 없습니다.");
         }
-        layoutMapper.softDelete(layoutId);
+        layoutMapper.softDelete(layoutId,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
     }
 }

@@ -1,5 +1,6 @@
 package com.gonet.primary.site.dto;
 
+import com.gonet.common.audit.Auditable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +12,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class SiteAdmDto {
+public class SiteAdmDto extends Auditable {
 
     private String siteId;
     private String siteCode;

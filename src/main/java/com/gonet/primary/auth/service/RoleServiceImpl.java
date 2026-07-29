@@ -1,5 +1,6 @@
 package com.gonet.primary.auth.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Csv;
 import com.gonet.common.util.Uid;
@@ -133,7 +134,8 @@ public class RoleServiceImpl extends AbstractCmsService implements RoleService {
             throw new IllegalArgumentException(
                     "계정·하위 역할·URL 규칙 " + references + "건이 이 역할을 참조 중이라 삭제할 수 없습니다.");
         }
-        roleMapper.softDelete(roleId);
+        roleMapper.softDelete(roleId,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
         rebuildHierarchy();
     }
 
@@ -166,7 +168,8 @@ public class RoleServiceImpl extends AbstractCmsService implements RoleService {
                     && roleCodes.equals(current.getRoleCodes())) {
                 continue;
             }
-            roleMapper.updateAdminRoleCsv(entry.getKey(), roleIds, roleCodes);
+            roleMapper.updateAdminRoleCsv(entry.getKey(), roleIds, roleCodes,
+                    AuditorContext.currentUserId(), AuditorContext.currentIp());
             changed++;
         }
         return changed;
@@ -179,7 +182,8 @@ public class RoleServiceImpl extends AbstractCmsService implements RoleService {
             Set<String> base = Csv.toSet(row.getRoleIds());
             String roleIds = String.join(",", RoleClosure.expandAll(base, descendants));
             if (!roleIds.equals(row.getRoleIds())) {
-                roleMapper.updateMemberRoleIds(row.getUserId(), roleIds);
+                roleMapper.updateMemberRoleIds(row.getUserId(), roleIds,
+                        AuditorContext.currentUserId(), AuditorContext.currentIp());
                 changed++;
             }
         }

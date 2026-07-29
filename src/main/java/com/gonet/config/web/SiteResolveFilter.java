@@ -1,6 +1,6 @@
 package com.gonet.config.web;
 
-import com.gonet.common.audit.AuditorContext;
+
 import com.gonet.common.web.ClientIpResolver;
 import com.gonet.common.web.SiteContextHolder;
 import com.gonet.primary.site.dto.SiteContext;
@@ -61,13 +61,11 @@ public class SiteResolveFilter extends OncePerRequestFilter {
                 SiteContextHolder.set(context);
                 request.setAttribute(SiteContextHolder.REQUEST_ATTR, context);
             }
-            // userId 는 세팅하지 않는다 — 이 필터는 시큐리티 체인 바깥이라 아직 인증 전이다.
-            // AuditorContext 가 조회 시점에 SecurityContext 에서 주체를 읽는다.
-            AuditorContext.set(null, clientIpResolver.resolve(request));
+            // 감사 컨텍스트(client_ip)는 AuditorContextFilter 담당 — 이 필터는 /adm/** 등을
+            // 건너뛰므로 여기서 세우면 관리자 쓰기의 updated_ip 가 비어버린다.
             filterChain.doFilter(request, response);
         } finally {
             SiteContextHolder.clear();
-            AuditorContext.clear();
         }
     }
 

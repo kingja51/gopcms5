@@ -30,5 +30,7 @@ public interface MenuMapper {
 
     int update(MenuAdmDto menu);
 
-    int softDelete(@Param("menuId") String menuId);
+    int softDelete(@Param("menuId") String menuId,
+                   @Param("updatedBy") String updatedBy,
+                   @Param("updatedIp") String updatedIp);
 }

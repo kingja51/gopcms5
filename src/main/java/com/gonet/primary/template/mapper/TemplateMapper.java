@@ -26,7 +26,9 @@ public interface TemplateMapper {
 
     int update(TemplateAdmDto template);
 
-    int softDelete(@Param("templateId") String templateId);
+    int softDelete(@Param("templateId") String templateId,
+                   @Param("updatedBy") String updatedBy,
+                   @Param("updatedIp") String updatedIp);
 
     List<TemplateAdmDto> findAllForSelect();
 }

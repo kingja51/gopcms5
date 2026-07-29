@@ -29,6 +29,10 @@
         LIMIT #{limit}
     </select>
 
+    <!--
+      조회수만 올리는 문장이라 updated_by/ip 를 건드리지 않는다 — 방문자가 최종 수정자로
+      기록되면 감사 추적이 망가진다. updated_at 도 갱신하지 않는다(수정 이력 보존).
+    -->
     <update id="increaseViewCount">
         UPDATE tb_content
         SET view_count = view_count + 1
@@ -100,25 +104,34 @@
     </insert>
 
     <!-- version_no 는 저장할 때마다 올린다 — 이력(tb_content_history) 도입 시 그대로 이어진다 -->
+    <!--
+      menu_id 와 3종 일정(published/publish_scheduled/unpublish) 은 무조건 세팅한다 —
+      메뉴 연결 해제·예약 취소가 <b>비우는 동작</b>이라 <if> 를 걸면 취소가 불가능해진다.
+      body 는 <if> 를 걸지 않는다: 본문을 통째로 지우는 것도 정당한 편집이다.
+    -->
     <update id="update" parameterType="com.gonet.primary.content.dto.ContentAdmDto">
         UPDATE tb_content
-        SET menu_id = #{menuId},
-            title = #{title},
-            slug = #{slug},
+        SET
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="slug != null and slug != ''">slug = #{slug},</if>
+            <if test="summary != null and summary != ''">summary = #{summary},</if>
+            <if test="metaKeywords != null and metaKeywords != ''">meta_keywords = #{metaKeywords},</if>
+            <if test="metaDescription != null and metaDescription != ''">meta_description = #{metaDescription},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            menu_id = #{menuId},
             body = #{body},
-            summary = #{summary},
-            meta_keywords = #{metaKeywords},
-            meta_description = #{metaDescription},
-            status = #{status},
             published_at = #{publishedAt},
             publish_scheduled_at = #{publishScheduledAt},
             unpublish_at = #{unpublishAt},
-            version_no = version_no + 1
+            version_no = version_no + 1,
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE content_id = #{contentId}
     </update>
 
     <update id="softDelete">
-        UPDATE tb_content SET delete_yn = 'Y'
+        UPDATE tb_content
+        SET delete_yn = 'Y',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE content_id = #{contentId}
     </update>
 

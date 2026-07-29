@@ -1,5 +1,6 @@
 package com.gonet.primary.theme.dto;
 
+import com.gonet.common.audit.Auditable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class ThemeAdmDto {
+public class ThemeAdmDto extends Auditable {
 
     private String themeId;
 

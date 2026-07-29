@@ -27,8 +27,10 @@ public interface PasswordMapper {
 
     /** 비밀번호 교체 + 변경/만료 일시 갱신 (만료는 changed_at + validDays). */
     int updateAdminPassword(@Param("userId") String userId,
-            @Param("passwordHash") String passwordHash, @Param("validDays") int validDays);
+            @Param("passwordHash") String passwordHash, @Param("validDays") int validDays,
+            @Param("updatedBy") String updatedBy, @Param("updatedIp") String updatedIp);
 
     int updateMemberPassword(@Param("userId") String userId,
-            @Param("passwordHash") String passwordHash, @Param("validDays") int validDays);
+            @Param("passwordHash") String passwordHash, @Param("validDays") int validDays,
+            @Param("updatedBy") String updatedBy, @Param("updatedIp") String updatedIp);
 }

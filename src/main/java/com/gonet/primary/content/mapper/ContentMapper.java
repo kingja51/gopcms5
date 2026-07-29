@@ -39,5 +39,7 @@ public interface ContentMapper {
 
     int update(ContentAdmDto content);
 
-    int softDelete(@Param("contentId") String contentId);
+    int softDelete(@Param("contentId") String contentId,
+                   @Param("updatedBy") String updatedBy,
+                   @Param("updatedIp") String updatedIp);
 }

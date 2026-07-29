@@ -1,5 +1,6 @@
 package com.gonet.primary.auth.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
@@ -57,10 +58,12 @@ public class PasswordServiceImpl extends AbstractCmsService implements PasswordS
         // isReused 가 따로 대조하므로, 이 방식이 지나온 비밀번호 전부를 덮는다.
         if (admin) {
             passwordMapper.insertAdminHistory(historyId, userId, user.getPassword());
-            passwordMapper.updateAdminPassword(userId, encoded, PasswordPolicy.VALID_DAYS);
+            passwordMapper.updateAdminPassword(userId, encoded, PasswordPolicy.VALID_DAYS,
+                    AuditorContext.currentUserId(), AuditorContext.currentIp());
         } else {
             passwordMapper.insertMemberHistory(historyId, userId, user.getPassword());
-            passwordMapper.updateMemberPassword(userId, encoded, PasswordPolicy.VALID_DAYS);
+            passwordMapper.updateMemberPassword(userId, encoded, PasswordPolicy.VALID_DAYS,
+                    AuditorContext.currentUserId(), AuditorContext.currentIp());
         }
     }
 

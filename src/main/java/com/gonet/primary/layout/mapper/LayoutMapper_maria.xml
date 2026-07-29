@@ -60,17 +60,21 @@
 
     <update id="update" parameterType="com.gonet.primary.layout.dto.LayoutAdmDto">
         UPDATE tb_layout
-        SET layout_code = #{layoutCode},
-            layout_name = #{layoutName},
-            wireframe_ref = #{wireframeRef},
-            description = #{description},
-            sort_order = #{sortOrder},
-            use_yn = #{useYn}
+        SET
+            <if test="layoutCode != null and layoutCode != ''">layout_code = #{layoutCode},</if>
+            <if test="layoutName != null and layoutName != ''">layout_name = #{layoutName},</if>
+            <if test="wireframeRef != null and wireframeRef != ''">wireframe_ref = #{wireframeRef},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE layout_id = #{layoutId}
     </update>
 
     <update id="softDelete">
-        UPDATE tb_layout SET delete_yn = 'Y', use_yn = 'N'
+        UPDATE tb_layout
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE layout_id = #{layoutId}
     </update>
 

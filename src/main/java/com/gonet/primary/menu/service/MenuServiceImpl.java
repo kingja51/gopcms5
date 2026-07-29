@@ -1,5 +1,6 @@
 package com.gonet.primary.menu.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
@@ -110,7 +111,8 @@ public class MenuServiceImpl extends AbstractCmsService implements MenuService {
             throw new IllegalArgumentException(
                     "하위 메뉴 " + children + "개를 먼저 삭제해야 합니다.");
         }
-        menuMapper.softDelete(menuId);
+        menuMapper.softDelete(menuId,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
     }
 
     /** menu_type 에 맞지 않는 링크 필드를 비운다 — 남은 값이 나중에 오해를 만든다. */

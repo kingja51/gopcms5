@@ -69,22 +69,31 @@
              #{linkTargetId}, #{linkUrl}, #{sortOrder}, #{depth}, #{authRequiredYn}, #{useYn})
     </insert>
 
+    <!--
+      parent_menu_id·link_target_id·link_url 은 무조건 세팅한다 — menu_type 을 바꾸면
+      쓰지 않는 링크 필드를 <b>NULL 로 비워야</b> 하고(P7-1 "menu_type 별 링크 필드 정규화"),
+      1뎁스로 올릴 때 parent 를 NULL 로 만들어야 하기 때문이다.
+    -->
     <update id="update" parameterType="com.gonet.primary.menu.dto.MenuAdmDto">
         UPDATE tb_menu
-        SET parent_menu_id = #{parentMenuId},
-            menu_name = #{menuName},
-            menu_type = #{menuType},
+        SET
+            <if test="menuName != null and menuName != ''">menu_name = #{menuName},</if>
+            <if test="menuType != null and menuType != ''">menu_type = #{menuType},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="depth != null">depth = #{depth},</if>
+            <if test="authRequiredYn != null and authRequiredYn != ''">auth_required_yn = #{authRequiredYn},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
+            parent_menu_id = #{parentMenuId},
             link_target_id = #{linkTargetId},
             link_url = #{linkUrl},
-            sort_order = #{sortOrder},
-            depth = #{depth},
-            auth_required_yn = #{authRequiredYn},
-            use_yn = #{useYn}
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE menu_id = #{menuId}
     </update>
 
     <update id="softDelete">
-        UPDATE tb_menu SET delete_yn = 'Y', use_yn = 'N'
+        UPDATE tb_menu
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE menu_id = #{menuId}
     </update>
 

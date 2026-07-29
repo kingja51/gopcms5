@@ -69,17 +69,21 @@
 
     <update id="update" parameterType="com.gonet.primary.theme.dto.ThemeAdmDto">
         UPDATE tb_theme
-        SET template_id = #{templateId},
-            theme_code = #{themeCode},
-            theme_name = #{themeName},
-            css_class = #{cssClass},
-            sort_order = #{sortOrder},
-            use_yn = #{useYn}
+        SET
+            <if test="templateId != null and templateId != ''">template_id = #{templateId},</if>
+            <if test="themeCode != null and themeCode != ''">theme_code = #{themeCode},</if>
+            <if test="themeName != null and themeName != ''">theme_name = #{themeName},</if>
+            <if test="cssClass != null and cssClass != ''">css_class = #{cssClass},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE theme_id = #{themeId}
     </update>
 
     <update id="softDelete">
-        UPDATE tb_theme SET delete_yn = 'Y', use_yn = 'N'
+        UPDATE tb_theme
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE theme_id = #{themeId}
     </update>
 

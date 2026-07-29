@@ -34,5 +34,7 @@ public interface UrlAccessMapper {
 
     int update(UrlAccessRule rule);
 
-    int softDelete(@Param("urlAccessId") String urlAccessId);
+    int softDelete(@Param("urlAccessId") String urlAccessId,
+                   @Param("updatedBy") String updatedBy,
+                   @Param("updatedIp") String updatedIp);
 }

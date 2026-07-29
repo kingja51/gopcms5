@@ -1,5 +1,6 @@
 package com.gonet.primary.site.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
@@ -119,7 +120,8 @@ public class SiteServiceImpl extends AbstractCmsService implements SiteService {
             throw new IllegalArgumentException(
                     "기본 사이트는 삭제할 수 없습니다. 다른 사이트를 기본으로 지정한 뒤 삭제하세요.");
         }
-        siteMapper.softDelete(siteId);
+        siteMapper.softDelete(siteId,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
     }
 
     /**

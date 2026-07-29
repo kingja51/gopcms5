@@ -64,17 +64,22 @@
 
     <update id="update" parameterType="com.gonet.primary.template.dto.TemplateAdmDto">
         UPDATE tb_template
-        SET template_code = #{templateCode},
-            template_name = #{templateName},
+        SET
+            <if test="templateCode != null and templateCode != ''">template_code = #{templateCode},</if>
+            <if test="templateName != null and templateName != ''">template_name = #{templateName},</if>
+            <if test="designMd != null and designMd != ''">design_md = #{designMd},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
+            <!-- 폼에서 필수값이라 항상 들어온다 — 굳이 <if> 로 감싸지 않는다 -->
             default_layout_id = #{defaultLayoutId},
-            design_md = #{designMd},
-            description = #{description},
-            use_yn = #{useYn}
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE template_id = #{templateId}
     </update>
 
     <update id="softDelete">
-        UPDATE tb_template SET delete_yn = 'Y', use_yn = 'N'
+        UPDATE tb_template
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE template_id = #{templateId}
     </update>
 

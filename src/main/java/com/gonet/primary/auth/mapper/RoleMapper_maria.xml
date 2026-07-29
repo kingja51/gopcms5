@@ -43,7 +43,8 @@
     <update id="updateAdminRoleCsv">
         UPDATE tb_admin
         SET role_ids = #{roleIds},
-            role_codes = #{roleCodes}
+            role_codes = #{roleCodes},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE admin_id = #{userId}
     </update>
 
@@ -120,15 +121,27 @@
 
     <update id="update" parameterType="com.gonet.primary.auth.dto.RoleAdmDto">
         UPDATE tb_role
-        SET site_id = #{siteId}, site_code = #{siteCode},
-            parent_role_id = #{parentRoleId}, role_code = #{roleCode},
-            role_name = #{roleName}, description = #{description},
-            sort_order = #{sortOrder}, use_yn = #{useYn}
+        SET
+            <if test="roleCode != null and roleCode != ''">role_code = #{roleCode},</if>
+            <if test="roleName != null and roleName != ''">role_name = #{roleName},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
+            <!--
+              site_id·parent_role_id 는 무조건 세팅 — 사이트 전용 역할을 전역으로 돌리거나
+              최상위(단독) 역할로 올리려면 NULL 로 <b>비울 수 있어야</b> 한다.
+              parent 를 못 비우면 ROLE_PRIVACY 같은 단독 역할을 만들 수 없다.
+            -->
+            site_id = #{siteId}, site_code = #{siteCode},
+            parent_role_id = #{parentRoleId},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE role_id = #{roleId}
     </update>
 
     <update id="softDelete">
-        UPDATE tb_role SET delete_yn = 'Y', use_yn = 'N'
+        UPDATE tb_role
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE role_id = #{roleId}
     </update>
 
@@ -141,7 +154,8 @@
 
     <update id="updateMemberRoleIds">
         UPDATE tb_member
-        SET role_ids = #{roleIds}
+        SET role_ids = #{roleIds},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE member_id = #{userId}
     </update>
 

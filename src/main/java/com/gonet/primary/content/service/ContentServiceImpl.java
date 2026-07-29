@@ -1,5 +1,6 @@
 package com.gonet.primary.content.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
@@ -86,7 +87,8 @@ public class ContentServiceImpl extends AbstractCmsService implements ContentSer
     @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
     @CacheEvict(cacheNames = CacheConfig.SITE_CONTEXT, allEntries = true)
     public void deleteAdm(String contentId) {
-        contentMapper.softDelete(contentId);
+        contentMapper.softDelete(contentId,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
     }
 
     /**

@@ -109,34 +109,45 @@
              #{logoPath}, #{faviconPath}, #{description}, #{headMeta}, #{copyright}, #{useYn})
     </insert>
 
+    <!--
+      값이 오지 않은 칸은 기존 값을 유지한다(<if> 가드).
+      다만 3축(template/theme/layout)과 parent_site_id 는 <b>비우는 것 자체가 기능</b>이라
+      (관리자 폼의 "선택 안 함" = NULL = 템플릿 기본값 상속) 무조건 세팅한다.
+      여기에 <if> 를 걸면 한번 지정한 테마를 영영 해제할 수 없다.
+    -->
     <update id="update" parameterType="com.gonet.primary.site.dto.SiteAdmDto">
         UPDATE tb_site
-        SET site_code = #{siteCode},
-            site_name = #{siteName},
-            domain = #{domain},
-            default_lang = #{defaultLang},
+        SET
+            <if test="siteCode != null and siteCode != ''">site_code = #{siteCode},</if>
+            <if test="siteName != null and siteName != ''">site_name = #{siteName},</if>
+            <if test="domain != null and domain != ''">domain = #{domain},</if>
+            <if test="defaultLang != null and defaultLang != ''">default_lang = #{defaultLang},</if>
+            <if test="defaultYn != null and defaultYn != ''">default_yn = #{defaultYn},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="logoPath != null and logoPath != ''">logo_path = #{logoPath},</if>
+            <if test="faviconPath != null and faviconPath != ''">favicon_path = #{faviconPath},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="headMeta != null and headMeta != ''">head_meta = #{headMeta},</if>
+            <if test="copyright != null and copyright != ''">copyright = #{copyright},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
             parent_site_id = #{parentSiteId},
             template_id = #{templateId},
             theme_id = #{themeId},
             layout_id = #{layoutId},
-            default_yn = #{defaultYn},
-            sort_order = #{sortOrder},
-            logo_path = #{logoPath},
-            favicon_path = #{faviconPath},
-            description = #{description},
-            head_meta = #{headMeta},
-            copyright = #{copyright},
-            use_yn = #{useYn}
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE site_id = #{siteId}
     </update>
 
     <update id="softDelete">
-        UPDATE tb_site SET delete_yn = 'Y', use_yn = 'N'
+        UPDATE tb_site
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE site_id = #{siteId}
     </update>
 
     <update id="clearDefaultExcept">
-        UPDATE tb_site SET default_yn = 'N'
+        UPDATE tb_site
+        SET default_yn = 'N', updated_at = CURRENT_TIMESTAMP
         WHERE default_yn = 'Y'
           AND site_id &lt;&gt; #{siteId}
     </update>

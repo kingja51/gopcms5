@@ -333,10 +333,199 @@ FAIL_2FA 적재 · 접근 로그 actor(ADMIN/MEMBER/ANONYMOUS) · 비밀번호 �
 > **검증 스크립트에서 한글은 셸 리터럴 대신 UTF-8 파일로 넘길 것.**
 
 
-## P8+ — 이후 로드맵 (예고)
+## P8 — 파일 관리 (업로드·다운로드)
 
-게시판 도메인 구현(V9 테이블 위) → 회원·조직 → 템플릿 CSS 진짜 구현(blueprint-001 부터,
-SG 스타일가이드 병행, 레이아웃 7종은 P7-4 로 완료) → 공통 프로그램 →
+> 원전: 선행 프로젝트 gopcms500 의 `GoPCMS_파일_기술명세서.md`(2026-05-01판).
+> **테이블은 P7-2(V9)에서 이미 만들어 두었다** — `tb_file_group`·`tb_file`,
+> 로그는 logging V2 의 `log_file_download`. 이 페이즈는 그 위에 코드를 올리는 일이다.
+> 원전과 다른 지점은 §P8 말미 "이식 시 교정" 에 모아 둔다. **선행 문서보다 이 저장소의
+> DDL·규약이 우선**이며, 원전 문서를 이 저장소로 복사해 오지 않는다.
+
+### P8-1 공통 업로드 엔진 (`com.gonet.common.file` — DB 미의존)
+- [ ] `FileUploadProperties` (`gopcms.file.upload.*`) — base/quarantine/thumb 경로,
+      최대 크기, 카테고리별 확장자 화이트리스트(any·document·image·video)
+- [ ] **다중 방어 파이프라인** — 확장자 화이트리스트(널바이트·경로·이중확장자 차단) →
+      Tika 매직바이트(카테고리와 family 교차 검증) → 이미지 재인코딩(Thumbnailator,
+      EXIF·삽입 스크립트 제거) → SHA-256(FIM) → 격리 디렉터리 저장 후 정식 이동 →
+      백신 큐 enqueue. **저장소는 웹루트 밖**(V9 DDL 주석에 이미 명시)
+- [ ] 파이프라인 진입 직후 SecurityContext 검사 — 비인증 업로드는 엔진 레벨에서 401
+- [ ] `VirusScanQueue` 인터페이스 + `NoOpVirusScanQueue` 기본 + ClamAV INSTREAM TCP
+      직구현(전용 의존성 없음). `gopcms.file.clamav.enabled=false` 가 기본
+- [ ] 비동기 썸네일(`@Async`) — 긴 외부호출이므로 주 트랜잭션과 분리(`NOT_SUPPORTED`)
+
+### P8-2 도메인 파일 서비스 (`com.gonet.primary.file`)
+- [ ] `FileService`/`Impl`(+`AbstractCmsService`) · `FileMapper`/`FileGroupMapper`
+      (`@EgovMapper`) — 업로드 커밋·목록·soft delete
+- [ ] `ensureGroup(entityType, entityId, siteId, downloadAuth)` 단일 진입점 —
+      도메인 Service 가 **폼 저장 전에** 그룹 정책을 확정한다. picker 가 lazily 만들면
+      DB DEFAULT(`ROLE_MEMBER`)가 박히는 지연 윈도우가 생기는데, 그걸 없애는 게 목적
+- [ ] `syncAttachments(fileGroupId, keep)` — picker 에서 뺀 파일 soft delete
+- [ ] 다운로드 엔진 — Range/ETag/If-* 조건부 헤더, `Cache-Control: private, no-store`
+- [ ] `virus_scan_status` **6값 정책 재정의** — V9 는 원전의 4값에 `QUARANTINED`·
+      `RESCANNING` 을 더했다. 다운로드 허용은 `CLEAN`·`PENDING` 만, 나머지 4종은 차단
+      (관리자 강제 다운로드만 예외)
+
+### P8-3 업로드·다운로드 권한 (2026-07-29 확정)
+- [ ] **업로드 = `ROLE_REAL` 이상.** 전개 집합에 `ROLE_REAL` 이 포함되면 통과 —
+      실측상 ADMIN·MANAGER·STAFF·MEMBER·REAL 이 해당하고, **단독 역할인 `ROLE_PRIVACY`
+      보유자만으로는 업로드할 수 없다**(계층 단절의 의도된 결과). 실명인증 전 계정으로
+      파일이 올라오는 경로를 원천 차단하는 것이 목적
+- [ ] **다운로드 권한은 등록 시점에 정한다** — 업로드 폼이 `download_auth` 를 명시하거나
+      `ANONYMOUS`. 도메인 Service 는 `ensureGroup(..., downloadAuth)` 에 **항상 정책을
+      명시 전달**하고, DB DEFAULT(`ROLE_MEMBER`)는 사고 방지용 안전망으로만 남긴다
+      (기본값에 기대면 정책 미지정 그룹이 조용히 회원공개가 된다)
+- [ ] `enforceDownloadAuth()` 단일 진입점 — `tb_file_group.download_auth` 가 유일 원천
+- [ ] **OWNER_PRIVACY** — 민원글처럼 *본인만* 열람해야 하는 첨부용 정책값.
+      통과 조건은 ① `ROLE_PRIVACY` 보유(role_ids CSV **토큰 정확 매치**, substring 금지)
+      또는 ② 글 작성자 본인. **`ROLE_ADMIN` 도 자동 통과하지 않는 것이 의도**이며,
+      시드의 `ROLE_PRIVACY` 가 이미 parent NULL(계층 단절)이라 admin 의 상속 CSV 에
+      들어가지 않아 이 성질이 그대로 성립한다(V906 실측)
+- [ ] `created_by` sentinel 가드 — `""`/`ALL`/`ANONYMOUS`/`SYSTEM` 은 본인으로 인정하지
+      않는다. 시드·시스템 계정 글에서 대량 owner-bypass 가 나는 것을 막는 장치
+- [ ] **`ROLE_EMPLOYEE` 는 사용하지 않는다** — 정책 enum·폼 선택지에서 제외.
+      V9 CHECK 제약에는 값이 남지만 앱이 절대 쓰지 않으므로 무해한 상위집합으로 둔다
+      (적용된 마이그레이션 수정 금지 — 굳이 조이려면 V10 으로 전진)
+- [ ] 다운로드 이력 `log_file_download` 적재 — **logging_db 라 크로스 DB JOIN 금지**,
+      주 트랜잭션과 격리(`REQUIRES_NEW` + try/catch 를 트랜잭션 밖에)
+
+### P8-4 화면
+- [ ] `fragments/file-picker` — 드래그앤드롭·다중·순서·제거. **인라인 스크립트 금지**
+      (외부 `.js` + `htmx:load` 멱등 초기화 + `data-action` 위임), KRDS 토큰만
+- [ ] 폼 GET 시점에 도메인 PK 사전 발급(`Uid.next()`) → hidden + picker `entityId`.
+      폼 취소 시 남는 orphan 은 purge 배치가 정리
+- [ ] `FileAdmController` `@RequestMapping("/adm/file")` — 목록·상세·강제 다운로드·삭제
+- [ ] `FileApiController` `@RequestMapping("/api/v1/file")` — 업로드 JSON 응답
+- [ ] `FileDownUsrController` `@RequestMapping("/file")` — 단일·그룹 ZIP·썸네일 스트리밍.
+      `/file` 을 사용자 프로그램 네임스페이스로 신설하고 `SKIP_PREFIXES` 에 추가한다
+      (바이너리 응답이라 사이트 컨텍스트·템플릿이 필요 없다)
+
+### P8-5 스케줄러
+- [ ] 물리 삭제 배치(보존기간 경과분) · 백신 재스캔 배치(PENDING/ERROR stale 픽업) —
+      `com.gonet.scheduler` 에 배치, ShedLock 적용
+
+### P8 이식 시 교정 (원전 문서를 그대로 따르면 깨지는 것)
+| 원전 | gopcms5 | 이유 |
+|---|---|---|
+| `FG0_` 접두어 | **`FGR_`** | conventions §2 레지스트리 확정값 (`UidPrefix.FGR`) |
+| `UuidV7Generator.generate("FIL")` | **`Uid.next(UidPrefix.FIL)`** | 채번 단일 경로 |
+| `PageResponse` | **`PageResult`** | P7-1 공통 기반 |
+| `FileMngController` | **`FileAdmController`** | 컨트롤러 접미어 Usr/Adm/Api |
+| `/admin/system/file` | **`/adm/file`** | URL 네임스페이스 = 보안 경계 |
+| `/fileDown/**` | **`/file/**`** | 사용자 프로그램 네임스페이스 규약(`/bbs/`·`/prg/`·`/file/`)에 맞춤 + `SKIP_PREFIXES` 등록 |
+| URL별 권한을 SecurityConfig 에 | **`tb_role_url_access` INSERT** | 인가는 DB 단일 원천, 무매칭 DENY |
+| `virus_scan_status` 4값 | **6값** | V9 CHECK 제약 |
+| 업로드 권한 = 인증 전체 | **`ROLE_REAL` 이상** | 실명인증 전 계정의 업로드 차단 |
+| `ROLE_EMPLOYEE` 정책값 | **미사용** | 역할 자체를 쓰지 않기로 확정 |
+| — | `tb_file.original_content` | gopcms5 에만 있는 컬럼(문서 본문 Markdown 추출) |
+
+---
+
+## P9 — 게시판 관리
+
+> 원전: gopcms500 `GoPCMS_게시판_기술명세서.md`(2026-05-02판).
+> **테이블 6종은 P7-2(V9)에 이미 있다** — `tb_bbs_{master,category,article,comment,like,report}`.
+> P8(파일) 이 선행 — 첨부가 file-picker + `ensureGroup` 을 그대로 재사용한다.
+> layout-001~007 의 좋아요/신고 밴드에 이미 자리를 잡아 두었다("게시판 페이즈에서 활성").
+
+### P9-0 사용자 프로그램 라우팅 선행 작업 (2026-07-29 확정)
+- [ ] **URL = `/bbs/{siteCode}/{bbsCode}`** — 사용자 프로그램은 `/bbs/`·`/prg/` 처럼
+      **프로그램 네임스페이스가 앞**에 오고 siteCode 가 뒤따른다. 컨텐츠 URL
+      (`/{siteCode}/{slug}`)과는 자리 순서가 반대이며, 둘 다 유지된다
+- [ ] `SiteResolveFilter` 확장 — 지금은 첫 세그먼트만 사이트코드로 본다. 프로그램
+      네임스페이스(`bbs`·`prg`·향후 추가분)에 한해 **두 번째 세그먼트를 사이트코드로**
+      읽도록 분기한다. 사이트 컨텍스트가 서야 레이아웃·템플릿·테마 3축이 적용되므로
+      단순 SKIP 처리로는 안 된다 (`/file/**` 은 바이너리라 SKIP 이 맞다 — 다르게 다룬다)
+- [ ] 프로그램 네임스페이스 목록을 상수 한 곳에 두고 `SKIP_PREFIXES`·컨텐츠 예약 slug·
+      사이트코드 예약어가 **같은 목록을 참조**하게 한다(세 곳이 어긋나면 라우팅이 깨진다)
+- [ ] `tb_role_url_access` 규칙 INSERT 를 같은 커밋에 — 무매칭 DENY 라 규칙 없이는 안 열린다
+
+### P9-1 마스터 + 카테고리
+- [ ] `BoardAdmController` (`/adm/board/**`) — 마스터 CRUD, 사이트 내 `bbs_code` UNIQUE,
+      사용중지/재사용, 참조 있는 행 삭제 차단
+- [ ] **8타입** NOTICE·BODO·FREE·FAQ·QNA·GALLERY·FILE·**YOUTUBE** (V9 CHECK 기준.
+      원전 본문은 7타입이라 적었지만 실제 화면은 8개였다 — 8로 확정)
+- [ ] 카테고리 CRUD — 게시판 내 `category_code` UNIQUE, 게시글이 매핑된 카테고리 삭제 차단
+- [ ] `download_auth` 변경 시 소속 글의 file_group 일괄 cascade — **공지글 제외**
+      (`WHERE notice_yn='N'`) 로 ANONYMOUS 보존
+
+### P9-2 게시글 + 첨부
+- [ ] `BoardArticleService` — 작성/수정/삭제, `write_auth` 검증, 공지 지정은 STAFF 이상
+- [ ] `resolveArticleDownloadAuth()` — **`notice_yn='Y'` 면 ANONYMOUS 강제**(마스터 정책보다
+      우선), 아니면 마스터 값 그대로 → `ensureGroup()` 으로 동기화
+- [ ] 조회수 30분 쿠키 dedup — 증가 쿼리는 감사컬럼 미주입(`updated_by` 보존)
+- [ ] 비밀글 — 본문 노출은 작성자/관리자만, 차단 시 조회수도 증가시키지 않는다
+- [ ] **본문 렌더는 `html_yn` 분기** — `N` 이면 `th:text` 평문, `Y` 면 **저장 시점
+      OWASP Sanitizer 통과분**만 `th:utext`
+
+### P9-2b 위지윅 에디터 — Tiptap (2026-07-29 확정)
+- [ ] **Tiptap 도입** (`html_yn='Y'` 게시판 본문 + `tb_content.body` 공용).
+      ProseMirror 기반이라 스키마 밖 마크업이 모델 단계에서 떨어진다 — 서버
+      Sanitizer allowlist 와 **같은 목록으로 맞춰** 두면 "에디터에서 되던 게 저장 후
+      사라지는" 불일치가 안 생긴다
+- [ ] **번들 빌드 도입 필요** — 현재 npm 은 Tailwind CLI 만 돌린다. Tiptap 은 ESM 묶음이
+      필요하므로 esbuild 정도의 번들러를 추가해 `static/js/vendor/editor.js` 한 장으로
+      떨군다. **CDN 금지·self-host 규약 유지**, 산출물은 nonce 없는 외부 스크립트
+- [ ] CSP 실측 확인 — `script-src` 에 `unsafe-eval` 이 없다. Tiptap 이 이를 요구하지
+      않는지 기동 후 콘솔로 검증하고, 요구한다면 CSP 를 여는 대신 다른 에디터로 되돌린다
+- [ ] **에디터 내 업로드는 이미지 전용 + `ROLE_STAFF` 만** — 파일 첨부(file-picker)와
+      **경로를 분리**한다. 별도 엔드포인트(`/api/v1/file/image`)로 두고
+      `uploadImage` 카테고리(확장자×MIME 교차검증 + 재인코딩) 강제
+- [ ] 미리보기에 `blob:` 을 쓰지 않는다 — `img-src` 에 `blob:` 이 없다(실측). **업로드를
+      먼저 끝내고 반환된 `/file/{id}` URL 을 본문에 넣는** 방식이라야 CSP 를 안 열어도 된다
+
+### P9-3 댓글
+- [ ] 대댓글 depth 2 제한(초과는 부모로 평탄화) · 비밀댓글 · 관리자 모더레이션
+- [ ] `comment_count` 재계산 — 증분이 아니라 재계산(모더레이션·삭제로 어긋나는 것 방지)
+
+### P9-4 좋아요 / 신고
+- [ ] `BoardLikeApiController` / `BoardReportApiController` (`/api/v1/board/**`) —
+      토글은 UNIQUE 충돌 시 활성/비활성 swap, 카운트 비정규화 동기
+- [ ] 신고 임계 도달 시 PUBLISHED → REPORTED 자동 전환 + 관리자 검토 큐
+
+### P9-5 사용자 화면
+- [ ] `/bbs/{siteCode}/{bbsCode}` 목록 · `/{articleId}` 상세 · `/write`·`/{id}/edit`
+- [ ] 8타입별 `front/board/{TYPE}/{list,detail,write}.html` — 레이아웃 축과 무관하게
+      동작해야 한다(컨트롤러는 논리 뷰명만 반환, Resolver 가 재작성)
+- [ ] **KRDS 준수는 타협 없음** — 시맨틱 토큰(`bg-surface`·`text-fg-subtle`·`border-line`)과
+      `.krds-*` 프리셋만. raw hex·Tailwind 기본색(`bg-blue-600`)·기본 타이포(`text-xl`)
+      금지, radius ≤12px, 8px 그리드. 7종 레이아웃 어디에 얹혀도 무너지지 않아야 한다
+
+### P9-6 통합 게시판 + canManage
+- [ ] `grouped_board_ids` CSV(V9 에 컬럼 존재) — 채워져 있으면 read-only 합본 뷰.
+      정규화 규칙: 중복 제거·중첩 금지·상한
+- [ ] `canManage = (master.bbsMasterId == article.bbsMasterId)` — 통합 URL 로 들어오면
+      수정·삭제·모더레이션 비노출
+- [ ] **Service 단 가드까지 함께** — 원전은 UI 가드만 넣고 Service 가드를 후속으로
+      미뤄 URL 직접 호출 우회가 열려 있었다(원전 §14-8 자인). 처음부터 같이 넣는다
+
+### P9-7 게시판 검색 — LIKE 검색 (2026-07-29 확정)
+- [ ] 제목·본문·작성자 `LIKE` 검색. **색인 테이블(`tb_search_index`)·FULLTEXT·Nori 는
+      쓰지 않는다** — 원전의 색인 동기화 훅 5경로가 통째로 불필요해진다
+- [ ] `#{}` 바인딩 유지 — 와일드카드는 `CONCAT('%', #{keyword}, '%')` 로 SQL 안에서
+      붙인다(`${}` 금지). `%`·`_` 는 이스케이프 처리
+- [ ] 검색 대상은 `bbs_master_id` + `status='PUBLISHED'` 로 먼저 좁힌 뒤 LIKE 를 건다 —
+      선행 인덱스(`idx_article_bbs_status`)가 먹어야 전체 스캔이 안 난다
+
+### P9 이식 시 교정
+| 원전 | gopcms5 | 이유 |
+|---|---|---|
+| `ART_` / `CMT_` / `BLK_` / `BRP_` | **`BBA_` / `BBC_` / `LIK_` / `RPT_`** | 레지스트리 확정값 |
+| `/bbs/{siteCode}/{bbsCode}` | **그대로 채택** | 사용자 프로그램은 `/bbs/`·`/prg/` 로 시작 — 컨텐츠(`/{siteCode}/{slug}`)와 자리 순서가 반대인 것이 의도 |
+| `/admin/system/board/**` | **`/adm/board/**`** | URL 네임스페이스 = 보안 경계 |
+| `BoardMngController` | **`BoardAdmController`** | 컨트롤러 접미어 규약 |
+| 7타입 | **8타입**(+YOUTUBE) | V9 CHECK 제약 |
+| **버튼 토큰 §9 전체** | **이식 금지** | `bg-blue-600`·`rose-*`·`!text-white` 는 raw Tailwind 색 — KRDS 규약 위반. `.krds-btn-*` 프리셋으로 대체 |
+| 감사 이벤트 5경로 | **미도입** | 6컬럼 감사(created/updated_by·ip·at)와 접속·보안 로그로 충분하다고 판단 |
+| `tb_search_index` + ngram | **LIKE 검색** | 색인 테이블·동기화 훅 5경로 전부 불필요 |
+| textarea + sanitize | **Tiptap** | 위지윅 확정 — 이미지 업로드는 `ROLE_STAFF` 만 |
+| — | `html_yn`·`captcha_yn` | gopcms5 에만 있는 컬럼. 원전에 없던 정책이라 새로 설계 |
+
+---
+
+## P10+ — 이후 로드맵 (예고)
+
+회원·조직(직원·부서) → 템플릿 CSS 진짜 구현(blueprint-001 부터, SG 스타일가이드 병행,
+레이아웃 7종은 P7-4 로 완료) → 배너/팝업·일정·설문 → 공통 프로그램 →
 eGov 호환성 확인 신청.
 
 ---
@@ -353,3 +542,10 @@ eGov 호환성 확인 신청.
 | ~~시큐리티 공백기~~ | ✅ 해소: P6 로 인증·인가·세션·헤더 적용 (P0~P5 는 무인증이었음) | P6 완료 |
 | 인증 기준 데이터 위치 | 역할·관리자·URL 규칙이 dev 시드(V906/V909)에 있다 — 운영 이관 필요 | P7 |
 | 세션 저장소 | 현재 인메모리(단일 인스턴스 전제) — 다중화 시 Redis 등 공유 저장소 필요 | 배포 전 |
+| ~~파일 다운로드 URL 자리~~ | ✅ 확정: `/file/**` — 사용자 프로그램 네임스페이스(`/bbs/`·`/prg/`·`/file/`) 규약에 맞추고 `SKIP_PREFIXES` 등록 | P8 |
+| ~~ROLE_EMPLOYEE 부재~~ | ✅ 확정: **사용하지 않는다.** 앱 enum·폼에서 제외, V9 CHECK 의 값은 무해한 상위집합으로 존치 | P8 |
+| ~~감사 이벤트 저장소~~ | ✅ 확정: 도입하지 않는다. 6컬럼 감사 + 접속·보안 로그로 충분 | — |
+| ~~한국어 전문검색 방식~~ | ✅ 확정: **LIKE 검색.** 색인 테이블·FULLTEXT·Nori 모두 미도입 | P9-7 |
+| ~~위지윅 에디터 선정~~ | ✅ 확정: **Tiptap.** 에디터 내 업로드는 이미지 전용 + `ROLE_STAFF` 한정 | P9-2b |
+| **Tiptap 번들 빌드** | 현재 npm 은 Tailwind CLI 만 돌린다. ESM 번들러(esbuild 등) 추가가 필요하고, CSP `script-src` 에 `unsafe-eval` 이 없어 실기동 검증 전에는 확정 못 한다 | P9-2b 착수 시 |
+| **프로그램 네임스페이스 3중 동기화** | `/bbs/`·`/prg/` 목록이 `SKIP_PREFIXES`·컨텐츠 예약 slug·사이트코드 예약어 세 곳에 흩어지면 라우팅이 조용히 깨진다 — 상수 한 곳을 세 곳이 참조하도록 | P9-0 |

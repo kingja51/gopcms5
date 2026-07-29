@@ -29,12 +29,14 @@ public interface RoleMapper {
     List<UserRoleRow> findAdminRoleCsv();
 
     int updateAdminRoleCsv(@Param("userId") String userId, @Param("roleIds") String roleIds,
-            @Param("roleCodes") String roleCodes);
+            @Param("roleCodes") String roleCodes,
+            @Param("updatedBy") String updatedBy, @Param("updatedIp") String updatedIp);
 
     /** 회원 현재 role_ids CSV — 기준 매핑 테이블이 없어 현재 값을 기준 집합으로 쓴다. */
     List<UserRoleRow> findMemberRoleCsv();
 
-    int updateMemberRoleIds(@Param("userId") String userId, @Param("roleIds") String roleIds);
+    int updateMemberRoleIds(@Param("userId") String userId, @Param("roleIds") String roleIds,
+            @Param("updatedBy") String updatedBy, @Param("updatedIp") String updatedIp);
 
     /* ── 관리 CRUD (P7-3) ───────────────────────────────────────────────── */
 
@@ -53,7 +55,9 @@ public interface RoleMapper {
 
     int update(RoleAdmDto role);
 
-    int softDelete(@Param("roleId") String roleId);
+    int softDelete(@Param("roleId") String roleId,
+                   @Param("updatedBy") String updatedBy,
+                   @Param("updatedIp") String updatedIp);
 
     /** 선택 목록용 — 활성 역할 (id, code, name) */
     List<RoleAdmDto> findAllForSelect();

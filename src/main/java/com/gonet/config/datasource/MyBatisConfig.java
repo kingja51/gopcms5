@@ -9,6 +9,7 @@ import org.apache.ibatis.type.JdbcType;
 import org.egovframe.rte.psl.dataaccess.mapper.MapperConfigurer;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -28,14 +29,21 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * <ul>
  *   <li>TxManager 빈 이름 = primary/secondary/loggingTransactionManager — 서비스의
  *       {@code @Transactional(transactionManager=…)} 가 참조하는 고정 상수</li>
- *   <li>매퍼 XML 은 인터페이스 옆 콜로케이션({@code com/gonet/{db}/**&#47;mapper/*.xml}) —
- *       pom 의 src/main/java 리소스 필터가 xml 을 복사</li>
- *   <li>벤더 분기 SQL 은 databaseId(mariadb/postgresql) 로 — 3중 파일 금지</li>
+ *   <li>매퍼 XML 은 인터페이스 옆 콜로케이션 + <b>벤더 접미어</b>
+ *       ({@code com/gonet/{db}/**&#47;mapper/*_maria.xml}) — pom 의 src/main/java
+ *       리소스 필터가 xml 을 복사</li>
+ *   <li>로드 대상은 {@code gopcms.datasource.vendor}(기본 maria) 가 고른 <b>한 벌뿐</b>이다.
+ *       두 벌을 동시에 읽으면 같은 namespace 가 중복 등록돼 기동이 깨진다</li>
+ *   <li>같은 벤더 안의 소소한 분기는 파일을 더 만들지 말고 databaseId 로 처리</li>
  * </ul>
  */
 @Configuration
 @EnableTransactionManagement
 public class MyBatisConfig {
+
+    /** 매퍼 XML 벤더 접미어 — maria(기본) / postgres. 파일명 {@code *Mapper_{vendor}.xml} 과 1:1. */
+    @Value("${gopcms.datasource.vendor:maria}")
+    private String vendor;
 
     public static final String PRIMARY_TX = "primaryTransactionManager";
     public static final String SECONDARY_TX = "secondaryTransactionManager";
@@ -47,7 +55,7 @@ public class MyBatisConfig {
     @Primary
     public SqlSessionFactory primarySqlSessionFactory(
             @Qualifier("primaryDataSource") DataSource dataSource) throws Exception {
-        return buildFactory(dataSource, "classpath*:com/gonet/primary/**/mapper/*.xml");
+        return buildFactory(dataSource, mapperPattern("primary"));
     }
 
     @Bean(PRIMARY_TX)
@@ -68,7 +76,7 @@ public class MyBatisConfig {
     @Bean
     public SqlSessionFactory secondarySqlSessionFactory(
             @Qualifier("secondaryDataSource") DataSource dataSource) throws Exception {
-        return buildFactory(dataSource, "classpath*:com/gonet/secondary/**/mapper/*.xml");
+        return buildFactory(dataSource, mapperPattern("secondary"));
     }
 
     @Bean(SECONDARY_TX)
@@ -87,7 +95,7 @@ public class MyBatisConfig {
     @Bean
     public SqlSessionFactory loggingSqlSessionFactory(
             @Qualifier("loggingDataSource") DataSource dataSource) throws Exception {
-        return buildFactory(dataSource, "classpath*:com/gonet/logging/**/mapper/*.xml");
+        return buildFactory(dataSource, mapperPattern("logging"));
     }
 
     @Bean(LOGGING_TX)
@@ -102,6 +110,14 @@ public class MyBatisConfig {
     }
 
     /* ── 공통 빌더 ──────────────────────────────────────────────────────── */
+
+    /**
+     * 벤더 한 벌만 읽는다 — {@code *_maria.xml} / {@code *_postgres.xml} 를 함께 읽으면
+     * 동일 namespace 중복으로 기동이 실패한다. 전환은 이 프로퍼티 하나로 끝난다.
+     */
+    private String mapperPattern(String db) {
+        return "classpath*:com/gonet/%s/**/mapper/*_%s.xml".formatted(db, vendor);
+    }
 
     private static MapperConfigurer mapperConfigurer(String basePackage, String factoryBeanName) {
         MapperConfigurer configurer = new MapperConfigurer();

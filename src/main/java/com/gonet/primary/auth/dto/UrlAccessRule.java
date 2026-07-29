@@ -1,5 +1,6 @@
 package com.gonet.primary.auth.dto;
 
+import com.gonet.common.audit.Auditable;
 import com.gonet.common.util.Csv;
 import java.util.Set;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class UrlAccessRule {
+public class UrlAccessRule extends Auditable {
 
     private String urlAccessId;
 

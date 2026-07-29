@@ -1,5 +1,6 @@
 package com.gonet.primary.theme.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
@@ -100,6 +101,7 @@ public class ThemeServiceImpl extends AbstractCmsService implements ThemeService
             throw new IllegalArgumentException(
                     "사이트 " + references + "곳이 이 테마를 쓰고 있어 삭제할 수 없습니다.");
         }
-        themeMapper.softDelete(themeId);
+        themeMapper.softDelete(themeId,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
     }
 }

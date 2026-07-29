@@ -1,5 +1,6 @@
 package com.gonet.primary.auth.dto;
 
+import com.gonet.common.audit.Auditable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class RoleAdmDto {
+public class RoleAdmDto extends Auditable {
 
     private String roleId;
 

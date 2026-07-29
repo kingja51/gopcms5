@@ -1,5 +1,6 @@
 package com.gonet.primary.auth.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Csv;
 import com.gonet.common.util.Uid;
@@ -98,7 +99,8 @@ public class UrlAccessServiceImpl extends AbstractCmsService implements UrlAcces
             throw new IllegalArgumentException(
                     "마지막 남은 규칙은 삭제할 수 없습니다. 규칙이 0건이 되면 모든 요청이 차단됩니다.");
         }
-        urlAccessMapper.softDelete(urlAccessId);
+        urlAccessMapper.softDelete(urlAccessId,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
     }
 
     /**

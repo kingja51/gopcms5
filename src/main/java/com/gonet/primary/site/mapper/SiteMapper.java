@@ -39,7 +39,9 @@ public interface SiteMapper {
     int update(SiteAdmDto site);
 
     /** soft-delete — 물리 삭제 금지(감사·복구). */
-    int softDelete(@Param("siteId") String siteId);
+    int softDelete(@Param("siteId") String siteId,
+                   @Param("updatedBy") String updatedBy,
+                   @Param("updatedIp") String updatedIp);
 
     /** 기본 사이트 단일성 보장 — 지정 사이트 외 전부 'N'. */
     int clearDefaultExcept(@Param("siteId") String siteId);

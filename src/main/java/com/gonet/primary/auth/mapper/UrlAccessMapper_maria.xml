@@ -85,18 +85,35 @@
 
     <update id="update" parameterType="com.gonet.primary.auth.dto.UrlAccessRule">
         UPDATE tb_role_url_access
-        SET site_id = #{siteId}, site_code = #{siteCode},
-            url_pattern = #{urlPattern}, http_method = #{httpMethod},
-            access_type = #{accessType}, required_roles = #{requiredRoles},
-            required_auths = #{requiredAuths}, allowed_user_types = #{allowedUserTypes},
-            allowed_ips = #{allowedIps}, require_csrf_yn = #{requireCsrfYn},
-            require_2fa_yn = #{require2faYn}, priority = #{priority},
-            description = #{description}, use_yn = #{useYn}
+        SET
+            <if test="urlPattern != null and urlPattern != ''">url_pattern = #{urlPattern},</if>
+            <if test="accessType != null and accessType != ''">access_type = #{accessType},</if>
+            <!-- NOT NULL DEFAULT 'ALL' — 빈 값이 오면 기존 값을 지킨다(예전엔 여기서 500 이 났다) -->
+            <if test="httpMethod != null and httpMethod != ''">http_method = #{httpMethod},</if>
+            <if test="requireCsrfYn != null and requireCsrfYn != ''">require_csrf_yn = #{requireCsrfYn},</if>
+            <if test="require2faYn != null and require2faYn != ''">require_2fa_yn = #{require2faYn},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
+            <!--
+              조건 컬럼은 전부 무조건 세팅한다. access_type 을 ROLE→PERMIT_ALL 로 바꾸면
+              required_roles 등을 <b>반드시 비워야</b> 하는데, <if> 를 걸면 옛 조건이
+              남아 인가 판정이 조용히 어긋난다(무매칭 DENY 원칙이 무의미해진다).
+              site_id NULL = 전역 규칙이라 이것도 비울 수 있어야 한다.
+            -->
+            site_id = #{siteId}, site_code = #{siteCode},
+            required_roles = #{requiredRoles},
+            required_auths = #{requiredAuths},
+            allowed_user_types = #{allowedUserTypes},
+            allowed_ips = #{allowedIps},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE url_access_id = #{urlAccessId}
     </update>
 
     <update id="softDelete">
-        UPDATE tb_role_url_access SET delete_yn = 'Y', use_yn = 'N'
+        UPDATE tb_role_url_access
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE url_access_id = #{urlAccessId}
     </update>
 

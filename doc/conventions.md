@@ -204,6 +204,91 @@ BoardApiController ┘      └ BoardServiceImpl extends AbstractCmsService(→E
 - 보안 경계는 URL 네임스페이스 기준으로 Spring Security 매처 3장(`/adm/**`,
   `/api/v1/**`, 나머지)과 일치 — 클래스 접미어·패키지·URL·보안이 항상 같이 움직인다.
 
+### 4.3 클래스 레벨 `@RequestMapping` 필수
+
+**모든 컨트롤러는 클래스에 `@RequestMapping` 으로 기준 경로를 선언한다.** 메서드에는
+그 아래 상대 경로만 남긴다.
+
+```java
+@Controller
+@RequestMapping("/adm/board")            // ← 클래스 첫 줄에서 담당 URL 이 보인다
+public class BoardAdmController {
+    @GetMapping                          // /adm/board
+    @GetMapping("/form")                 // /adm/board/form
+    @PostMapping("/{bbsMasterId}/delete")
+}
+```
+
+이유는 두 가지다. **URL 네임스페이스가 곧 보안 경계**이므로(§7 · 무매칭 DENY) 클래스를
+열자마자 어느 경계에 속하는지 보여야 `tb_role_url_access` 규칙과 대조가 된다. 또
+메서드마다 전체 경로를 적으면 경계를 넘는 경로가 섞여 들어가도 눈에 띄지 않는다.
+
+- 기준 경로에 **와일드카드·경로변수를 두지 않는다** — `/adm/board` 는 되고
+  `/adm/{domain}` 은 안 된다(규칙 대조가 불가능해진다).
+- `*ApiController` 는 버전을 포함해 `@RequestMapping("/api/v1/파일")` 형태로 적는다.
+
+## 4.4 MyBatis 매퍼 XML — 파일명·배치
+
+**`{Mapper인터페이스}_{vendor}.xml`** 로 인터페이스 옆에 둔다 (예: `LayoutMapper_maria.xml`).
+
+- 벤더 접미어: `maria`(현재 사용) · `postgres`(멀티 벤더 전환 시).
+- 로드 대상은 `gopcms.datasource.vendor`(기본 `maria`)가 고른 **한 벌뿐**이다
+  (`MyBatisConfig.mapperPattern`). 두 벌을 함께 읽으면 같은 namespace 가 중복 등록돼
+  기동이 깨지므로, 벤더를 바꿀 때 파일을 지울 필요 없이 프로퍼티만 바꾸면 된다.
+- 파일명을 바꿀 때 **`target/classes` 에 남은 옛 이름의 XML 을 지워야 한다** —
+  증분 빌드는 삭제를 따라가지 않아 옛 파일이 남고, 그러면 중복 namespace 로 기동이 실패한다.
+- 같은 벤더 안의 소소한 분기는 파일을 더 만들지 말고 `databaseId` 로 처리한다.
+
+## 4.5 MyBatis UPDATE 구문 규약
+
+**모든 `<update>` 는 ① 선택 칸을 `<if>` 로 감싸고 ② 감사 3종을 반드시 쓴다.**
+
+```xml
+<update id="update" parameterType="…AdmDto">
+    UPDATE tb_xxx
+    SET
+        <if test="description != null and description != ''">description = #{description},</if>
+        <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+        updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+    WHERE xxx_id = #{xxxId}
+</update>
+```
+
+감사 3종이 **맨 끝**에 오는 덕분에 앞의 `<if>` 가 전부 꺼져도 `SET` 뒤가 비지 않는다
+(`<set>` 태그 없이도 콤마가 깨지지 않는다).
+
+### 감사 3종이 채워지려면
+
+- **파라미터가 `Auditable` 을 상속**해야 `AuditInterceptor` 가 `updatedBy`/`updatedIp` 를
+  채운다. 상속하지 않은 DTO 는 인터셉터가 아예 대상으로 잡지 않아 **컬럼이 조용히 NULL 로
+  남는다**(P7-5 에서 실제로 그 상태였다).
+- `@Param` 방식(예: `softDelete`)은 인터셉터가 못 잡으므로 시그니처에
+  `@Param("updatedBy")`·`@Param("updatedIp")` 를 두고 서비스가
+  `AuditorContext.currentUserId()`/`currentIp()` 를 넘긴다.
+- IP 는 `AuditorContextFilter` 가 전 요청에 심는다 — `SiteResolveFilter` 는 `/adm/**` 를
+  건너뛰므로 거기에 얹으면 관리자 쓰기의 IP 가 비어버린다.
+
+### `<if>` 를 걸면 안 되는 칸 — "비우는 것이 기능"인 컬럼
+
+`<if test="x != null …">` 는 **값이 없으면 기존 값을 지킨다**는 뜻이라, 폼에서 **비워
+저장하는 것 자체가 기능**인 칸에 걸면 한번 채운 값을 영영 못 지운다. 아래는 무조건 세팅한다.
+
+| 테이블 | 컬럼 | 비우는 것이 왜 기능인가 |
+|---|---|---|
+| `tb_site` | `template_id`·`theme_id`·`layout_id`·`parent_site_id` | 3축 "선택 안 함" = NULL = 템플릿 기본값 상속 |
+| `tb_menu` | `parent_menu_id`·`link_target_id`·`link_url` | menu_type 변경 시 안 쓰는 링크 칸을 비워야 함, 1뎁스 승격 |
+| `tb_content` | `menu_id`·`published_at`·`publish_scheduled_at`·`unpublish_at`·`body` | 메뉴 연결 해제·예약 취소·본문 비우기 |
+| `tb_role` | `site_id`·`parent_role_id` | 전역 역할로 전환, 단독(최상위) 역할 만들기 |
+| `tb_role_url_access` | `required_roles`·`required_auths`·`allowed_user_types`·`allowed_ips`·`site_id` | access_type 을 바꿨는데 옛 조건이 남으면 **인가 판정이 조용히 어긋난다** |
+
+반대로 `NOT NULL` 컬럼(예: `tb_role_url_access.http_method` = `NOT NULL DEFAULT 'ALL'`)은
+반드시 `<if>` 로 감싼다 — 빈 값이 그대로 들어가면 제약 위반 500 이 난다.
+
+### 감사 컬럼을 건드리지 않는 예외
+
+조회수처럼 **방문자가 일으키는 증분 갱신**은 `updated_*` 를 갱신하지 않는다
+(`ContentMapper.increaseViewCount`). 방문자가 최종 수정자로 기록되면 감사 추적이 망가진다.
+
 ## 5. URL 계약 — 사용자 사이트 컨텐츠
 
 | URL | 화면 | 비고 |
@@ -221,6 +306,28 @@ BoardApiController ┘      └ BoardServiceImpl extends AbstractCmsService(→E
   보조일 뿐, canonical URL 은 `/{siteCode}/…` 형태를 유지한다(SiteResolveFilter 정규화).
 - 처리 주체: `ContentUsrController` (논리 뷰 `front/index` · `front/sitemap` ·
   `front/content`) — 템플릿 Resolver 재작성 대상.
+
+### 5.1 사용자 프로그램 네임스페이스 — `/bbs/` · `/prg/` · `/file/`
+
+컨텐츠는 사이트가 앞(`/{siteCode}/{slug}`)이지만, **프로그램은 프로그램이 앞**이다.
+
+| URL | 대상 | 사이트 컨텍스트 |
+|---|---|---|
+| `/bbs/{siteCode}/{bbsCode}` | 게시판 | **필요** — 2번째 세그먼트에서 해석 |
+| `/prg/{siteCode}/…` | 개별 프로그램(교수진·수업계획서 등) | **필요** — 동일 |
+| `/file/{fileId}` | 파일 스트리밍 | 불필요(바이너리) — `SKIP_PREFIXES` |
+
+자리 순서가 반대인 것은 의도다. 프로그램은 여러 사이트가 **같은 화면·같은 코드**를
+공유하고 사이트는 데이터 범위일 뿐이라, 프로그램을 앞에 두면 라우팅이 프로그램 단위로
+모인다. 반대로 컨텐츠는 사이트마다 slug 가 다른 고유 페이지라 사이트가 앞이다.
+
+- **`SiteResolveFilter` 는 프로그램 네임스페이스에서 2번째 세그먼트를 사이트코드로 읽는다.**
+  사이트 컨텍스트가 서야 3축(layout·template·theme)이 적용되므로 SKIP 해서는 안 된다.
+  `/file/**` 만 예외로 SKIP (템플릿을 타지 않는 바이너리 응답).
+- 프로그램 네임스페이스 목록은 **상수 한 곳**에서 관리하고 `SKIP_PREFIXES` ·
+  컨텐츠 예약 slug · 사이트코드 예약어가 그 상수를 참조한다. 세 곳에 따로 적으면
+  하나만 빠졌을 때 라우팅이 조용히 깨진다.
+- 새 프로그램 네임스페이스를 열 때도 §7 의 접근 규칙 INSERT 가 같은 커밋에 들어가야 한다.
 
 ## 6. 개인정보(PII) 암호화 — `@Encrypt`
 

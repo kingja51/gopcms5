@@ -1,5 +1,6 @@
 package com.gonet.primary.template.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
@@ -87,6 +88,7 @@ public class TemplateServiceImpl extends AbstractCmsService implements TemplateS
             throw new IllegalArgumentException(
                     "사이트·테마 " + references + "건이 이 템플릿을 참조 중이라 삭제할 수 없습니다.");
         }
-        templateMapper.softDelete(templateId);
+        templateMapper.softDelete(templateId,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
     }
 }

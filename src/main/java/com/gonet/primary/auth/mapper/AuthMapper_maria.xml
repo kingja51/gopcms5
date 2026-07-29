@@ -54,10 +54,17 @@
         <include refid="activeAllowIp"/>
     </select>
 
+    <!--
+      로그인 상태 갱신문의 updated_by 는 본인(userId) 이다 — 로그인 시점에는 SecurityContext
+      가 아직 서지 않아 AuditorContext 가 비어 있고, 실제 행위자도 본인이기 때문이다.
+      loginFail 은 clientIp 파라미터가 없어 updated_ip 를 건드리지 않는다
+      (접속 IP 는 tb_login_history 가 이미 남긴다).
+    -->
     <update id="touchAllowIp">
         UPDATE tb_admin_allow_ip
         SET access_count = access_count + 1,
-            last_access_at = NOW()
+            last_access_at = NOW(),
+            updated_at = CURRENT_TIMESTAMP
         WHERE ip_id = #{ipId}
     </update>
 
@@ -72,7 +79,8 @@
     <update id="enableTwoFactor">
         UPDATE tb_admin
         SET two_factor_secret = #{secret},
-            two_factor_enabled_yn = 'Y'
+            two_factor_enabled_yn = 'Y',
+            updated_by = #{adminId}, updated_at = CURRENT_TIMESTAMP
         WHERE admin_id = #{adminId}
     </update>
 
@@ -82,7 +90,8 @@
         SET locked_until = IF(login_fail_count + 1 &gt;= 5, DATE_ADD(NOW(), INTERVAL 30 MINUTE), locked_until),
             status = IF(login_fail_count + 1 &gt;= 5, 'LOCKED', status),
             captcha_required_yn = IF(login_fail_count + 1 &gt;= 5, 'Y', captcha_required_yn),
-            login_fail_count = login_fail_count + 1
+            login_fail_count = login_fail_count + 1,
+            updated_by = #{userId}, updated_at = CURRENT_TIMESTAMP
         WHERE member_id = #{userId}
     </update>
 
@@ -91,7 +100,8 @@
         SET locked_until = IF(login_fail_count + 1 &gt;= 5, DATE_ADD(NOW(), INTERVAL 30 MINUTE), locked_until),
             status = IF(login_fail_count + 1 &gt;= 5, 'LOCKED', status),
             captcha_required_yn = IF(login_fail_count + 1 &gt;= 5, 'Y', captcha_required_yn),
-            login_fail_count = login_fail_count + 1
+            login_fail_count = login_fail_count + 1,
+            updated_by = #{userId}, updated_at = CURRENT_TIMESTAMP
         WHERE admin_id = #{userId}
     </update>
 
@@ -104,7 +114,8 @@
             status = IF(status = 'LOCKED', 'ACTIVE', status),
             last_login_at = NOW(),
             last_login_ip = #{clientIp},
-            last_access_at = NOW()
+            last_access_at = NOW(),
+            updated_by = #{userId}, updated_ip = #{clientIp}, updated_at = CURRENT_TIMESTAMP
         WHERE member_id = #{userId}
     </update>
 
@@ -116,7 +127,8 @@
             status = IF(status = 'LOCKED', 'ACTIVE', status),
             last_login_at = NOW(),
             last_login_ip = #{clientIp},
-            last_access_at = NOW()
+            last_access_at = NOW(),
+            updated_by = #{userId}, updated_ip = #{clientIp}, updated_at = CURRENT_TIMESTAMP
         WHERE admin_id = #{userId}
     </update>
 

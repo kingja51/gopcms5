@@ -1,5 +1,6 @@
 package com.gonet.primary.menu.dto;
 
+import com.gonet.common.audit.Auditable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,7 +15,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class MenuAdmDto {
+public class MenuAdmDto extends Auditable {
 
     private String menuId;
     private String siteId;

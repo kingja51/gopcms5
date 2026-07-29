@@ -1,5 +1,6 @@
 package com.gonet.primary.content.dto;
 
+import com.gonet.common.audit.Auditable;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class ContentAdmDto {
+public class ContentAdmDto extends Auditable {
 
     private String contentId;
     private String siteId;
