@@ -3,8 +3,20 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.gonet.primary.auth.mapper.AuthMapper">
 
+    <!--
+      display_name 은 tb_member.member_name 을 그대로 내보내는 컬럼이라 <b>암호문</b>이다
+      (뷰는 TypeHandler 를 타지 않는다 — 실측: 화면 인사말에 "{AG}…" 가 노출됐다).
+      여기서 복호화한다. 나머지 컬럼은 자동 매핑에 맡긴다.
+      ※ ADMIN 분기의 display_name(tb_admin.admin_name)은 평문이지만, PiiTypeHandler 는
+        {AG} 가 없으면 값을 그대로 돌려주므로 같은 매핑을 공유해도 안전하다.
+    -->
+    <resultMap id="loginUserMap" type="com.gonet.primary.auth.dto.LoginUser" autoMapping="true">
+        <result property="displayName" column="display_name"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+    </resultMap>
+
     <!-- 통합 로그인 조회 — user_type 필수 + MEMBER 는 site 스코프 (동일 login_id 양측 공존 가능) -->
-    <select id="findLoginUser" resultType="com.gonet.primary.auth.dto.LoginUser">
+    <select id="findLoginUser" resultMap="loginUserMap">
         SELECT *
         FROM vw_user_login
         WHERE user_type = #{userType}
@@ -18,7 +30,7 @@
     </select>
 
     <!-- user_id 는 전역 유일(ADM_/MBR_ 접두 + UUIDv7)이라 사이트 스코프가 필요 없다 -->
-    <select id="findLoginUserById" resultType="com.gonet.primary.auth.dto.LoginUser">
+    <select id="findLoginUserById" resultMap="loginUserMap">
         SELECT *
         FROM vw_user_login
         WHERE user_type = #{userType}

@@ -755,27 +755,61 @@ P9-3 댓글 · P9-4 좋아요/신고 · P9-5 사용자 화면 · P9-6 통합 게
 > 메일 템플릿 10종도 V910 에 시드돼 있다(휴면 알림 3단계·전환·복원 포함).
 > **생명주기 정책은 원전과 다르다** — 사용자 확정값(§P10-4)이 우선한다.
 
-### P10-0 착수 전 점검 (원전과 스키마가 어긋나는 지점)
-- [ ] **본인확인 값이 CI 가 아니라 DI 다.** gopcms5 는 `di`/`di_hash`/`parent_di`/
+### P10-0 착수 전 점검 (완료 2026-07-29 — 실측)
+- [x] **본인확인 값이 CI 가 아니라 DI 다.** gopcms5 는 `di`/`di_hash`/`parent_di`/
       `parent_di_hash` 를 쓰는데, 원전 문서는 **DI 를 DROP 하고 CI 로 갔다**. 정반대라
       그대로 옮기면 컬럼이 안 맞는다. 스키마(DI)를 정본으로 삼는다
-- [ ] `tb_member` 에만 있는 컬럼 반영 — `email_verified_yn`(원전의 미구현 항목 M-01 자리),
+      → **실측 확인**: `di`·`di_hash`·`parent_di`·`parent_di_hash` 존재, `ci` 계열 없음
+- [x] `tb_member` 에만 있는 컬럼 반영 — `email_verified_yn`(원전의 미구현 항목 M-01 자리),
       `birth_year`, `captcha_required_yn`, `site_code`. 반대로 원전의 `group_ids` 는 없다
-- [ ] `tb_member_withdraw` 는 **이미 PII 를 담지 않는 설계** — `login_id_hash`·`di_hash`·
+      → **실측 확인**: 4종 모두 존재, `group_ids` 없음
+- [x] `tb_member_withdraw` 는 **이미 PII 를 담지 않는 설계** — `login_id_hash`·`di_hash`·
       탈퇴일시·사유·`retention_expire_at`·`legal_basis` 뿐이다. 탈퇴 원장은 그대로 쓰면 된다
-- [ ] `vw_user_login` 은 `delete_yn='N'` 만 거른다. 휴면은 **행 자체가 `tb_member_dormant`
+- [x] `vw_user_login` 은 `delete_yn='N'` 만 거른다. 휴면은 **행 자체가 `tb_member_dormant`
       로 이관**되므로 뷰에서 자동으로 사라진다 — 별도 조건이 필요 없다(설계 확인 완료)
-- [ ] 인가 방식 재검토 — 원전은 "회원은 role 매핑이 없으니 `AUTHENTICATED + user_type`" 으로
+- [x] 인가 방식 재검토 — 원전은 "회원은 role 매핑이 없으니 `AUTHENTICATED + user_type`" 으로
       갔지만, gopcms5 는 `role_ids` CSV 가 살아 있고 `ROLE_REAL`(실명인증 회원)도 있다.
       P6-2 의 site-scoped ROLE 규칙(`/ai/member/**` ROLE_REAL)이 이미 그 전제로 깔려 있다
+- [x] **메일 템플릿 10종 실재 확인** — 휴면 3단계·전환·복원·가입환영·탈퇴·비밀번호 2종.
+      탈퇴 전환 예고 템플릿만 없다(P10-4 에서 신규 필요)
 
-### P10-1 가입
-- [ ] 7단계 플로우(유형선택 → 약관 → 본인인증 → 폼 → 가입 → 완료), 세션이 유일한 신뢰원 —
-      `userType` 같은 값은 폼 hidden 을 믿지 않는다
-- [ ] ADULT / CHILD(14세 미만, 법정대리인 DI 공유) 분기
-- [ ] 중복 차단 — `login_id` · `email_hash` · UNIQUE(사이트+이름+di_hash+parent_di_hash)
-- [ ] PII 는 `@Encrypt`(`{AG}`) + 검색용 `*_hash` 병행 (conventions §6)
-- [ ] 약관 동의 이력은 UPDATE 가 아니라 INSERT 누적(버전·IP·UA 동반)
+> **추가로 발견한 어긋남**: `join_type` CHECK 허용값은
+> `EMAIL|KAKAO|NAVER|GOOGLE|APPLE|HOMEPAGE|MOBILE` 이다 — 원전 용어 `SELF` 로 넣었다가
+> 제약 위반 500 을 맞았다. 홈페이지 직접 가입은 **`HOMEPAGE`**.
+
+### P10-1 가입 (부분 완료 2026-07-29)
+- [x] **PII 암호화 배선** (P6 잔여분 회수) — `@Encrypt` 어노테이션(문서용) +
+      `PiiTypeHandler`(실제 암복호화) + `PiiCrypto`(정적 홀더 — TypeHandler 는 스프링 빈이
+      아니라 주입을 못 받는다) + `PiiHash`(HMAC-SHA256, AES 마스터키와 **분리된 키**).
+      **매퍼 XML 이 컬럼마다 typeHandler 를 명시**해야 걸린다 — 어노테이션은 MyBatis 가 보지
+      않는다. 빠뜨리면 평문으로 저장되므로 리뷰 포인트
+- [x] 이행기 정책 — 읽을 때 `{AG}` 가 없으면 평문으로 간주(기존 dev 시드가 평문이라
+      화면이 깨지지 않게). 쓸 때 이미 암호문이면 이중 암호화하지 않는다
+- [x] 가입 폼·컨트롤러·서비스 — `/{siteCode}/member/join`. 폼 DTO 를 따로 둔다
+      (`MemberDto` 를 그대로 쓰면 상태·역할·잠금 카운트처럼 **서버가 정하는 값**이 폼에
+      실려 온다)
+- [x] 중복 차단 — `login_id`(사이트 스코프) · `email_hash`(암호문엔 `=` 를 못 건다).
+      해시는 소문자·trim 정규화 후 산출 — 안 하면 대소문자만 다른 이메일이 통과한다
+- [x] 약관 동의 이력 INSERT 누적 — 필수 2종 + 선택 3종을 **모두** 남긴다.
+      "동의하지 않음"도 기록이어야 나중에 증명할 수 있다. 버전·IP·UA 동반(UA 는 500자 절단)
+- [x] 신규 회원은 `ROLE_MEMBER` 만 — `ROLE_REAL` 은 본인확인을 거쳐야 붙는다
+- [x] V914 URL 규칙 — `/*/member/join` PERMIT_ALL(priority 53). 회원 영역 잠금(55·60)보다
+      **앞**이어야 한다. 뒤면 가입하려면 로그인해야 하고 로그인하려면 가입해야 하는 상태가 된다
+- [ ] 7단계 플로우 분리(유형선택 → 약관 → 본인인증 → 폼 → 가입 → 완료) — 본인인증(NICE)
+      연동 시점에 나눈다. 현재는 약관+폼 한 화면
+- [ ] ADULT / CHILD(14세 미만, 법정대리인 DI 공유) 분기 — 본인인증 선행
+- [ ] UNIQUE(사이트+이름+di_hash+parent_di_hash) 중복가입 차단 — DI 가 들어오는 시점에
+
+**완료 확인(2026-07-29, 8081 실측)**: 가입 302 → 로그인 화면 ·
+**DB 원본이 `{AG}` 암호문**(이름·이메일·전화·생년월일), `email_hash` 는 별도 저장 ·
+거부 5종(아이디 중복 / **대소문자만 다른 이메일 중복** / 약한 비밀번호 / 대문자 아이디 /
+잘못된 이메일) · 필수 동의 누락 거부 · 동의 이력 5행(선택 미동의 `N` 포함) ·
+가입 계정으로 로그인 성공. 검증 데이터 전량 제거.
+
+> **실측 결함 1건 발견·수정**: 로그인 뷰(`vw_user_login`)의 `display_name` 이
+> **암호문 그대로 화면에 노출**됐다. 뷰는 TypeHandler 를 타지 않는데 `resultType` 자동
+> 매핑이라 컬럼별 지정을 못 했던 것 — `resultMap` 으로 바꿔 그 컬럼만 복호화했다.
+> 기존 시드(user1)는 평문이라 정상으로 보였고, **새로 가입한 회원에서만 드러났다**.
 
 ### P10-2 로그인·인증
 - [ ] `/member/login` — 관리자(`/adm/login`)와 물리 분리, UserDetailsService 교차 차단

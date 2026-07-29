@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  PII 컬럼은 typeHandler 를 <b>명시</b>해야 암복호화가 걸린다 — MyBatis 는 DTO 의
+  @Encrypt 어노테이션을 보지 않는다. 어노테이션은 "이 필드가 PII 다" 를 코드에서 보이게
+  하는 문서이고, 실제 동작은 여기서 지정한다(conventions §6).
+  컬럼을 추가할 때 이 지정을 빠뜨리면 <b>평문으로 저장된다</b> — 리뷰 포인트.
+-->
+<mapper namespace="com.gonet.primary.member.mapper.MemberMapper">
+
+    <resultMap id="memberMap" type="com.gonet.primary.member.dto.MemberDto">
+        <id property="memberId" column="member_id"/>
+        <result property="memberSeq" column="member_seq"/>
+        <result property="siteId" column="site_id"/>
+        <result property="siteCode" column="site_code"/>
+        <result property="loginId" column="login_id"/>
+        <result property="password" column="password"/>
+        <result property="passwordChangedAt" column="password_changed_at"/>
+        <result property="passwordExpireAt" column="password_expire_at"/>
+        <result property="roleIds" column="role_ids"/>
+
+        <result property="memberName" column="member_name"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="nickname" column="nickname"/>
+        <result property="email" column="email"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="emailHash" column="email_hash"/>
+        <result property="emailVerifiedYn" column="email_verified_yn"/>
+        <result property="phone" column="phone"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="phoneHash" column="phone_hash"/>
+        <result property="birthDate" column="birth_date"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="birthYear" column="birth_year"/>
+        <result property="gender" column="gender"/>
+
+        <result property="di" column="di"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="diHash" column="di_hash"/>
+        <result property="parentName" column="parent_name"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="parentDi" column="parent_di"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="parentDiHash" column="parent_di_hash"/>
+
+        <result property="addressZipcode" column="address_zipcode"/>
+        <result property="address" column="address"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="addressDetail" column="address_detail"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+
+        <result property="joinType" column="join_type"/>
+        <result property="status" column="status"/>
+        <result property="loginFailCount" column="login_fail_count"/>
+        <result property="lockedUntil" column="locked_until"/>
+        <result property="captchaRequiredYn" column="captcha_required_yn"/>
+        <result property="lastLoginAt" column="last_login_at"/>
+        <result property="lastLoginIp" column="last_login_ip"/>
+        <result property="lastAccessAt" column="last_access_at"/>
+        <result property="dormantScheduledAt" column="dormant_scheduled_at"/>
+
+        <result property="privacyAgreeYn" column="privacy_agree_yn"/>
+        <result property="termsAgreeYn" column="terms_agree_yn"/>
+        <result property="marketingAgreeYn" column="marketing_agree_yn"/>
+        <result property="smsAgreeYn" column="sms_agree_yn"/>
+        <result property="emailAgreeYn" column="email_agree_yn"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.gonet.primary.member.dto.MemberDto">
+        INSERT INTO tb_member (
+            member_id, site_id, site_code, login_id, password, password_changed_at,
+            role_ids, member_name, nickname, email, email_hash, email_verified_yn,
+            phone, phone_hash, birth_date, birth_year, gender,
+            di, di_hash, parent_name, parent_di, parent_di_hash,
+            address_zipcode, address, address_detail,
+            join_type, status,
+            privacy_agree_yn, terms_agree_yn, marketing_agree_yn, sms_agree_yn, email_agree_yn,
+            created_by, created_ip, created_at, updated_by, updated_ip, updated_at
+        ) VALUES (
+            #{memberId}, #{siteId}, #{siteCode}, #{loginId}, #{password}, #{passwordChangedAt},
+            #{roleIds},
+            #{memberName, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{nickname},
+            #{email, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{emailHash}, #{emailVerifiedYn},
+            #{phone, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{phoneHash},
+            #{birthDate, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{birthYear}, #{gender},
+            #{di, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{diHash},
+            #{parentName, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{parentDi, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{parentDiHash},
+            #{addressZipcode},
+            #{address, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{addressDetail, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{joinType}, #{status},
+            #{privacyAgreeYn}, #{termsAgreeYn}, #{marketingAgreeYn}, #{smsAgreeYn}, #{emailAgreeYn},
+            #{createdBy}, #{createdIp}, CURRENT_TIMESTAMP,
+            #{updatedBy}, #{updatedIp}, CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <select id="findById" resultMap="memberMap">
+        SELECT * FROM tb_member WHERE member_id = #{memberId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByLoginId" resultType="int">
+        SELECT COUNT(*) FROM tb_member
+        WHERE site_id = #{siteId} AND login_id = #{loginId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByEmailHash" resultType="int">
+        SELECT COUNT(*) FROM tb_member
+        WHERE site_id = #{siteId} AND email_hash = #{emailHash} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByDiHash" resultType="int">
+        SELECT COUNT(*) FROM tb_member
+        WHERE site_id = #{siteId} AND di_hash = #{diHash} AND delete_yn = 'N'
+    </select>
+
+    <insert id="insertConsent" parameterType="com.gonet.primary.member.dto.MemberConsentDto">
+        INSERT INTO tb_member_consent
+            (member_consent_id, member_id, consent_type, consent_version, agree_yn,
+             agreed_at, client_ip, user_agent, created_by, created_ip, created_at)
+        VALUES
+            (#{memberConsentId}, #{memberId}, #{consentType}, #{consentVersion}, #{agreeYn},
+             CURRENT_TIMESTAMP, #{clientIp}, #{userAgent}, #{createdBy}, #{createdIp},
+             CURRENT_TIMESTAMP)
+    </insert>
+
+</mapper>
