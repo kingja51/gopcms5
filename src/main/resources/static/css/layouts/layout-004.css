@@ -1,0 +1,94 @@
+/* ============================================================================
+   layout-004 — D안 원페이지 풀블리드 매거진 (구조 CSS)
+   ----------------------------------------------------------------------------
+   핵심은 <b>두 폭의 대비</b>다: 섹션은 화면 끝까지(풀블리드), 읽기 텍스트는 720px.
+   이걸 각 페이지가 매번 감싸지 않아도 되게, 본문 자식 요소에 기본 협폭을 주고
+   .l4-bleed 를 붙인 것만 풀폭으로 빠져나가게 한다(_default 뷰를 그대로 쓰기 위함).
+   색은 토큰만 — raw HEX 금지. radius 최대 12px · 8px 그리드.
+   ============================================================================ */
+
+:root { --l4-read: 720px; }
+
+.l4-skip {
+    position: absolute; left: -9999px; top: 0; z-index: 100;
+    background-color: var(--color-gray-90); color: var(--c-fg-on); padding: 8px 16px;
+}
+.l4-skip:focus { left: 0; }
+
+/* ── ① 헤더 — 히어로 위에 얹히는 오버레이 / 없으면 불투명 ───────────────── */
+.l4-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 24px; min-height: 60px;
+    position: sticky; top: 0; z-index: 40;
+}
+.l4-header .grow { flex: 1; }
+.l4-brand { text-decoration: none; letter-spacing: -0.01em; }
+
+/* 투명 모드 — 히어로 위. 글자가 묻히지 않도록 상단에 옅은 그라디언트를 깐다 */
+.l4-transparent {
+    background-image: linear-gradient(to bottom, rgb(0 0 0 / 0.45), transparent);
+    color: var(--c-fg-on);
+}
+.l4-transparent .l4-brand { color: var(--c-fg-on); }
+.l4-transparent .krds-btn { color: var(--c-fg-on); border-color: rgb(255 255 255 / 0.5); }
+
+/* 불투명 모드 — 히어로 없는 페이지(글이 헤더 아래로 파고들지 않게) */
+.l4-solid {
+    background-color: var(--c-surface);
+    border-bottom: 1px solid var(--c-line);
+}
+
+/* 투명 헤더는 자리를 차지하지 않아야 히어로가 화면 꼭대기부터 시작한다 */
+.l4-transparent + * { margin-top: -60px; }
+
+/* ── ② 풀스크린 오버레이 메뉴 ──────────────────────────────────────────── */
+.l4-menu {
+    border: 0; padding: 0; margin: 0;
+    width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh;
+    background-color: var(--c-surface); color: var(--c-fg);
+}
+.l4-menu::backdrop { background-color: rgb(0 0 0 / 0.6); }
+.l4-menu-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 16px 24px; border-bottom: 1px solid var(--c-line);
+}
+.l4-menu-head .grow { flex: 1; }
+.l4-menu-grid {
+    display: grid; gap: 24px 32px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    padding: 32px 24px; overflow-y: auto;
+    max-height: calc(100vh - 65px);
+}
+.l4-menu-group { margin: 0 0 8px; padding-bottom: 8px; border-bottom: 2px solid var(--brand-50); }
+.l4-menu-group a { text-decoration: none; color: var(--c-fg-strong); }
+.l4-menu-grid ul { list-style: none; margin: 0; padding: 0; }
+.l4-menu-grid li { margin-bottom: 6px; }
+.l4-menu-grid li a { text-decoration: none; color: var(--c-fg); }
+.l4-menu-grid li a:hover { color: var(--brand-50); text-decoration: underline; }
+.l4-menu-grid li ul { margin: 4px 0 8px 12px; }
+
+/* ── ③~⑤ 본문 — 풀블리드 스택 + 협폭 읽기 컬럼 ────────────────────────── */
+.l4-crumb { max-width: var(--l4-read); margin: 24px auto 0; padding: 0 24px; }
+
+.l4-content { padding-bottom: 48px; }
+/* 기본은 협폭 읽기 컬럼 */
+.l4-content > * { max-width: var(--l4-read); margin-left: auto; margin-right: auto;
+    padding-left: 24px; padding-right: 24px; }
+/* 시각 요소는 .l4-bleed 로 화면 끝까지 빠져나간다 */
+.l4-content > .l4-bleed { max-width: none; padding-left: 0; padding-right: 0; }
+/* 이미지·표는 읽기 폭을 넘겨도 무너지지 않게 */
+.l4-content img { max-width: 100%; height: auto; }
+.l4-content table { display: block; overflow-x: auto; }
+
+.l4-reaction {
+    max-width: var(--l4-read); margin: 0 auto; padding: 16px 24px; text-align: center;
+    border-top: 1px solid var(--c-divider, var(--c-line));
+}
+.l4-top { max-width: var(--l4-read); margin: 0 auto; padding: 8px 24px 24px; text-align: right; }
+
+@media (max-width: 767px) {
+    .l4-header { padding: 8px 16px; min-height: 52px; }
+    .l4-transparent + * { margin-top: -52px; }
+    .l4-content > *, .l4-crumb, .l4-reaction, .l4-top { padding-left: 16px; padding-right: 16px; }
+    .l4-menu-grid { padding: 24px 16px; }
+}

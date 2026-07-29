@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     layout-005 — E안 포털형 벤토 대시보드 (원전: wireframe/frame005)
+     ----------------------------------------------------------------------------
+     A안과의 차이:
+       · 헤더가 <b>2단</b>: ①유틸바 + ②로고 · 가로 GNB · <b>검색 인풋 상시 노출</b>.
+         (A안은 검색이 GNB 안 아이콘, E안은 헤더에 늘 열려 있다)
+       · 본문이 바탕 위에 바로 놓이지 않고 <b>항상 카드 패널</b> 위에 놓인다 —
+         포털처럼 여러 덩어리를 나열해도 경계가 분명하다.
+       · 푸터도 카드형(정보 묶음 3열).
+     본문을 카드로 감싸는 일은 각 페이지가 아니라 <b>레이아웃이 한다</b> —
+     _default 뷰를 그대로 쓰면서 E안의 인상을 내기 위해서다.
+     슬롯 계약·데이터·라우트는 A안과 동일.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:classappend="${themeClass}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${site != null ? site.siteName : 'gopcms5'}">gopcms5</title>
+    <link rel="icon" href="data:,"/>
+    <link rel="stylesheet" href="/css/output.css"/>
+    <link rel="stylesheet" th:href="@{${'/tmpl/css/' + (site != null ? site.templateCode : 'krds') + '.css'}}"/>
+    <link rel="stylesheet" href="/css/layouts/layout-005.css"/>
+    <th:block th:if="${site != null and site.headMeta != null}" th:utext="${site.headMeta}"/>
+    <script th:attr="nonce=${cspNonce}">
+        try { if (localStorage.getItem('gopcms5.hc') === '1')
+            document.documentElement.classList.add('hc'); } catch (e) {}
+    </script>
+</head>
+<body class="bg-bg text-fg l5-body">
+
+<a class="l5-skip" href="#content">본문으로 건너뛰기</a>
+
+<!-- ① 유틸바 -->
+<div class="l5-utilbar">
+    <div class="l5-wrap">
+        <a class="text-body-xs" href="https://www.konyang.ac.kr" target="_blank" rel="noopener">건양대학교</a>
+        <span class="grow"></span>
+        <a class="text-body-xs" th:href="${site != null ? '/' + site.siteCode + '/sitemap' : '/main/sitemap'}">사이트맵</a>
+        <a class="text-body-xs" th:href="${site != null ? '/login?siteCode=' + site.siteCode : '/login'}">로그인</a>
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm"
+                data-action="toggle-hc" aria-pressed="false">◐ 선명한 화면</button>
+    </div>
+</div>
+
+<!-- ② 헤더 — 로고 · GNB · 상시 검색 -->
+<header class="l5-header">
+    <div class="l5-wrap l5-header-row">
+        <a class="l5-brand text-heading-sm"
+           th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}"
+           th:text="${site != null ? site.siteName : 'gopcms5'}">사이트명</a>
+
+        <nav class="l5-gnb" aria-label="주 메뉴" th:if="${menuTree != null}">
+            <a th:each="m1 : ${menuTree}" class="l5-gnb-link text-label-md"
+               th:href="${m1.href != null ? m1.href
+                          : (m1.children != null and !m1.children.isEmpty() and m1.children[0].href != null
+                             ? m1.children[0].href : '#')}"
+               th:classappend="${breadcrumb != null and breadcrumb.contains(m1)} ? 'l5-active'"
+               th:text="${m1.name}">대메뉴</a>
+        </nav>
+
+        <!-- 상시 노출 검색 — E안 고유 -->
+        <form class="l5-search" method="get" role="search"
+              th:action="${site != null ? '/' + site.siteCode + '/search' : '/search'}">
+            <label class="sr-only" for="l5-q">통합검색</label>
+            <input id="l5-q" name="keyword" class="krds-input krds-input-sm" placeholder="검색어"/>
+            <button type="submit" class="krds-btn krds-btn-primary krds-btn-sm">검색</button>
+        </form>
+    </div>
+</header>
+
+<!-- ③ 페이지 타이틀 — 카드 위가 아니라 배경 위에 얹어 카드와 층을 구분 -->
+<div class="l5-wrap l5-titlebar" th:if="${breadcrumb != null and !breadcrumb.isEmpty()}">
+    <h1 class="text-heading-md text-fg-strong"
+        th:text="${breadcrumb[breadcrumb.size() - 1].name}">페이지 제목</h1>
+    <nav aria-label="현재 위치">
+        <ol class="krds-breadcrumb text-body-xs">
+            <li><a th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}">홈</a></li>
+            <li th:each="crumb, stat : ${breadcrumb}">
+                <a th:if="${!stat.last and crumb.href != null}" th:href="${crumb.href}"
+                   th:text="${crumb.name}">메뉴</a>
+                <span th:if="${!stat.last and crumb.href == null}" th:text="${crumb.name}">메뉴</span>
+                <span th:if="${stat.last}" aria-current="page" th:text="${crumb.name}">현재</span>
+            </li>
+        </ol>
+    </nav>
+    <span class="grow"></span>
+    <div id="sub-hero-slot"></div>
+</div>
+
+<!-- ④ 본문 — 레이아웃이 카드 패널로 감싼다 -->
+<div class="l5-wrap l5-stage">
+    <main id="content" class="l5-panel" layout:fragment="content">본문</main>
+
+    <!-- ⑤ 좋아요/신고 — 별도 카드 -->
+    <div th:if="${content != null}" class="l5-panel l5-reaction">
+        <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm" disabled>👍 좋아요</button>
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm" disabled>🚩 신고</button>
+        <span class="text-body-xs text-fg-disabled">(게시판 페이즈에서 활성)</span>
+    </div>
+</div>
+
+<!-- ⑥ 카드형 푸터 — 정보 묶음 3열 + 공용 정책 조각 -->
+<div class="l5-wrap l5-footcards" th:if="${menuTree != null}">
+    <section class="l5-panel" th:each="m1, st : ${menuTree}" th:if="${st.index < 3}">
+        <h2 class="text-label-lg text-fg-strong" th:text="${m1.name}">그룹</h2>
+        <ul>
+            <li th:each="m2 : ${m1.children}">
+                <a class="text-body-sm" th:href="${m2.href != null ? m2.href : '#'}"
+                   th:text="${m2.name}">2뎁스</a>
+            </li>
+        </ul>
+    </section>
+</div>
+
+<footer th:replace="~{fragments/site-footer :: footer}"></footer>
+<div class="l5-wrap l5-top">
+    <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm"
+            data-action="scroll-top">TOP ↑</button>
+</div>
+
+<script src="/js/vendor/htmx.min.js"></script>
+<script src="/js/app.js"></script>
+<th:block layout:fragment="scripts"/>
+
+</body>
+</html>

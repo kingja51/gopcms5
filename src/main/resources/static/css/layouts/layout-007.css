@@ -1,0 +1,174 @@
+/* ============================================================================
+   layout-007 — G안 공공기관 정석 3단 헤더 + 좌 LNB (구조 CSS)
+   ----------------------------------------------------------------------------
+   헤더가 3단이라 세로 공간을 많이 쓴다 — 각 단의 높이를 최소로 잡고,
+   스크롤 시 <b>GNB 만</b> 붙게 해서(유틸·로고단은 흘려보냄) 본문 면적을 지킨다.
+   GNB 드롭다운은 hover 뿐 아니라 <b>focus-within</b> 으로도 열려야 키보드로 닿는다.
+   색은 토큰만 · radius 최대 12px · 8px 그리드 · 평면은 보더 우선.
+   ============================================================================ */
+
+:root { --l7-lnb-w: 220px; }
+
+.l7-skip {
+    position: absolute; left: -9999px; top: 0; z-index: 100;
+    background-color: var(--color-gray-90); color: var(--c-fg-on); padding: 8px 16px;
+}
+.l7-skip:focus { left: 0; }
+
+.l7-wrap { max-width: 1200px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+
+/* ── ① 유틸바 ─────────────────────────────────────────────────────────── */
+.l7-utilbar { background-color: var(--c-surface-subtle); border-bottom: 1px solid var(--c-divider, var(--c-line)); }
+.l7-utilbar .l7-wrap { display: flex; align-items: center; gap: 16px; min-height: 32px; }
+.l7-utilbar .grow { flex: 1; }
+.l7-utilbar a { color: var(--c-fg-subtle); text-decoration: none; }
+.l7-utilbar a:hover { color: var(--brand-50); text-decoration: underline; }
+
+/* ── ② 로고 + 검색 ────────────────────────────────────────────────────── */
+.l7-brandbar { background-color: var(--c-surface); }
+.l7-brandbar .l7-wrap {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding-top: 16px; padding-bottom: 16px;
+}
+.l7-brandbar .grow { flex: 1; }
+.l7-brand { text-decoration: none; color: var(--c-fg-strong); }
+.l7-search { display: flex; gap: 6px; }
+.l7-search .krds-input { width: 220px; }
+.l7-menu-open { display: none; }
+
+/* ── ③ 풀폭 GNB ───────────────────────────────────────────────────────── */
+.l7-gnb {
+    background-color: var(--c-surface);
+    border-top: 2px solid var(--brand-50);
+    border-bottom: 1px solid var(--c-line);
+    position: sticky; top: 0; z-index: 30;
+}
+.l7-gnb-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.l7-gnb-item { position: relative; }
+.l7-gnb-link {
+    display: block; padding: 14px 20px;
+    color: var(--c-fg); text-decoration: none;
+}
+.l7-gnb-link:hover { color: var(--brand-60); }
+.l7-gnb .l7-active {
+    color: var(--brand-60); font-weight: 700;
+    box-shadow: inset 0 -3px 0 0 var(--brand-50);
+}
+
+/* 드롭 — hover 와 focus-within 둘 다로 열어야 키보드로도 닿는다 */
+.l7-gnb-drop {
+    display: none; position: absolute; top: 100%; left: 0; z-index: 40;
+    min-width: 200px; margin: 0; padding: 8px 0; list-style: none;
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-line); border-radius: 0 0 8px 8px;
+}
+.l7-gnb-item:hover > .l7-gnb-drop,
+.l7-gnb-item:focus-within > .l7-gnb-drop { display: block; }
+.l7-gnb-drop a {
+    display: block; padding: 8px 16px;
+    color: var(--c-fg-subtle); text-decoration: none;
+}
+.l7-gnb-drop a:hover { background-color: var(--c-surface-subtle); color: var(--brand-60); }
+
+/* ── ④ 타이틀 밴드 / ⑤ breadcrumb 줄 ──────────────────────────────────── */
+.l7-titleband { background-color: var(--c-surface-subtle); border-bottom: 1px solid var(--c-line); }
+.l7-titleband .l7-wrap {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding-top: 28px; padding-bottom: 28px;
+}
+.l7-titleband h1 { margin: 0; flex: 1; }
+
+.l7-crumbbar { border-bottom: 1px solid var(--c-divider, var(--c-line)); }
+.l7-crumbbar .l7-wrap { padding-top: 8px; padding-bottom: 8px; }
+.l7-crumbbar .krds-breadcrumb { margin: 0; }
+
+/* ── ⑥ LNB + 본문 ─────────────────────────────────────────────────────── */
+.l7-body { display: block; padding-top: 32px; padding-bottom: 48px; }
+.l7-with-lnb {
+    display: grid; gap: 32px;
+    grid-template-columns: var(--l7-lnb-w) minmax(0, 1fr);
+}
+
+.l7-lnb { align-self: start; position: sticky; top: 64px; }
+.l7-lnb-head {
+    display: block; padding: 14px 16px;
+    background-color: var(--brand-50); color: var(--c-fg-on);
+    border-radius: 8px 8px 0 0;
+}
+.l7-lnb-link, .l7-lnb-sub {
+    display: block; padding: 10px 16px;
+    color: var(--c-fg); text-decoration: none;
+    border: 1px solid var(--c-line); border-top: 0;
+}
+.l7-lnb-sub { padding-left: 28px; color: var(--c-fg-subtle); background-color: var(--c-surface-subtle); }
+.l7-lnb-link:hover, .l7-lnb-sub:hover { background-color: var(--c-surface-subtler); }
+.l7-lnb .l7-active { color: var(--brand-60); font-weight: 700; }
+
+.l7-content { min-width: 0; }
+.l7-content img { max-width: 100%; height: auto; }
+.l7-content table { display: block; overflow-x: auto; }
+
+.l7-reaction { border-top: 1px solid var(--c-divider, var(--c-line)); }
+.l7-reaction .l7-wrap { padding-top: 16px; padding-bottom: 16px; text-align: center; }
+
+/* ── ⑧ 풀 사이트맵 푸터 ───────────────────────────────────────────────── */
+.l7-sitemap { background-color: var(--c-surface-subtle); border-top: 1px solid var(--c-line); }
+.l7-sitemap-grid {
+    display: grid; gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    padding-top: 32px; padding-bottom: 32px;
+}
+.l7-sitemap-grid h2 { margin: 0 0 8px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--c-line); color: var(--c-fg-strong); }
+.l7-sitemap-grid ul { list-style: none; margin: 0; padding: 0; }
+.l7-sitemap-grid li { margin-bottom: 4px; }
+.l7-sitemap-grid a { color: var(--c-fg-subtle); text-decoration: none; }
+.l7-sitemap-grid a:hover { color: var(--brand-50); text-decoration: underline; }
+
+/* ── ⑨ 플로팅 퀵메뉴 ──────────────────────────────────────────────────── */
+.l7-quick {
+    position: fixed; right: 16px; bottom: 16px; z-index: 35;
+    display: flex; flex-direction: column; gap: 1px;
+    background-color: var(--c-line);
+    border: 1px solid var(--c-line); border-radius: 12px; overflow: hidden;
+}
+.l7-quick-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    width: 60px; min-height: 56px; padding: 6px 4px;
+    background-color: var(--c-surface); color: var(--c-fg-subtle);
+    text-decoration: none; border: 0; cursor: pointer;
+}
+.l7-quick-item:hover { background-color: var(--brand-5); color: var(--brand-60); }
+
+/* ── 모바일 전체 메뉴 ─────────────────────────────────────────────────── */
+.l7-menu {
+    border: 0; border-radius: 12px; padding: 0;
+    width: min(520px, 92vw); max-height: 80vh;
+    background-color: var(--c-surface); color: var(--c-fg);
+}
+.l7-menu::backdrop { background-color: rgb(0 0 0 / 0.5); }
+.l7-menu-head { display: flex; align-items: center; gap: 8px;
+    padding: 14px 16px; border-bottom: 1px solid var(--c-line); }
+.l7-menu-head .grow { flex: 1; }
+.l7-menu-body { padding: 8px 16px 20px; overflow-y: auto; max-height: calc(80vh - 53px); }
+.l7-menu-body summary { padding: 10px 4px; cursor: pointer; color: var(--c-fg-strong);
+    border-bottom: 1px solid var(--c-divider, var(--c-line)); }
+.l7-menu-body a { display: block; padding: 8px 4px 8px 16px;
+    color: var(--c-fg-subtle); text-decoration: none; }
+.l7-menu-body a:hover { color: var(--brand-50); }
+
+@media (max-width: 1023px) {
+    /* GNB 드롭은 터치에서 열기 어렵다 — ☰ 전체 메뉴로 대체 */
+    .l7-gnb { display: none; }
+    .l7-menu-open { display: inline-flex; }
+    .l7-with-lnb { grid-template-columns: 1fr; gap: 24px; }
+    .l7-lnb { position: static; }
+}
+@media (max-width: 767px) {
+    .l7-wrap { padding-left: 16px; padding-right: 16px; }
+    .l7-search .krds-input { width: 140px; }
+    .l7-titleband .l7-wrap { padding-top: 20px; padding-bottom: 20px; }
+    /* 퀵메뉴가 본문을 가리지 않게 축소 */
+    .l7-quick { right: 8px; bottom: 8px; }
+    .l7-quick-item { width: 48px; min-height: 48px; }
+}

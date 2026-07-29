@@ -1,0 +1,138 @@
+/* ============================================================================
+   layout-003 — C안 좌측 고정 사이드바 GNB (구조 CSS)
+   ----------------------------------------------------------------------------
+   3층 분리: 전역 output.css → 템플릿 /tmpl/css/{code}.css(색) → 이 파일(구조).
+   색은 <b>토큰만</b> 쓴다 — raw HEX 금지(SG-krds §5). 사이드바의 어두운 면도
+   그레이 램프 토큰(숫자가 클수록 어둡다: gray-5 밝음 … gray-95 어두움)으로 만든다.
+   radius 최대 12px · 8px 그리드 · 평면은 보더 우선.
+   ============================================================================ */
+
+:root { --l3-side-w: 240px; }
+
+/* 스킵링크 — 포커스 시에만 노출 */
+.l3-skip {
+    position: absolute; left: -9999px; top: 0; z-index: 100;
+    background-color: var(--color-gray-90); color: var(--c-fg-on);
+    padding: 8px 16px;
+}
+.l3-skip:focus { left: 0; }
+
+/* ── 셸: 사이드바 + 본문 2분할 ─────────────────────────────────────────── */
+.l3-shell { display: grid; grid-template-columns: var(--l3-side-w) minmax(0, 1fr); }
+
+.l3-side {
+    background-color: var(--color-gray-90);
+    color: var(--color-gray-10);
+    position: sticky; top: 0; align-self: start;
+    height: 100vh; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 16px 0 24px;
+}
+
+.l3-side-logo {
+    display: block; padding: 8px 20px 16px; text-decoration: none;
+    color: var(--c-fg-on);
+}
+.l3-side-logo span { display: block; color: var(--color-gray-30); margin-top: 2px; }
+
+.l3-side-search { padding: 0 16px 12px; }
+.l3-side-search .krds-input {
+    width: 100%;
+    background-color: var(--color-gray-80);
+    border-color: var(--color-gray-70);
+    color: var(--c-fg-on);
+}
+.l3-side-search .krds-input::placeholder { color: var(--color-gray-40); }
+
+/* ── 메뉴 아코디언 (네이티브 details) ──────────────────────────────────── */
+.l3-side-nav { flex: 1; }
+.l3-side-nav details > summary { list-style: none; cursor: pointer; }
+.l3-side-nav details > summary::-webkit-details-marker { display: none; }
+
+/* 1뎁스 그룹 — 접힘 ▸ / 펼침 ▾ 를 CSS 로 (아이콘 마크업 없이) */
+.l3-side-group {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 20px; color: var(--color-gray-10); text-decoration: none;
+}
+.l3-side-group::before { content: '▸'; color: var(--color-gray-40); font-size: 11px; }
+details[open] > .l3-side-group::before { content: '▾'; }
+a.l3-side-group::before { content: '·'; }
+.l3-side-group:hover { background-color: var(--color-gray-80); }
+
+/* 2뎁스 */
+.l3-side-sub {
+    display: block; padding: 7px 20px 7px 36px;
+    color: var(--color-gray-20); text-decoration: none;
+}
+.l3-side-sub:hover { background-color: var(--color-gray-80); }
+
+/* 3뎁스 */
+.l3-side-sub2 {
+    display: block; padding: 6px 20px 6px 52px;
+    color: var(--color-gray-30); text-decoration: none;
+}
+.l3-side-sub2:hover { background-color: var(--color-gray-80); }
+
+/* 현재 위치 — 색만으로 구분하지 않도록 좌측 램프를 함께 둔다 */
+.l3-active {
+    background-color: var(--color-gray-80);
+    color: var(--c-fg-on); font-weight: 700;
+    box-shadow: inset 3px 0 0 0 var(--brand-40);
+}
+
+.l3-side-util {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 16px 16px 0; margin-top: 8px;
+    border-top: 1px solid var(--color-gray-80);
+}
+.l3-side-util .krds-btn { color: var(--color-gray-10); border-color: var(--color-gray-60); }
+
+/* ── 본문 영역 ────────────────────────────────────────────────────────── */
+.l3-main { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ⑤ 유틸바 — breadcrumb + 관련 사이트를 한 줄로 */
+.l3-utilbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 24px; min-height: 44px;
+    border-bottom: 1px solid var(--c-line);
+    background-color: var(--c-surface);
+    position: sticky; top: 0; z-index: 20;
+}
+.l3-utilbar .grow { flex: 1; }
+.l3-utilbar .krds-breadcrumb { margin: 0; }
+
+/* ☰ 는 모바일에서만 */
+.l3-drawer-open { display: none; }
+
+.l3-content { flex: 1; padding: 32px 24px 48px; max-width: 1120px; width: 100%; }
+
+.l3-reaction {
+    padding: 16px 24px; text-align: center;
+    border-top: 1px solid var(--c-divider, var(--c-line));
+}
+.l3-top { padding: 8px 24px 16px; text-align: right; }
+
+/* ── 모바일 드로어 — 사이드바 조각을 그대로 담는다 ────────────────────── */
+.l3-drawer {
+    border: 0; padding: 0; margin: 0 auto 0 0; height: 100vh; max-height: 100vh;
+    width: 280px; max-width: 85vw;
+    background-color: var(--color-gray-90); color: var(--color-gray-10);
+}
+.l3-drawer::backdrop { background-color: rgb(0 0 0 / 0.5); }
+.l3-drawer-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px; border-bottom: 1px solid var(--color-gray-80);
+    color: var(--c-fg-on);
+}
+.l3-drawer-head .krds-btn { margin-left: auto; color: var(--color-gray-20); }
+.l3-drawer-body { overflow-y: auto; height: calc(100vh - 49px); }
+/* 드로어 안에서는 사이드바가 화면 고정일 이유가 없다 */
+.l3-drawer-body .l3-side { position: static; height: auto; }
+
+@media (max-width: 767px) {
+    .l3-shell { grid-template-columns: 1fr; }
+    .l3-side { display: none; }
+    .l3-drawer-open { display: inline-flex; }
+    .l3-content { padding: 24px 16px 40px; }
+    .l3-utilbar { padding: 8px 16px; }
+}

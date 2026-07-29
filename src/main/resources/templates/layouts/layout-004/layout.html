@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     layout-004 — D안 원페이지 풀블리드 매거진 (원전: wireframe/frame004)
+     ----------------------------------------------------------------------------
+     A안과의 차이:
+       · 마스트헤드+GNB 밴드 → <b>투명 오버레이 헤더</b>(히어로 위에 얹힘) +
+         ☰ <b>풀스크린 오버레이 메뉴</b>(네이티브 dialog).
+       · 본문은 <b>풀블리드 섹션 스택</b>이고, 읽기 텍스트만 협폭(720px) 컬럼으로 좁힌다
+         — 매거진 리듬(넓은 시각 요소 / 좁은 읽기 폭)을 구조로 강제한다.
+       · breadcrumb 은 별도 밴드 없이 본문 첫머리에 얇게 얹는다.
+     주의: 투명 헤더는 <b>히어로가 있는 페이지</b>에서만 의미가 있다. 히어로가 없으면
+     글이 헤더 아래로 파고들므로, breadcrumb 유무로 판단해 불투명 헤더로 전환한다.
+     슬롯 계약·데이터·라우트는 A안과 동일.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:classappend="${themeClass}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${site != null ? site.siteName : 'gopcms5'}">gopcms5</title>
+    <link rel="icon" href="data:,"/>
+    <link rel="stylesheet" href="/css/output.css"/>
+    <link rel="stylesheet" th:href="@{${'/tmpl/css/' + (site != null ? site.templateCode : 'krds') + '.css'}}"/>
+    <link rel="stylesheet" href="/css/layouts/layout-004.css"/>
+    <th:block th:if="${site != null and site.headMeta != null}" th:utext="${site.headMeta}"/>
+    <script th:attr="nonce=${cspNonce}">
+        try { if (localStorage.getItem('gopcms5.hc') === '1')
+            document.documentElement.classList.add('hc'); } catch (e) {}
+    </script>
+</head>
+<body class="bg-bg text-fg">
+
+<a class="l4-skip" href="#content">본문으로 건너뛰기</a>
+
+<!-- ① 오버레이 헤더 — 히어로가 있는 페이지(breadcrumb 없음)에서만 투명 -->
+<header class="l4-header"
+        th:classappend="${breadcrumb == null or breadcrumb.isEmpty()} ? 'l4-transparent' : 'l4-solid'">
+    <a class="l4-brand text-heading-2xs"
+       th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}"
+       th:text="${site != null ? site.siteName : 'gopcms5'}">사이트명</a>
+    <span class="grow"></span>
+    <button type="button" class="krds-btn krds-btn-text krds-btn-sm"
+            data-action="toggle-hc" aria-pressed="false">◐</button>
+    <button type="button" class="krds-btn krds-btn-secondary krds-btn-sm"
+            data-action="open-dialog" data-target="#l4-menu">☰ 메뉴</button>
+</header>
+
+<!-- ② 풀스크린 오버레이 메뉴 — 1~3뎁스를 한 화면에 펼친다(별도 사이트맵 이동 없이) -->
+<dialog id="l4-menu" class="l4-menu">
+    <div class="l4-menu-head">
+        <b class="text-heading-2xs" th:text="${site != null ? site.siteName : 'gopcms5'}">사이트명</b>
+        <span class="grow"></span>
+        <a class="krds-btn krds-btn-text krds-btn-sm"
+           th:href="${site != null ? '/' + site.siteCode + '/sitemap' : '/main/sitemap'}">사이트맵</a>
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm"
+                data-action="close-dialog" aria-label="메뉴 닫기">✕</button>
+    </div>
+    <nav class="l4-menu-grid" aria-label="주 메뉴" th:if="${menuTree != null}">
+        <section th:each="m1 : ${menuTree}">
+            <h2 class="text-heading-2xs l4-menu-group">
+                <a th:href="${m1.href != null ? m1.href : '#'}" th:text="${m1.name}">1뎁스</a>
+            </h2>
+            <ul>
+                <li th:each="m2 : ${m1.children}">
+                    <a class="text-body-md" th:href="${m2.href != null ? m2.href : '#'}"
+                       th:text="${m2.name}">2뎁스</a>
+                    <ul th:if="${m2.children != null and !m2.children.isEmpty()}">
+                        <li th:each="m3 : ${m2.children}">
+                            <a class="text-body-sm text-fg-subtle"
+                               th:href="${m3.href != null ? m3.href : '#'}"
+                               th:text="${m3.name}">3뎁스</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+    </nav>
+</dialog>
+
+<!-- ③ SUB_HERO — 풀블리드 슬롯(배너 P7). 히어로는 각 페이지가 content 안에서 그린다 -->
+<div id="sub-hero-slot"></div>
+
+<!-- ④ breadcrumb — 별도 밴드 없이 읽기 컬럼 폭에 맞춰 얇게 -->
+<nav class="l4-crumb" aria-label="현재 위치"
+     th:if="${breadcrumb != null and !breadcrumb.isEmpty()}">
+    <ol class="krds-breadcrumb text-body-xs">
+        <li><a th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}">홈</a></li>
+        <li th:each="crumb, stat : ${breadcrumb}">
+            <a th:if="${!stat.last and crumb.href != null}" th:href="${crumb.href}"
+               th:text="${crumb.name}">메뉴</a>
+            <span th:if="${!stat.last and crumb.href == null}" th:text="${crumb.name}">메뉴</span>
+            <span th:if="${stat.last}" aria-current="page" th:text="${crumb.name}">현재</span>
+        </li>
+    </ol>
+</nav>
+
+<!-- ⑤ 본문 — 풀블리드 섹션 스택. 읽기 텍스트는 CSS 가 협폭 컬럼으로 좁힌다 -->
+<main id="content" class="l4-content" layout:fragment="content">본문</main>
+
+<!-- ⑥ 좋아요/신고 -->
+<div th:if="${content != null}" class="l4-reaction">
+    <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm" disabled>👍 좋아요</button>
+    <button type="button" class="krds-btn krds-btn-text krds-btn-sm" disabled>🚩 신고</button>
+    <span class="text-body-xs text-fg-disabled">(게시판 페이즈에서 활성)</span>
+</div>
+
+<!-- ⑦ 푸터 -->
+<footer th:replace="~{fragments/site-footer :: footer}"></footer>
+<div class="l4-top">
+    <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm"
+            data-action="scroll-top">TOP ↑</button>
+</div>
+
+<script src="/js/vendor/htmx.min.js"></script>
+<script src="/js/app.js"></script>
+<th:block layout:fragment="scripts"/>
+
+</body>
+</html>

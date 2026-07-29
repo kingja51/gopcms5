@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     layout-003 — C안 좌측 고정 사이드바 GNB (원전: wireframe/frame003)
+     ----------------------------------------------------------------------------
+     A안과의 차이(와이어프레임 "바뀌는 것" 표):
+       · 세로 적층(헤더→본문→푸터) → <b>2분할(aside 사이드바 + main)</b>.
+         마스트헤드·GNB 밴드 제거, 사이드바가 GNB 와 LNB 를 겸한다.
+       · breadcrumb 은 독립 밴드가 아니라 main 상단 <b>얇은 유틸바</b> 안으로 들어간다.
+       · 사이드바가 LNB 를 겸하므로 <b>본문은 항상 1단 풀폭</b>.
+       · 푸터는 main 하단에만 렌더(사이드바 아래 아님).
+     구현 규약:
+       · 메뉴 아코디언은 네이티브 <details> — 현재 경로만 SSR 로 open, 펼침 저장 JS 불필요.
+       · 모바일(~767px)은 사이드바를 숨기고 ☰ → <dialog> 드로어로 <b>같은 조각을 재사용</b>
+         (마크업 이중화 없음 — 사이드바 프래그먼트를 두 곳에서 부른다).
+     슬롯 계약·데이터(menuTree·breadcrumb·content)·라우트는 A안과 동일.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:classappend="${themeClass}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${site != null ? site.siteName : 'gopcms5'}">gopcms5</title>
+    <link rel="icon" href="data:,"/>
+    <link rel="stylesheet" href="/css/output.css"/>
+    <link rel="stylesheet" th:href="@{${'/tmpl/css/' + (site != null ? site.templateCode : 'krds') + '.css'}}"/>
+    <link rel="stylesheet" href="/css/layouts/layout-003.css"/>
+    <th:block th:if="${site != null and site.headMeta != null}" th:utext="${site.headMeta}"/>
+    <!-- 고대비(hc) 복원 — 첫 페인트 전(FOUC 방지). 인라인 예외는 여기 하나, CSP nonce 필수 -->
+    <script th:attr="nonce=${cspNonce}">
+        try { if (localStorage.getItem('gopcms5.hc') === '1')
+            document.documentElement.classList.add('hc'); } catch (e) {}
+    </script>
+</head>
+<body class="bg-bg text-fg">
+
+<!-- ① 스킵링크 — 사이드바 전체를 건너뛰므로 C안에서 특히 중요 -->
+<a class="l3-skip" href="#content">본문으로 건너뛰기</a>
+
+<!--
+  사이드바 알맹이 — 데스크톱 aside 와 모바일 드로어가 <b>같은 조각</b>을 쓴다.
+  th:fragment 로 뽑아 두 곳에서 부르므로 메뉴 마크업이 두 벌로 갈라지지 않는다.
+-->
+<th:block th:fragment="sidebarBody">
+    <a class="l3-side-logo" th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}">
+        <b class="text-heading-2xs" th:text="${site != null ? site.siteName : 'gopcms5'}">사이트명</b>
+        <span class="text-body-xs" th:text="${site != null ? site.description : ''}">설명</span>
+    </a>
+
+    <!-- ② 상시 노출 검색 — C안 고유. 일반 내비게이션(htmx 아님), 인라인 핸들러 없음 -->
+    <form class="l3-side-search" method="get" role="search"
+          th:action="${site != null ? '/' + site.siteCode + '/search' : '/search'}">
+        <label class="sr-only" for="l3-q">통합검색</label>
+        <input id="l3-q" name="keyword" class="krds-input krds-input-sm" placeholder="통합검색"/>
+    </form>
+
+    <!-- ③ 메뉴 1~3뎁스 아코디언 — 4뎁스는 사이트맵에서만(와이어프레임 ③-1) -->
+    <nav class="l3-side-nav" aria-label="주 메뉴" th:if="${menuTree != null}">
+        <th:block th:each="m1 : ${menuTree}">
+            <details th:if="${m1.children != null and !m1.children.isEmpty()}"
+                     th:attr="open=${breadcrumb != null and breadcrumb.contains(m1)} ? open : null">
+                <summary class="l3-side-group text-label-md" th:text="${m1.name}">1뎁스</summary>
+                <th:block th:each="m2 : ${m1.children}">
+                    <details th:if="${m2.children != null and !m2.children.isEmpty()}"
+                             th:attr="open=${breadcrumb != null and breadcrumb.contains(m2)} ? open : null">
+                        <summary class="l3-side-sub text-body-sm" th:text="${m2.name}">2뎁스</summary>
+                        <a th:each="m3 : ${m2.children}" class="l3-side-sub2 text-body-sm"
+                           th:href="${m3.href != null ? m3.href : '#'}"
+                           th:classappend="${breadcrumb != null and breadcrumb.contains(m3)} ? 'l3-active'"
+                           th:text="${m3.name}">3뎁스</a>
+                    </details>
+                    <a th:if="${m2.children == null or m2.children.isEmpty()}"
+                       class="l3-side-sub text-body-sm"
+                       th:href="${m2.href != null ? m2.href : '#'}"
+                       th:classappend="${breadcrumb != null and breadcrumb.contains(m2)} ? 'l3-active'"
+                       th:text="${m2.name}">2뎁스</a>
+                </th:block>
+            </details>
+            <a th:if="${m1.children == null or m1.children.isEmpty()}"
+               class="l3-side-group text-label-md" th:href="${m1.href != null ? m1.href : '#'}"
+               th:classappend="${breadcrumb != null and breadcrumb.contains(m1)} ? 'l3-active'"
+               th:text="${m1.name}">1뎁스</a>
+        </th:block>
+    </nav>
+
+    <!-- ④ 하단 유틸 — 로그인·알림은 회원 페이즈, 고대비는 지금 동작 -->
+    <div class="l3-side-util">
+        <a class="krds-btn krds-btn-tertiary krds-btn-sm"
+           th:href="${site != null ? '/login?siteCode=' + site.siteCode : '/login'}">로그인</a>
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm"
+                data-action="toggle-hc" aria-pressed="false">◐ 선명한 화면</button>
+    </div>
+</th:block>
+
+<div class="l3-shell">
+    <!-- ◀ 데스크톱 사이드바 (뷰포트 고정) -->
+    <aside class="l3-side" th:insert="~{:: sidebarBody}"></aside>
+
+    <!-- ▶ 본문 영역 -->
+    <div class="l3-main">
+        <!-- ⑤ 유틸바 — breadcrumb + 관련 사이트. A안의 마스트헤드+breadcrumb 2밴드를 1줄로 -->
+        <div class="l3-utilbar">
+            <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm l3-drawer-open"
+                    data-action="open-dialog" data-target="#l3-drawer"
+                    aria-label="메뉴 열기">☰</button>
+            <nav aria-label="현재 위치" class="grow" th:if="${breadcrumb != null and !breadcrumb.isEmpty()}">
+                <ol class="krds-breadcrumb text-body-xs">
+                    <li><a th:href="${site != null ? '/' + site.siteCode + '/index' : '/'}">홈</a></li>
+                    <li th:each="crumb, stat : ${breadcrumb}">
+                        <a th:if="${!stat.last and crumb.href != null}" th:href="${crumb.href}"
+                           th:text="${crumb.name}">메뉴</a>
+                        <span th:if="${!stat.last and crumb.href == null}" th:text="${crumb.name}">메뉴</span>
+                        <span th:if="${stat.last}" aria-current="page" th:text="${crumb.name}">현재</span>
+                    </li>
+                </ol>
+            </nav>
+            <span class="grow" th:if="${breadcrumb == null or breadcrumb.isEmpty()}"></span>
+            <a class="text-body-xs text-fg-subtle" href="https://www.konyang.ac.kr"
+               target="_blank" rel="noopener">건양대학교</a>
+        </div>
+
+        <!-- SUB_HERO — 유틸바 아래 슬림 밴드(배너 P7, 0건이면 미출력) -->
+        <div id="sub-hero-slot"></div>
+
+        <!-- ⑥ 본문 — 사이드바가 LNB 를 겸하므로 항상 1단 풀폭 -->
+        <main id="content" class="l3-content" layout:fragment="content">본문</main>
+
+        <!-- ⑦ 좋아요/신고 밴드 — 컨텐츠 페이지에서만 -->
+        <div th:if="${content != null}" class="l3-reaction">
+            <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm" disabled>👍 좋아요</button>
+            <button type="button" class="krds-btn krds-btn-text krds-btn-sm" disabled>🚩 신고</button>
+            <span class="text-body-xs text-fg-disabled">(게시판 페이즈에서 활성)</span>
+        </div>
+
+        <!-- ⑧ 푸터 — main 하단에만 -->
+        <footer th:replace="~{fragments/site-footer :: footer}"></footer>
+        <div class="l3-top">
+            <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                    data-action="scroll-top">TOP ↑</button>
+        </div>
+    </div>
+</div>
+
+<!-- 모바일 드로어 — 네이티브 <dialog>(ESC·포커스 트랩·딤 기본). 사이드바 조각 재사용 -->
+<dialog id="l3-drawer" class="l3-drawer">
+    <div class="l3-drawer-head">
+        <b class="text-label-md" th:text="${site != null ? site.siteName : 'gopcms5'}">사이트명</b>
+        <button type="button" class="krds-btn krds-btn-text krds-btn-sm"
+                data-action="close-dialog" aria-label="메뉴 닫기">✕</button>
+    </div>
+    <div class="l3-drawer-body" th:insert="~{:: sidebarBody}"></div>
+</dialog>
+
+<script src="/js/vendor/htmx.min.js"></script>
+<script src="/js/app.js"></script>
+<th:block layout:fragment="scripts"/>
+
+</body>
+</html>

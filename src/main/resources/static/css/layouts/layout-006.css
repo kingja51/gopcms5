@@ -1,0 +1,108 @@
+/* ============================================================================
+   layout-006 — F안 모바일 퍼스트 앱형 (구조 CSS)
+   ----------------------------------------------------------------------------
+   같은 마크업이 두 모습을 낸다: 모바일은 하단 고정 탭바, 데스크톱은 상단 탭.
+   둘 중 하나만 보이게 해서 스크린리더가 메뉴를 두 번 읽지 않도록
+   <b>display:none 으로 완전히 감춘다</b>(visibility·opacity 로 숨기면 읽힌다).
+   하단 탭바가 본문 끝을 가리므로 body 에 탭바 높이 + 안전영역만큼 여백을 준다.
+   색은 토큰만 · radius 최대 12px · 터치 타깃 최소 40px(SG-krds §5).
+   ============================================================================ */
+
+:root { --l6-tabbar-h: 60px; --l6-read: 760px; }
+
+.l6-skip {
+    position: absolute; left: -9999px; top: 0; z-index: 100;
+    background-color: var(--color-gray-90); color: var(--c-fg-on); padding: 8px 16px;
+}
+.l6-skip:focus { left: 0; }
+
+.l6-wrap { max-width: var(--l6-read); margin: 0 auto; padding-left: 20px; padding-right: 20px; }
+
+/* ── ① 앱바 ───────────────────────────────────────────────────────────── */
+.l6-appbar {
+    background-color: var(--c-surface);
+    border-bottom: 1px solid var(--c-line);
+    position: sticky; top: 0; z-index: 30;
+}
+.l6-appbar-row {
+    display: flex; align-items: center; gap: 8px; min-height: 52px;
+}
+.l6-appbar-row .grow { flex: 1; }
+.l6-brand { text-decoration: none; color: var(--c-fg-strong); }
+/* 모바일에서는 사이트명 대신 현재 페이지 제목을 앱바에 올린다 */
+.l6-pagetitle { display: none; }
+
+/* 데스크톱 상단 탭 */
+.l6-toptabs { display: flex; gap: 4px; padding-bottom: 4px; }
+.l6-tab {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 40px; padding: 8px 12px; border-radius: 8px;
+    color: var(--c-fg-subtle); text-decoration: none;
+}
+.l6-tab:hover { background-color: var(--c-surface-subtle); color: var(--c-fg); }
+.l6-active { color: var(--brand-60); font-weight: 700; }
+.l6-toptabs .l6-active { box-shadow: inset 0 -2px 0 0 var(--brand-50); }
+
+/* ── ②~④ 본문 ────────────────────────────────────────────────────────── */
+.l6-crumb { padding-top: 12px; }
+.l6-crumb .krds-breadcrumb { margin: 0; }
+.l6-content { padding-top: 20px; padding-bottom: 40px; }
+.l6-content img { max-width: 100%; height: auto; }
+.l6-content table { display: block; overflow-x: auto; }
+.l6-reaction {
+    padding-top: 16px; padding-bottom: 16px; text-align: center;
+    border-top: 1px solid var(--c-divider, var(--c-line));
+}
+
+/* ── ⑤ 하단 탭바 — 모바일 전용 ────────────────────────────────────────── */
+.l6-tabbar { display: none; }
+
+/* 전체 메뉴 시트 — 모바일에서 아래에서 올라오는 느낌, 데스크톱에서는 가운데 패널 */
+.l6-sheet {
+    border: 0; border-radius: 12px; padding: 0;
+    width: min(520px, 92vw); max-height: 80vh;
+    background-color: var(--c-surface); color: var(--c-fg);
+}
+.l6-sheet::backdrop { background-color: rgb(0 0 0 / 0.5); }
+.l6-sheet-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 16px; border-bottom: 1px solid var(--c-line);
+}
+.l6-sheet-head .grow { flex: 1; }
+.l6-sheet-body { padding: 8px 16px 20px; overflow-y: auto; max-height: calc(80vh - 53px); }
+.l6-sheet-body summary {
+    padding: 10px 4px; cursor: pointer; color: var(--c-fg-strong);
+    border-bottom: 1px solid var(--c-divider, var(--c-line));
+}
+.l6-sheet-body a {
+    display: block; padding: 8px 4px 8px 16px;
+    color: var(--c-fg-subtle); text-decoration: none;
+}
+.l6-sheet-body a:hover { color: var(--brand-50); }
+
+@media (max-width: 767px) {
+    .l6-wrap { padding-left: 16px; padding-right: 16px; }
+    /* 앱바는 페이지 제목 중심으로 */
+    .l6-brand { display: none; }
+    .l6-pagetitle { display: inline; }
+    /* 상단 탭 → 하단 탭바로 교대 (둘 다 보이지 않게 완전히 감춘다) */
+    .l6-toptabs { display: none; }
+    .l6-crumb { display: none; }
+
+    .l6-tabbar {
+        display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+        background-color: var(--c-surface);
+        border-top: 1px solid var(--c-line);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .l6-tabbar .l6-tab {
+        flex-direction: column; gap: 2px; border-radius: 0;
+        min-height: var(--l6-tabbar-h); padding: 8px 4px;
+    }
+    /* 본문 끝이 탭바에 가리지 않게 */
+    .l6-body { padding-bottom: calc(var(--l6-tabbar-h) + env(safe-area-inset-bottom, 0px)); }
+
+    .l6-sheet { width: 100vw; max-width: 100vw; max-height: 85vh; border-radius: 12px 12px 0 0;
+        margin: auto auto 0; }
+}
