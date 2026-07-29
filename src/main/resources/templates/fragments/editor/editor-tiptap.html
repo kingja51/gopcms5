@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<!-- Tiptap 마운트 지점 — 실제 동작은 /js/vendor/editor-tiptap.js 가 data-* 를 읽어 붙인다.
+     인라인 스크립트 없음(CSP nonce 규약). -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="mount(targetId, entityId, siteId)"
+     data-editor="tiptap"
+     th:attr="data-target=${targetId},
+              data-entity-id=${entityId},
+              data-site-id=${siteId}"></div>
+
+</body>
+</html>

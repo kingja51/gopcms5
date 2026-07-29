@@ -60,9 +60,11 @@
         </div>
 
         <div class="ladm-field">
-            <label for="body">본문 (HTML)</label>
-            <textarea class="krds-textarea" id="body" name="body" style="min-height:320px"
-                      th:text="${content.body}"></textarea>
+            <label for="gp-editor-src-body">본문 (HTML)</label>
+            <!-- 게시글과 같은 프래그먼트 한 벌 — provider 는 application.yml 이 정한다 -->
+            <th:block th:replace="~{fragments/editor :: editor(
+                    field='body', value=${content.body},
+                    entityId=${content.contentId}, siteId=${content.siteId})}"/>
         </div>
 
         <div class="ladm-form-row">
@@ -108,5 +110,9 @@
         </div>
     </section>
 </div>
+
+<th:block layout:fragment="scripts">
+    <th:block th:replace="~{fragments/editor :: assets}"/>
+</th:block>
 </body>
 </html>

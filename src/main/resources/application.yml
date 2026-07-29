@@ -74,6 +74,19 @@ gopcms:
     # ※ P6-2 인가 규칙(V909)이 dev 시드에 있다 — false 로 기동하면 규칙 0건이라
     #   RbacSmokeRunner 가 기동을 중단시킨다(전면 차단 상태로 뜨는 것을 막는 의도된 동작).
     devdata: false
+
+  # ── 위지윅 에디터 (P9-2b) ──────────────────────────────────────────────────
+  # tiptap | namo | ckeditor5 — 교체해도 저장·정화·업로드·권한은 한 벌 그대로다.
+  # provider 별로 갈리는 것은 셋뿐: 자산 목록·프래그먼트 이름·어댑터 JS.
+  #   tiptap    = 기본. 번들은 `npm run editor` 로 생성한다(self-host, CDN 금지)
+  #   namo      = Namo CrossEditor 4(상용). 벤더 번들을 static/js/vendor/crosseditor/ 에 배치.
+  #               라이선스 때문에 번들을 저장소에 커밋하지 않는다
+  #   ckeditor5 = GPL 로고 또는 상용 라이선스 키 필요 — 도입 전 확인
+  # 선택한 provider 의 자산이 없으면 EditorAssetSmokeRunner 가 기동을 멈춘다
+  # (폼을 열고 나서야 "에디터가 안 뜬다" 를 알게 되면 늦다).
+  editor:
+    provider: tiptap
+
   # ── 파일 업로드 ────────────────────────────────────────────────────────────
   # 저장 경로는 반드시 웹루트 밖. 정적 자원 경로 안에 두면 톰캣이 파일을 그대로
   # 내보내므로, 올라온 스크립트가 곧바로 실행 가능한 URL 을 갖게 된다(웹쉘의 고전 경로).

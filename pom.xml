@@ -853,6 +853,28 @@
                             <skip>${tailwind.skip}</skip>
                         </configuration>
                     </execution>
+                    <!--
+                      위지윅 번들(Tiptap) — CSS 와 같은 이유로 빌드가 필수다.
+                      ESM 묶음이라 브라우저가 직접 못 읽고, CDN 은 금지이므로 self-host 파일을
+                      만들어 둬야 한다. 산출물(static/js/vendor/editor-tiptap.js)은 gitignore.
+                      ※ provider 를 namo/ckeditor5 로 바꾸면 이 산출물은 쓰이지 않지만,
+                        빌드해 두는 편이 provider 를 되돌릴 때 안전하다(자산 검사 통과).
+                    -->
+                    <execution>
+                        <id>npm-build-editor</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${npm.executable}</executable>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>editor</argument>
+                            </arguments>
+                            <skip>${tailwind.skip}</skip>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

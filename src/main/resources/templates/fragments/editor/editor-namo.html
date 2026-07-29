@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     Namo CrossEditor 4 마운트 지점 (상용).
+
+     ※ 벤더 번들은 라이선스 때문에 저장소에 커밋하지 않는다 —
+       `static/js/vendor/crosseditor/` 아래에 배치하면 이 조각이 그대로 동작한다.
+       배치 전에 provider 를 namo 로 바꾸면 EditorAssetSmokeRunner 가 기동을 멈춘다.
+
+     이식 시 주의(PLAN P9-2b):
+       · 벤더가 주는 Java 업로드 핸들러를 쓰지 않는다. 우리 다중 방어(확장자·Tika·
+         재인코딩·격리)를 우회하고, javax.servlet 시대 코드라 Tomcat 10.1 에서 로드도 안 된다.
+         업로드는 /api/v1/file/image 로 돌리고 응답 형식만 어댑터가 변환한다.
+       · CSP 실측이 도입 조건 — iframe 기반 번들이라 frame-src 를 요구할 수 있다.
+         'unsafe-eval' 은 열지 않는다(사용자 확정 2026-07-29).
+     ============================================================================ -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="mount(targetId, entityId, siteId)"
+     data-editor="namo"
+     th:attr="data-target=${targetId},
+              data-entity-id=${entityId},
+              data-site-id=${siteId},
+              data-params=@{/js/vendor/crosseditor/index.html}"></div>
+
+</body>
+</html>

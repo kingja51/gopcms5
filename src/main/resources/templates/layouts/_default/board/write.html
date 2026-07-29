@@ -48,8 +48,18 @@
 
         <div class="bbs-form-row">
             <label class="bbs-form-label" for="content">내용</label>
-            <textarea id="content" th:field="*{content}" class="krds-input"
-                      rows="12" required></textarea>
+            <div>
+                <!-- HTML 게시판만 위지윅(관리자 폼과 같은 규칙) -->
+                <!-- th:if 와 th:replace 를 같은 태그에 두지 않는다(우선순위 함정) -->
+                <th:block th:if="${master.htmlYn == 'Y'}">
+                    <th:block th:replace="~{fragments/editor :: editor(
+                            field='content', value=*{content},
+                            entityId=*{articleId}, siteId=${master.siteId})}"/>
+                </th:block>
+                <textarea th:unless="${master.htmlYn == 'Y'}"
+                          id="content" th:field="*{content}" class="krds-input"
+                          rows="12" required></textarea>
+            </div>
         </div>
 
         <div class="bbs-form-row" th:if="${master.fileYn == 'Y'}">
@@ -86,6 +96,9 @@
 
 <th:block layout:fragment="scripts">
     <script src="/js/file-picker.js" defer></script>
+    <th:block th:if="${master.htmlYn == 'Y'}">
+        <th:block th:replace="~{fragments/editor :: assets}"/>
+    </th:block>
 </th:block>
 </body>
 </html>

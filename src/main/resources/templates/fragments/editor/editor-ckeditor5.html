@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     CKEditor 5 마운트 지점.
+
+     ※ 번들은 저장소에 두지 않는다 — GPL 로 쓰면 편집 영역에 "Powered by CKEditor"
+       로고가 표시되고, 없애려면 상용 라이선스 키가 필요하다(도입 전 확인 필요).
+       `static/js/vendor/ckeditor5/` 에 배치하면 이 조각이 동작한다.
+     ============================================================================ -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="mount(targetId, entityId, siteId)"
+     data-editor="ckeditor5"
+     th:attr="data-target=${targetId},
+              data-entity-id=${entityId},
+              data-site-id=${siteId}"></div>
+
+</body>
+</html>

@@ -10,6 +10,8 @@ node_modules/
 dist/
 # Tailwind 빌드 산출물 (npm run css — Maven generate-resources 가 재생성)
 src/main/resources/static/css/output.css
+# 위지윅 번들 (npm run editor — 같은 이유로 재생성. 소스는 src/editor/)
+src/main/resources/static/js/vendor/editor-tiptap.js
 
 # ── IDE ──────────────────────────────────────
 .idea/

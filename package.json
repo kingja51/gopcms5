@@ -6,10 +6,19 @@
   "scripts": {
     "css": "tailwindcss -i ./src/krds.css -o ./src/main/resources/static/css/output.css --minify",
     "css:watch": "tailwindcss -i ./src/krds.css -o ./src/main/resources/static/css/output.css --watch",
-    "css:sg": "tailwindcss -i ./design-md/styleguide/SG-krds-input.css -o ./design-md/styleguide/SG-krds-output.css"
+    "css:sg": "tailwindcss -i ./design-md/styleguide/SG-krds-input.css -o ./design-md/styleguide/SG-krds-output.css",
+    "editor": "esbuild ./src/editor/tiptap.js --bundle --minify --format=iife --target=es2019 --outfile=./src/main/resources/static/js/vendor/editor-tiptap.js",
+    "editor:watch": "esbuild ./src/editor/tiptap.js --bundle --format=iife --target=es2019 --outfile=./src/main/resources/static/js/vendor/editor-tiptap.js --watch"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
+    "@tiptap/core": "^3.29.2",
+    "@tiptap/extension-image": "^3.29.2",
+    "@tiptap/extension-link": "^3.29.2",
+    "@tiptap/extension-table": "^3.29.2",
+    "@tiptap/pm": "^3.29.2",
+    "@tiptap/starter-kit": "^3.29.2",
+    "esbuild": "^0.28.1",
     "tailwindcss": "^4.1.0"
   },
   "dependencies": {
