@@ -29,6 +29,14 @@ public interface MemberMapper {
     /** 본인확인 중복가입 차단 — 같은 사람이 한 사이트에 두 계정을 만들 수 없다. */
     int countByDiHash(@Param("siteId") String siteId, @Param("diHash") String diHash);
 
+    /** 이메일 중복 — 수정 시 자기 자신은 제외한다. */
+    int countByEmailHashExcept(@Param("siteId") String siteId,
+                               @Param("emailHash") String emailHash,
+                               @Param("excludeMemberId") String excludeMemberId);
+
+    /** 마이페이지 수정 — 바꿀 수 있는 컬럼만 건드린다(본인확인 근간값은 대상이 아니다). */
+    int updateProfile(MemberDto member);
+
     /**
      * 임시 비밀번호 적용 — 만료 시각을 <b>과거로</b> 둔다.
      *

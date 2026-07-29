@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- step-up 재인증 — 개인정보 화면에 들어가기 직전에 비밀번호를 한 번 더 묻는다.
+     로그인 세션만으로 열면 자리를 비운 사이 남이 브라우저를 만졌을 때 그대로 열린다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title>본인 확인</title>
+    <link rel="stylesheet" href="/css/board.css"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <header class="bbs-head">
+        <h1 class="text-heading-lg">본인 확인</h1>
+        <p class="text-body-md text-fg-subtle">
+            개인정보를 안전하게 보호하기 위해 비밀번호를 다시 한 번 확인합니다.</p>
+    </header>
+
+    <div th:replace="~{fragments/board/flash :: flash}"></div>
+
+    <form method="post" class="bbs-form"
+          th:action="@{'/' + ${site.siteCode} + '/member/mypage/verify'}">
+        <div class="bbs-form-row">
+            <label class="bbs-form-label" for="password">비밀번호</label>
+            <input id="password" name="password" type="password" class="krds-input"
+                   required autocomplete="current-password" autofocus/>
+        </div>
+        <div class="bbs-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">확인</button>
+            <a th:href="@{'/' + ${site.siteCode} + '/index'}"
+               class="krds-btn krds-btn-secondary">취소</a>
+        </div>
+    </form>
+
+</main>
+</body>
+</html>

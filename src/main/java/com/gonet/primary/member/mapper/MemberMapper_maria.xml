@@ -132,6 +132,35 @@
         WHERE site_id = #{siteId} AND di_hash = #{diHash} AND delete_yn = 'N'
     </select>
 
+    <select id="countByEmailHashExcept" resultType="int">
+        SELECT COUNT(*) FROM tb_member
+        WHERE site_id = #{siteId} AND email_hash = #{emailHash}
+          AND member_id &lt;&gt; #{excludeMemberId} AND delete_yn = 'N'
+    </select>
+
+    <!--
+      수정 대상 컬럼을 <b>명시</b>한다 — SET 절에 없는 컬럼은 어떤 경로로도 바뀌지 않는다.
+      login_id·birth_date·gender·di·parent_* 가 여기 없는 것이 곧 "수정 불가" 의 구현이다.
+      PII 는 typeHandler 를 잊지 말 것(빠뜨리면 평문으로 덮인다).
+    -->
+    <update id="updateProfile" parameterType="com.gonet.primary.member.dto.MemberDto">
+        UPDATE tb_member
+        SET nickname = #{nickname},
+            email = #{email, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            email_hash = #{emailHash},
+            email_verified_yn = #{emailVerifiedYn},
+            phone = #{phone, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            phone_hash = #{phoneHash},
+            address_zipcode = #{addressZipcode},
+            address = #{address, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            address_detail = #{addressDetail, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            marketing_agree_yn = #{marketingAgreeYn},
+            sms_agree_yn = #{smsAgreeYn},
+            email_agree_yn = #{emailAgreeYn},
+            updated_by = #{memberId}, updated_at = CURRENT_TIMESTAMP
+        WHERE member_id = #{memberId} AND delete_yn = 'N'
+    </update>
+
     <!--
       임시 비밀번호 — 실패 카운트·잠금도 함께 푼다. 비밀번호를 새로 받았는데
       이전 실패 때문에 잠겨 있으면 사용자는 여전히 못 들어온다.
