@@ -39,3 +39,10 @@ application-local.yml
 # 업로드 저장소 — 로컬 개발용 기본 경로(application.yml gopcms.file.upload.*).
 # 운영은 환경변수로 외부 마운트를 가리킨다. 업로드된 파일이 저장소에 들어가면 안 된다.
 /data/
+
+# 폰트 — 실제로 참조하는 것만 커밋한다(krds.css 의 @font-face 대상).
+# 나머지는 로컬에 두되 저장소에 넣지 않는다: 미참조 바이너리 24MB 가 히스토리에 들어가면
+# 되돌리기 어렵다(실제로 일괄 add 로 한 번 들어갔다가 되돌렸다).
+src/main/resources/static/fonts/*
+!src/main/resources/static/fonts/PretendardGOVVariable.woff2
+!src/main/resources/static/fonts/PretendardVariable.woff2
