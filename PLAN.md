@@ -491,14 +491,37 @@ dry-run 을 끄자 정확히 2건만 삭제(살아 있는 1건은 보존)되고 
 ANONYMOUS→ROLE_MEMBER 로 바꾸자 일반글 첨부만 ROLE_MEMBER 로 바뀌고 **공지글·삭제글
 첨부는 ANONYMOUS 유지**(로그 `groups=1 (공지 제외)`). 검증 데이터 전량 제거.
 
-### P9-2 게시글 + 첨부
-- [ ] `BoardArticleService` — 작성/수정/삭제, `write_auth` 검증, 공지 지정은 STAFF 이상
-- [ ] `resolveArticleDownloadAuth()` — **`notice_yn='Y'` 면 ANONYMOUS 강제**(마스터 정책보다
-      우선), 아니면 마스터 값 그대로 → `ensureGroup()` 으로 동기화
-- [ ] 조회수 30분 쿠키 dedup — 증가 쿼리는 감사컬럼 미주입(`updated_by` 보존)
-- [ ] 비밀글 — 본문 노출은 작성자/관리자만, 차단 시 조회수도 증가시키지 않는다
-- [ ] **본문 렌더는 `html_yn` 분기** — `N` 이면 `th:text` 평문, `Y` 면 **저장 시점
-      OWASP Sanitizer 통과분**만 `th:utext`
+### P9-2 게시글 + 첨부 (완료 2026-07-29)
+- [x] `BoardArticleService` — 작성/수정/삭제, `write_auth` 검증(ADMIN=담당자 이상),
+      **공지 지정은 STAFF 이상**. 작성자는 세션에서 채운다 — 폼 hidden 을 믿으면
+      남의 이름으로 글이 올라간다
+- [x] `resolveArticleDownloadAuth()` — **`notice_yn='Y'` 면 ANONYMOUS 강제**(마스터 정책보다
+      우선), 아니면 마스터 값 → `ensureGroup(정책 명시)` + `syncAttachments()`.
+      첨부를 모두 빼면 `file_group_id` 참조를 끊고 빈 그룹은 purge 배치가 회수
+- [x] 조회수 — `ArticleViewCounter`(30분 쿠키, 상한 80건, HttpOnly). 세션 대신 쿠키를 쓰는
+      이유는 비로그인 열람마다 세션이 생기는 비용을 피하기 위함. 증가 쿼리는 **감사컬럼
+      미주입** + `updated_at = updated_at` 로 ON UPDATE 갱신까지 차단
+- [x] 비밀글 — `canRead()`(작성자 본인 또는 담당자 이상). 관리자 목록에서도 배지로 표시 —
+      열어 보고 나서 아는 것은 늦다. **사용자 화면 연결과 "차단 시 조회수 미증가" 는 P9-5**
+- [x] **본문은 저장 시점 정화** — `HtmlSanitizer`(OWASP) 단일 지점. `html_yn='Y'` 만 정화하고
+      평문 게시판은 렌더에서 이스케이프한다. allowlist 는 **두 에디터 출력의 합집합**
+      (인라인 style 보존 — Tiptap 기준만 잡으면 CrossEditor 본문이 저장마다 깎인다)
+- [x] `BoardArticleAdmController`(`/adm/board/{bbsMasterId}/article`) + 목록·폼 화면.
+      폼 GET 에서 PK 사전 발급(첨부 picker 가 저장 전에 그 ID 로 올린다)
+
+**완료 확인(2026-07-29, 8081 실측 + 단위 테스트 10종)**: XSS 정화 실측 —
+`<script>`·`onclick`·`<iframe>`·`javascript:` 전부 제거되고 `<b>` 는 보존 ·
+공지 전환 시 첨부 그룹이 ROLE_MEMBER→**ANONYMOUS 자동 전환**(일반글은 마스터 정책 유지) ·
+조회수 +1 에도 `updated_by`·`updated_at` 불변 · 목록 공지 우선 정렬·제목 검색 1건 적중.
+검증 데이터 전량 제거.
+
+> **실측 결함 2건 발견·수정**: ① **PK 사전 발급 함정** — "PK 가 비었으면 신규" 로 판정해
+> 신규 글이 수정으로 오인됐고, 없는 행을 UPDATE 해 **0건 갱신으로 조용히 사라졌다**(302 는
+> 정상 반환). 실제 존재 여부를 물어 판정하도록 고치고, 겸사겸사 잘못된 PK 주입과
+> **다른 게시판 글을 이 게시판 URL 로 수정하는 시도**도 여기서 막았다.
+> ② 정화 정책이 표 머리셀의 `scope` 를 떨어뜨렸다(단위 테스트가 발견). `Sanitizers.TABLES`
+> 는 요소만 열어 줄 뿐이라 속성 규칙이 붙지 않았던 것 — **접근성(KWCAG) 판정 대상**이라
+> 그대로 두면 스크린리더가 표를 못 읽는다.
 
 ### P9-2b 위지윅 에디터 — 2종 교체형 (2026-07-29 확정)
 

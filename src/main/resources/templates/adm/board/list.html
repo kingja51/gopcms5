@@ -85,6 +85,10 @@
                               th:text="${b.useYn == 'Y'} ? '사용' : '중지'">사용</span>
                     </td>
                     <td class="center nowrap">
+                        <!-- 통합 게시판은 글을 직접 갖지 않으므로 글 관리로 보내지 않는다 -->
+                        <a th:unless="${b.aggregator}"
+                           th:href="@{'/adm/board/' + ${b.bbsMasterId} + '/article'}"
+                           class="krds-btn krds-btn-secondary krds-btn-sm">글 관리</a>
                         <!-- 사용자 화면은 /bbs/{siteCode}/{bbsCode} — 프로그램이 앞에 온다 -->
                         <a th:href="@{'/bbs/' + ${b.siteCode} + '/' + ${b.bbsCode}}" target="_blank"
                            class="krds-btn krds-btn-tertiary krds-btn-sm">게시판 보기</a>

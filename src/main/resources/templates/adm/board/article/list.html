@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<!-- 게시글 목록 — 한 게시판 안의 글. 공지가 항상 위로 오는 정렬은 매퍼가 담당한다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>게시글 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header class="ladm-page-head">
+        <div>
+            <h1 class="ladm-page-title text-heading-lg" th:text="${master.bbsName}">공지사항</h1>
+            <p class="text-body-md text-fg-subtle">
+                <span th:text="${master.siteCode}">ai</span> ·
+                <span th:text="${T(com.gonet.primary.board.dto.BbsType).label(master.bbsType)}">공지</span> ·
+                쓰기 <span th:text="${master.writeAuth}">ADMIN</span> ·
+                첨부 <span th:text="${master.downloadAuth}">ANONYMOUS</span>
+            </p>
+        </div>
+        <div class="ladm-head-actions">
+            <a th:href="@{/adm/board/form(bbsMasterId=${master.bbsMasterId})}"
+               class="krds-btn krds-btn-tertiary krds-btn-sm">게시판 설정</a>
+            <a th:href="@{'/adm/board/' + ${master.bbsMasterId} + '/article/form'}"
+               class="krds-btn krds-btn-primary krds-btn-sm">글쓰기</a>
+        </div>
+    </header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form method="get" class="ladm-search"
+                  th:action="@{'/adm/board/' + ${master.bbsMasterId} + '/article'}">
+                <label class="sr-only" for="searchType">검색 대상</label>
+                <select id="searchType" name="searchType" class="krds-select krds-select-sm">
+                    <option value="" th:selected="${cond.searchType == null}">제목+내용</option>
+                    <option value="TITLE" th:selected="${cond.searchType == 'TITLE'}">제목</option>
+                    <option value="CONTENT" th:selected="${cond.searchType == 'CONTENT'}">내용</option>
+                    <option value="WRITER" th:selected="${cond.searchType == 'WRITER'}">작성자</option>
+                </select>
+                <label class="sr-only" for="keyword">검색어</label>
+                <input id="keyword" name="keyword" class="krds-input krds-input-sm"
+                       th:value="${cond.keyword}" placeholder="검색어"/>
+                <label class="sr-only" for="categoryId">분류</label>
+                <select id="categoryId" name="categoryId" class="krds-select krds-select-sm"
+                        th:if="${!categories.isEmpty()}" data-submit-on-change>
+                    <option value="">분류 전체</option>
+                    <option th:each="c : ${categories}" th:value="${c.categoryId}"
+                            th:text="${c.categoryName}"
+                            th:selected="${c.categoryId == cond.categoryId}">분류</option>
+                </select>
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">검색</button>
+            </form>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only" th:text="${master.bbsName} + ' 게시글 목록'">게시글 목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="center">구분</th>
+                    <th scope="col" th:if="${!categories.isEmpty()}">분류</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">작성자</th>
+                    <th scope="col" class="center">첨부</th>
+                    <th scope="col" class="num">조회</th>
+                    <th scope="col" class="center nowrap">작성일</th>
+                    <th scope="col" class="center">관리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="a : ${page.content()}">
+                    <td class="center">
+                        <span th:if="${a.notice}" class="krds-badge ladm-badge-on">공지</span>
+                        <span th:unless="${a.notice}" class="text-fg-disabled">—</span>
+                    </td>
+                    <td th:if="${!categories.isEmpty()}" class="text-fg-subtle"
+                        th:text="${a.categoryName}">분류</td>
+                    <td>
+                        <a class="krds-link"
+                           th:href="@{'/adm/board/' + ${master.bbsMasterId} + '/article/form'(articleId=${a.articleId})}"
+                           th:text="${a.title}">제목</a>
+                        <!-- 비밀글은 목록에서도 표시한다 — 열어 보고 나서 알면 늦다 -->
+                        <span th:if="${a.secret}" class="krds-badge ladm-badge-off"
+                              style="margin-left:6px">비밀</span>
+                    </td>
+                    <td class="text-fg-subtle" th:text="${a.writerName}">작성자</td>
+                    <td class="center text-fg-subtle"
+                        th:text="${a.fileCount > 0} ? ${a.fileCount} : '—'">—</td>
+                    <td class="num" th:text="${a.viewCount}">0</td>
+                    <td class="center nowrap text-body-xs text-fg-subtle"
+                        th:text="${a.createdAtView != null}
+                                 ? ${#temporals.format(a.createdAtView, 'yyyy-MM-dd')} : ''">2026-07-29</td>
+                    <td class="center">
+                        <form method="post" style="display:inline"
+                              th:action="@{'/adm/board/' + ${master.bbsMasterId} + '/article/delete'}">
+                            <input type="hidden" name="articleId" th:value="${a.articleId}"/>
+                            <button type="submit" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                                    data-confirm="이 글을 삭제할까요?">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(8, ${page.content().isEmpty()},
+                        ${'/adm/board/' + master.bbsMasterId + '/article/form'})}"></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:replace="~{adm/fragments/adm-ui :: pager(${'/adm/board/' + master.bbsMasterId + '/article'})}"></div>
+    </section>
+</div>
+</body>
+</html>

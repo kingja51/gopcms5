@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.board.mapper.BbsArticleMapper">
+
+    <sql id="cols">
+        a.article_id, a.bbs_master_id, a.category_id, a.file_group_id,
+        a.writer_user_id, a.writer_user_type, a.writer_name,
+        a.title, a.content, a.press_name, a.link_url, a.published_at,
+        a.notice_yn, a.secret_yn, a.view_count, a.like_count, a.report_count,
+        a.comment_count, a.client_ip, a.status,
+        a.created_by, a.created_at, a.updated_by, a.updated_at
+    </sql>
+
+    <!--
+      게시판·상태로 먼저 좁힌 뒤 LIKE 를 건다 — 선행 인덱스(idx_article_bbs_status)가
+      먹어야 전체 스캔이 안 난다. 와일드카드는 SQL 안에서 CONCAT 으로 붙인다(${} 금지).
+    -->
+    <sql id="admWhere">
+        WHERE a.delete_yn = 'N'
+          AND a.bbs_master_id = #{bbsMasterId}
+        <if test="status != null and status != ''">AND a.status = #{status}</if>
+        <if test="categoryId != null and categoryId != ''">AND a.category_id = #{categoryId}</if>
+        <if test="noticeYn != null and noticeYn != ''">AND a.notice_yn = #{noticeYn}</if>
+        <if test="keyword != null">
+            <choose>
+                <when test="searchType == 'TITLE'">
+                    AND a.title LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'CONTENT'">
+                    AND a.content LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'WRITER'">
+                    AND a.writer_name LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    AND (a.title LIKE CONCAT('%', #{keyword}, '%')
+                      OR a.content LIKE CONCAT('%', #{keyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <!-- 공지는 항상 위로 — notice_top_yn 판단은 서비스가 하고, 여기서는 정렬만 제공한다 -->
+    <select id="findPage" resultType="com.gonet.primary.board.dto.BbsArticleAdmDto">
+        SELECT <include refid="cols"/>,
+               c.category_name,
+               a.created_at AS created_at_view,
+               (SELECT COUNT(*) FROM tb_file f
+                 WHERE f.file_group_id = a.file_group_id AND f.delete_yn = 'N') AS file_count
+        FROM tb_bbs_article a
+        LEFT JOIN tb_bbs_category c ON c.category_id = a.category_id
+        <include refid="admWhere"/>
+        ORDER BY a.notice_yn DESC, a.created_at DESC, a.article_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_article a
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.board.dto.BbsArticleAdmDto">
+        SELECT <include refid="cols"/>,
+               c.category_name, m.bbs_code, m.bbs_name, m.site_code,
+               a.created_at AS created_at_view
+        FROM tb_bbs_article a
+        JOIN tb_bbs_master m ON m.bbs_master_id = a.bbs_master_id
+        LEFT JOIN tb_bbs_category c ON c.category_id = a.category_id
+        WHERE a.article_id = #{articleId} AND a.delete_yn = 'N'
+    </select>
+
+    <insert id="insert">
+        INSERT INTO tb_bbs_article (
+            article_id, bbs_master_id, category_id, file_group_id,
+            writer_user_id, writer_user_type, writer_name, writer_password,
+            title, content, press_name, link_url, published_at,
+            notice_yn, secret_yn, client_ip, status,
+            created_by, created_ip, created_at, updated_by, updated_ip, updated_at
+        ) VALUES (
+            #{articleId}, #{bbsMasterId}, #{categoryId}, #{fileGroupId},
+            #{writerUserId}, #{writerUserType}, #{writerName}, #{writerPassword},
+            #{title}, #{content}, #{pressName}, #{linkUrl}, #{publishedAt},
+            #{noticeYn}, #{secretYn}, #{clientIp}, #{status},
+            #{createdBy}, #{createdIp}, CURRENT_TIMESTAMP,
+            #{updatedBy}, #{updatedIp}, CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE tb_bbs_article
+        SET category_id = #{categoryId},
+            file_group_id = #{fileGroupId},
+            title = #{title},
+            content = #{content},
+            press_name = #{pressName},
+            link_url = #{linkUrl},
+            published_at = #{publishedAt},
+            notice_yn = #{noticeYn},
+            secret_yn = #{secretYn},
+            <if test="status != null and status != ''">status = #{status},</if>
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE article_id = #{articleId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_bbs_article
+        SET delete_yn = 'Y', status = 'DELETED',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE article_id = #{articleId}
+    </update>
+
+    <!--
+      조회수만 올린다. 감사컬럼(updated_by/at)은 손대지 않는다 — 읽기는 수정이 아니고,
+      여기서 덮으면 '마지막으로 글을 고친 사람' 이 조회자로 바뀐다.
+      ON UPDATE current_timestamp() 가 걸린 updated_at 도 함께 갱신되지 않도록
+      명시적으로 자기 값을 다시 넣어 고정한다.
+    -->
+    <update id="increaseViewCount">
+        UPDATE tb_bbs_article
+        SET view_count = view_count + 1, updated_at = updated_at
+        WHERE article_id = #{articleId} AND delete_yn = 'N'
+    </update>
+
+    <update id="refreshCommentCount">
+        UPDATE tb_bbs_article a
+        SET a.comment_count = (SELECT COUNT(*) FROM tb_bbs_comment c
+                                WHERE c.article_id = a.article_id AND c.delete_yn = 'N'),
+            a.updated_at = a.updated_at
+        WHERE a.article_id = #{articleId}
+    </update>
+
+</mapper>

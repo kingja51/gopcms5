@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!-- 게시글 등록·수정.
+     본문 편집기는 P9-2b(위지윅)에서 이 자리(textarea)를 프래그먼트로 교체한다 —
+     지금은 html_yn 에 따라 평문/HTML 을 그대로 받고, HTML 은 저장 시점에 정화한다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>게시글</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header class="ladm-page-head">
+        <div>
+            <h1 class="ladm-page-title text-heading-lg">게시글</h1>
+            <p class="text-body-md text-fg-subtle">
+                <span th:text="${master.bbsName}">공지사항</span> ·
+                <span th:text="${T(com.gonet.primary.board.dto.BbsType).label(master.bbsType)}">공지</span>
+            </p>
+        </div>
+        <div class="ladm-head-actions">
+            <a th:href="@{'/adm/board/' + ${master.bbsMasterId} + '/article'}"
+               class="krds-btn krds-btn-secondary krds-btn-sm">목록</a>
+        </div>
+    </header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <form method="post" th:object="${article}" class="ladm-panel"
+          th:action="@{'/adm/board/' + ${master.bbsMasterId} + '/article/save'}">
+        <input type="hidden" th:field="*{articleId}"/>
+        <input type="hidden" th:field="*{fileGroupId}"/>
+
+        <div class="ladm-panel-body ladm-form">
+
+            <div class="ladm-form-row" th:if="${!categories.isEmpty()}">
+                <label class="ladm-form-label" for="categoryId">분류</label>
+                <div class="ladm-form-field">
+                    <select id="categoryId" th:field="*{categoryId}" class="krds-select">
+                        <option value="">선택 안 함</option>
+                        <option th:each="c : ${categories}" th:value="${c.categoryId}"
+                                th:text="${c.categoryName}">분류</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="title">제목</label>
+                <div class="ladm-form-field">
+                    <input id="title" th:field="*{title}" class="krds-input" required maxlength="300"/>
+                </div>
+            </div>
+
+            <!-- 보도자료·영상 게시판에서만 쓰는 부가 필드. 다른 유형에서는 아예 감춘다 -->
+            <div class="ladm-form-row" th:if="${master.bbsType == 'BODO'}">
+                <label class="ladm-form-label" for="pressName">언론사</label>
+                <div class="ladm-form-field">
+                    <input id="pressName" th:field="*{pressName}" class="krds-input" maxlength="100"/>
+                </div>
+            </div>
+            <div class="ladm-form-row"
+                 th:if="${master.bbsType == 'BODO' or master.bbsType == 'YOUTUBE'}">
+                <label class="ladm-form-label" for="linkUrl">원문 링크</label>
+                <div class="ladm-form-field">
+                    <input id="linkUrl" th:field="*{linkUrl}" class="krds-input" maxlength="500"
+                           th:required="${master.bbsType == 'YOUTUBE'}"/>
+                    <p class="ladm-hint text-body-xs" th:if="${master.bbsType == 'YOUTUBE'}">
+                        영상은 본문에 태그를 심지 않고 링크로 받습니다 — 정화 규칙이
+                        iframe 을 허용하지 않기 때문입니다.</p>
+                </div>
+            </div>
+            <div class="ladm-form-row" th:if="${master.bbsType == 'BODO'}">
+                <label class="ladm-form-label" for="publishedAt">게재일</label>
+                <div class="ladm-form-field">
+                    <input id="publishedAt" th:field="*{publishedAt}" type="date" class="krds-input"/>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="content">본문</label>
+                <div class="ladm-form-field">
+                    <textarea id="content" th:field="*{content}" class="krds-input"
+                              rows="14" required></textarea>
+                    <p class="ladm-hint text-body-xs" th:if="${master.htmlYn == 'Y'}">
+                        HTML 게시판입니다. 저장할 때 허용 태그만 남기고 정화합니다 —
+                        script·이벤트 속성·iframe 은 저장되지 않습니다.</p>
+                    <p class="ladm-hint text-body-xs" th:unless="${master.htmlYn == 'Y'}">
+                        평문 게시판입니다. 입력한 그대로 저장되고, 화면에서는 태그가 아니라
+                        글자로 보입니다.</p>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <span class="ladm-form-label">옵션</span>
+                <div class="ladm-form-field">
+                    <label class="ladm-check">
+                        <input type="checkbox" th:field="*{noticeYn}" value="Y"/> 공지</label>
+                    <label class="ladm-check">
+                        <input type="checkbox" th:field="*{secretYn}" value="Y"/> 비밀글</label>
+                    <p class="ladm-hint text-body-xs">
+                        공지로 지정하면 목록 맨 위에 고정되고, <b>첨부는 로그인 없이 열립니다</b> —
+                        알리려고 올리는 글이라 게시판 정책보다 우선합니다.</p>
+                </div>
+            </div>
+
+            <div class="ladm-form-row" th:if="${master.fileYn == 'Y'}">
+                <span class="ladm-form-label">첨부</span>
+                <div class="ladm-form-field">
+                    <th:block th:replace="~{fragments/file-picker :: picker(
+                            name='attachments',
+                            entityType='BBS',
+                            entityId=*{articleId},
+                            siteId=${master.siteId},
+                            category='ANY',
+                            downloadAuth=${master.downloadAuth},
+                            maxFiles=${master.fileCountMax},
+                            files=${attachedFiles})}"/>
+                    <p class="ladm-hint text-body-xs">
+                        최대 <b th:text="${master.fileCountMax}">5</b>개.
+                        내려받기 권한은 <b th:text="${master.downloadAuth}">ANONYMOUS</b>
+                        (공지로 지정하면 공개로 바뀝니다).</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ladm-form-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{'/adm/board/' + ${master.bbsMasterId} + '/article'}"
+               class="krds-btn krds-btn-secondary">취소</a>
+        </div>
+    </form>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script src="/js/file-picker.js" defer></script>
+</th:block>
+</body>
+</html>
