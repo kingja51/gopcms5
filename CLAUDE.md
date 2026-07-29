@@ -24,7 +24,11 @@ conventions.md §3~4). 컨트롤러 클래스 접미어(Usr/Adm/Api)는 동일 �
 - [doc/template-resolver-design.md](doc/template-resolver-design.md) — 3축(layout·template·theme) 템플릿 아키텍처 + ViewResolver 설계. **템플릿/레이아웃 질문은 여기부터.**
 - [doc/conventions.md](doc/conventions.md) — PK(`대문자접두어3+"_"+UUIDv7`=varchar(40))·접두어 레지스트리·컨트롤러 네이밍. **식별자/네이밍 질문은 여기부터.**
 - [doc/flyway-migration.md](doc/flyway-migration.md) — SQL 마이그레이션 규약(버전 정책·벤더 폴더·작업 절차).
-- [doc/member-domain.md](doc/member-domain.md) — 회원 도메인 기능별 개발 매뉴얼(가입·본인인증·소셜·휴면/탈퇴·PII·보존기간). **회원 관련 작업은 여기부터.**
+- **도메인 개발 매뉴얼** — 각 도메인 작업은 코드보다 먼저 해당 문서를 읽는다. 구현된 것만 적혀 있고, 실측으로 잡은 결함·함정이 함께 있다.
+  - [doc/site-domain.md](doc/site-domain.md) — 사이트·템플릿·테마·메뉴·컨텐츠(P1~P4). 요청 해석 파이프라인·URL 네임스페이스·3축 폴백. ↑ 설계 근거는 template-resolver-design.md, **여기는 그 구현**.
+  - [doc/file-domain.md](doc/file-domain.md) — 파일 업로드·다운로드·미리보기·정리 배치(P8). 다중 방어 파이프라인·`download_auth` 7단계.
+  - [doc/board-domain.md](doc/board-domain.md) — 게시판·게시글·댓글·좋아요/신고·위지윅 에디터(P9).
+  - [doc/member-domain.md](doc/member-domain.md) — 회원 가입·본인인증·소셜·휴면/탈퇴·PII·보존기간(P10).
 - [design-md/styleguide/SG-krds.md](design-md/styleguide/SG-krds.md) — KRDS × Tailwind v4 토큰·프리셋. **화면 작업의 단일 기준.** 데모: SG-krds.html.
 - [wireframe/index.html](wireframe/index.html) — 레이아웃 설계안 A~G(frame001~007) 원전.
 - 위 정본 외 **`.md` 임의 생성 금지** — 사용자 명시 요청 시만.
