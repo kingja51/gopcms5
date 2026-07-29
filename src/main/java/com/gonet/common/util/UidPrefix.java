@@ -41,6 +41,7 @@ public enum UidPrefix {
     MBR("tb_member"),
     MBC("tb_member_consent"),
     MDN("tb_member_dormant_notice"),
+    MOT("tb_member_otp"),
     MBO("tb_member_oauth"),
     MPH("tb_member_password_history"),
     DPT("tb_department"),

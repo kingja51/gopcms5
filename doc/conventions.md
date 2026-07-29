@@ -97,6 +97,7 @@ SIT_01890a5d-ac96-774b-bcce-b302099a8057
 | `MBR` | tb_member | 사용자 회원 |
 | `MBC` | tb_member_consent | 회원 동의 이력 |
 | `MDN` | tb_member_dormant_notice | 휴면 안내 발송 이력 |
+| `MOT` | tb_member_otp | 회원 인증번호(휴면 복원·이메일 인증) |
 | `MBO` | tb_member_oauth | 회원 OAuth 매핑 |
 | `MPH` | tb_member_password_history | 회원 비밀번호 이력 |
 | `DPT` | tb_department | 부서 관리 (명칭 확정 — 구 tb_dept 표기 대체) |

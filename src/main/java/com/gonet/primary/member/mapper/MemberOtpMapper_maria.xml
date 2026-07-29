@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.member.mapper.MemberOtpMapper">
+
+    <insert id="insert" parameterType="com.gonet.primary.member.dto.MemberOtp">
+        INSERT INTO tb_member_otp
+            (otp_id, member_id, site_id, purpose, code_hash, expires_at,
+             attempt_count, client_ip, created_by, created_ip, created_at)
+        VALUES
+            (#{otpId}, #{memberId}, #{siteId}, #{purpose}, #{codeHash}, #{expiresAt},
+             0, #{clientIp}, #{createdBy}, #{createdIp}, CURRENT_TIMESTAMP)
+    </insert>
+
+    <!--
+      아직 쓰지 않은 최신 코드 하나만 본다. 여러 개를 받아 순회하면 옛 코드로도
+      통과할 수 있고, 그러면 재발송이 곧 시도 횟수 초기화가 된다.
+    -->
+    <select id="findLatest" resultType="com.gonet.primary.member.dto.MemberOtp">
+        SELECT otp_id, member_id, site_id, purpose, code_hash, expires_at,
+               attempt_count, verified_at, client_ip, created_at AS created_at_view
+        FROM tb_member_otp
+        WHERE member_id = #{memberId} AND purpose = #{purpose} AND verified_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <update id="increaseAttempt">
+        UPDATE tb_member_otp
+        SET attempt_count = attempt_count + 1, updated_at = CURRENT_TIMESTAMP
+        WHERE otp_id = #{otpId}
+    </update>
+
+    <update id="markVerified">
+        UPDATE tb_member_otp
+        SET verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE otp_id = #{otpId}
+    </update>
+
+    <!-- 만료 시각을 과거로 당긴다 — 행을 지우지 않는 이유는 남용 추적 때문이다 -->
+    <update id="expireAll">
+        UPDATE tb_member_otp
+        SET expires_at = #{now}, updated_at = CURRENT_TIMESTAMP
+        WHERE member_id = #{memberId} AND purpose = #{purpose}
+          AND verified_at IS NULL AND expires_at &gt; #{now}
+    </update>
+
+</mapper>

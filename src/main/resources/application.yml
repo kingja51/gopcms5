@@ -106,6 +106,14 @@ gopcms:
   # 피해가 한 배치로 제한된다.
   member:
     consent-version: "1.0"
+    # ── 이메일 인증번호 (P10-5 휴면 복원) ────────────────────────────────────
+    # 관리자 2FA(TOTP)와 다른 것 — 서버가 만들어 메일로 보내고 한 번 쓰면 끝난다.
+    # 코드는 평문으로 저장하지 않고(HMAC 해시), 시도 횟수는 세션이 아니라 행에 둔다
+    # (세션에 두면 세션을 새로 잡아 무제한 대입할 수 있다).
+    otp:
+      ttl-minutes: 5
+      max-attempts: 5
+      resend-cooldown-seconds: 60
     lifecycle:
       dry-run: true
       batch-size: 200

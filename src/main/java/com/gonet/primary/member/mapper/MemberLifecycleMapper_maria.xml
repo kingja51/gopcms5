@@ -89,6 +89,18 @@
         WHERE member_id = #{memberId} AND delete_yn = 'N'
     </insert>
 
+    <!--
+      휴면 전환 — 행을 지우지 않는다. 동의 이력·비밀번호 이력이 FK 로 참조하는데
+      그 둘은 증빙이라 함께 지울 수 없다(실측: 가입 절차를 거친 회원은 전환이 실패했다).
+      vw_user_login 이 delete_yn='N' 을 거르므로 로그인은 차단된다.
+    -->
+    <update id="softDeleteMemberRow">
+        UPDATE tb_member
+        SET delete_yn = 'Y', updated_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP
+        WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 완전 삭제용 — 자식 행을 모두 지운 뒤에만 부른다 -->
     <delete id="deleteMemberRow">
         DELETE FROM tb_member WHERE member_id = #{memberId}
     </delete>
@@ -177,6 +189,60 @@
     <delete id="deleteWithdrawLedger">
         DELETE FROM tb_member_withdraw WHERE member_id = #{memberId}
     </delete>
+
+    <!-- ── 휴면 복원 (P10-5) ─────────────────────────────────────────────
+         PII 는 복호화해 담는다 — 복원 안내 메일에 이름·주소가 필요하다. -->
+    <resultMap id="dormantMemberMap" type="com.gonet.primary.member.dto.MemberDto">
+        <id property="memberId" column="member_id"/>
+        <result property="siteId" column="site_id"/>
+        <result property="siteCode" column="site_code"/>
+        <result property="loginId" column="login_id"/>
+        <result property="password" column="password"/>
+        <result property="roleIds" column="role_ids"/>
+        <result property="memberName" column="member_name"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="email" column="email"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="emailHash" column="email_hash"/>
+        <result property="diHash" column="di_hash"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <select id="findDormantByLoginId" resultMap="dormantMemberMap">
+        SELECT member_id, site_id, site_code, login_id, password, role_ids,
+               member_name, email, email_hash, di_hash, status
+        FROM tb_member_dormant
+        WHERE site_id = #{siteId} AND login_id = #{loginId}
+          AND delete_yn = 'N' AND restored_at IS NULL
+    </select>
+
+    <select id="findDormantById" resultMap="dormantMemberMap">
+        SELECT member_id, site_id, site_code, login_id, password, role_ids,
+               member_name, email, email_hash, di_hash, status
+        FROM tb_member_dormant
+        WHERE member_id = #{memberId} AND delete_yn = 'N' AND restored_at IS NULL
+    </select>
+
+    <!--
+      역이관 — 휴면 전환의 반대. status 를 ACTIVE 로 되돌리고 last_login_at 을 지금으로
+      찍는다(안 찍으면 복원한 그날 다시 휴면 대상이 된다).
+      privacy/terms 동의는 가입 때 받은 것이라 'Y' 로 되살린다 — NOT NULL 컬럼이다.
+    -->
+    <update id="restoreToMember">
+        UPDATE tb_member
+        SET status = 'ACTIVE', delete_yn = 'N',
+            last_login_at = CURRENT_TIMESTAMP, last_access_at = CURRENT_TIMESTAMP,
+            login_fail_count = 0, locked_until = NULL,
+            updated_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP
+        WHERE member_id = #{memberId} AND delete_yn = 'Y'
+    </update>
+
+    <!-- 휴면 원본은 지우지 않고 복원 표시만 남긴다 — 언제 돌아왔는지가 이력이다 -->
+    <update id="markRestored">
+        UPDATE tb_member_dormant
+        SET restored_at = CURRENT_TIMESTAMP, delete_yn = 'Y', updated_at = CURRENT_TIMESTAMP
+        WHERE member_id = #{memberId}
+    </update>
 
     <!-- ── 사전 안내 이력 ───────────────────────────────────────────── -->
     <insert id="insertNotice">

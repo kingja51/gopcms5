@@ -39,6 +39,16 @@ public interface MemberLifecycleMapper {
     /** tb_member → tb_member_dormant 복사(컬럼 대응은 XML 이 명시). */
     int copyToDormant(@Param("memberId") String memberId, @Param("reason") String reason);
 
+    /**
+     * 휴면 전환용 — 행을 <b>지우지 않고</b> delete_yn='Y' 로 감춘다.
+     *
+     * <p>하드 삭제는 불가능하다: 동의 이력·비밀번호 이력이 FK 로 tb_member 를 참조하는데,
+     * 그 둘은 증빙이라 함께 지울 수 없다(실측 — 가입 절차를 거친 회원은 전환이 실패했다).
+     * {@code vw_user_login} 이 {@code delete_yn='N'} 을 거르므로 목적(로그인 차단)은 같다.
+     */
+    int softDeleteMemberRow(@Param("memberId") String memberId);
+
+    /** 완전 삭제용 하드 삭제 — 자식 행을 모두 지운 뒤에만 부른다. */
     int deleteMemberRow(@Param("memberId") String memberId);
 
     /* ── 탈퇴 ──────────────────────────────────────────────────────────── */
@@ -79,6 +89,30 @@ public interface MemberLifecycleMapper {
     int deleteDormantRow(@Param("memberId") String memberId);
 
     int deleteWithdrawLedger(@Param("memberId") String memberId);
+
+    /* ── 휴면 복원 (P10-5) ─────────────────────────────────────────────── */
+
+    /**
+     * 휴면 계정 조회 — 아이디로 찾는다.
+     *
+     * <p>이 조회 결과만으로 "휴면입니다" 를 알려 주면 안 된다. 비밀번호까지 맞을 때만
+     * 안내로 분기한다 — 아이디만으로 알려 주면 계정 존재가 새어 나간다.
+     */
+    com.gonet.primary.member.dto.MemberDto findDormantByLoginId(
+            @Param("siteId") String siteId, @Param("loginId") String loginId);
+
+    /** 휴면 계정 단건 — 코드 발급·복원 안내에 쓴다(PII 복호화). */
+    com.gonet.primary.member.dto.MemberDto findDormantById(@Param("memberId") String memberId);
+
+    /**
+     * 복원 — 감춰 둔 tb_member 행을 되살린다(status=ACTIVE, delete_yn='N').
+     *
+     * <p>휴면 전환이 소프트 삭제라 행이 그대로 있다. 마지막 로그인을 지금으로 찍지 않으면
+     * 복원한 그날 다시 휴면 대상이 된다.
+     */
+    int restoreToMember(@Param("memberId") String memberId);
+
+    int markRestored(@Param("memberId") String memberId);
 
     /* ── 사전 안내 이력 ────────────────────────────────────────────────── */
 

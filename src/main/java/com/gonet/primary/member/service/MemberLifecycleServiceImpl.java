@@ -67,9 +67,9 @@ public class MemberLifecycleServiceImpl extends AbstractCmsService
         if (copied == 0) {
             throw new IllegalArgumentException("휴면 대상 회원을 찾을 수 없습니다.");
         }
-        // 원본 행을 지운다 — vw_user_login 에서 사라져 평범한 로그인은 그냥 실패한다.
-        // 복원은 P10-5(실명인증·이메일 OTP)가 담당한다.
-        lifecycleMapper.deleteMemberRow(memberId);
+        // 원본 행은 감추기만 한다(delete_yn='Y') — 하드 삭제는 동의·비밀번호 이력의 FK 에
+        // 막힌다. vw_user_login 이 delete_yn 을 거르므로 로그인은 차단된다.
+        lifecycleMapper.softDeleteMemberRow(memberId);
         lifecycleMapper.deleteNoticesByMember(memberId);
         log.info("휴면 전환 member={} reason={}", memberId, reason);
     }
