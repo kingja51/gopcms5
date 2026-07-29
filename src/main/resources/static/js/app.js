@@ -48,6 +48,24 @@
       case 'scroll-top':
         window.scrollTo({ top: 0, behavior: 'smooth' });
         break;
+      case 'copy-text': {
+        /* 링크 복사 — 값은 data-copy 에 담는다.
+           navigator.clipboard 는 보안 컨텍스트(HTTPS·localhost)에서만 동작하므로,
+           안 되는 환경에서는 선택 상태로 만들어 사용자가 직접 복사하게 둔다. */
+        var text = el.dataset.copy || '';
+        var done = function () {
+          var old = el.textContent;
+          el.textContent = '복사됨';
+          setTimeout(function () { el.textContent = old; }, 1200);
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(done, function () {});
+        } else {
+          var src = el.previousElementSibling;
+          if (src && typeof src.select === 'function') { src.select(); }
+        }
+        break;
+      }
       default:
         break;
     }

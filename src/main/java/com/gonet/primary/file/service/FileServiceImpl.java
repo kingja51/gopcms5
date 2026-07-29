@@ -51,6 +51,7 @@ public class FileServiceImpl extends AbstractCmsService implements FileService {
     private final ImageReencoder imageReencoder;
     private final VirusScanQueue virusScanQueue;
     private final FileDomainProperties domainProperties;
+    private final DocumentViewService documentViewService;
 
     @Override
     @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
@@ -195,7 +196,7 @@ public class FileServiceImpl extends AbstractCmsService implements FileService {
 
     @Override
     public FileItem findById(String fileId) {
-        return fileMapper.findById(fileId);
+        return withViewerKind(fileMapper.findById(fileId));
     }
 
     @Override
@@ -247,7 +248,18 @@ public class FileServiceImpl extends AbstractCmsService implements FileService {
 
     @Override
     public FileItem findAnyById(String fileId) {
-        return fileMapper.findAnyById(fileId);
+        return withViewerKind(fileMapper.findAnyById(fileId));
+    }
+
+    /**
+     * 미리보기 방식을 붙인다 — 확장자에서 파생되지만 <b>오피스 변환이 꺼져 있으면 NONE</b> 이다.
+     * 화면이 열지도 못할 미리보기를 약속하지 않게 하려는 것이다.
+     */
+    private FileItem withViewerKind(FileItem item) {
+        if (item != null) {
+            item.setViewerKind(documentViewService.kindOf(item).name());
+        }
+        return item;
     }
 
     @Override

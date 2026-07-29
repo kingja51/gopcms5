@@ -131,24 +131,26 @@ public class FileAdmController {
     }
 
     /**
-     * 공통 첨부 폼 시연·점검 화면.
+     * 파일 등록 — 서식·안내문처럼 <b>글에 붙지 않는</b> 파일을 관리자가 직접 올린다.
      *
-     * <p>진짜 목적은 시연이 아니라 <b>회귀 확인</b>이다. 게시판·컨텐츠가 붙기 전에도
-     * 업로드 경로 전체(권한→방어→저장→목록→다운로드)를 한 화면에서 확인할 수 있어야
-     * 나중에 도메인이 늘어도 무엇이 깨졌는지 빨리 좁힐 수 있다.
+     * <p>실무에서 흔한 경로다: 서식 파일을 올려 두고 그 다운로드 링크를 컨텐츠 본문이나
+     * 메뉴에 걸어 쓴다. 그래서 이 화면은 게시판·컨텐츠 유무와 무관하게 <b>항상</b> 있어야 한다.
+     *
+     * <p>같은 화면이 공통 첨부 폼의 점검 경로를 겸한다 — 업로드 경로가 하나뿐이라
+     * 여기가 정상이면 다른 도메인의 첨부도 같은 방어를 받는다.
      */
-    @GetMapping("/picker")
-    public String picker(Model model) {
+    @GetMapping("/new")
+    public String newForm(Model model) {
         // 실제 폼과 같은 방식 — 저장 전에 PK 를 미리 발급해 그룹의 주인을 정한다
         model.addAttribute("entityId", Uid.next(UidPrefix.CNT));
         model.addAttribute("entityTypes", FileEntityType.selectable());
         model.addAttribute("downloadAuths", DownloadAuth.SELECTABLE);
-        return "adm/file/picker";
+        return "adm/file/new";
     }
 
-    /** 시연 폼 저장 — picker 가 보낸 CSV 를 받아 그룹을 정리한다(실제 도메인과 같은 흐름). */
-    @PostMapping("/picker")
-    public String pickerSave(@RequestParam("entityType") String entityType,
+    /** 등록 저장 — picker 가 보낸 CSV 로 묶음을 확정한다(실제 도메인과 같은 흐름). */
+    @PostMapping("/new")
+    public String newSave(@RequestParam("entityType") String entityType,
             @RequestParam("entityId") String entityId,
             @RequestParam(value = "downloadAuth", required = false) String downloadAuth,
             @RequestParam(value = "attachments", required = false) String attachments,
@@ -163,8 +165,11 @@ public class FileAdmController {
         List<String> keep = (attachments == null || attachments.isBlank())
                 ? List.of() : List.of(attachments.split(","));
         int removed = fileService.syncAttachments(groupId, keep);
-        ra.addFlashAttribute("flashMessage",
-                "첨부 %d건 확정, %d건 정리했습니다.".formatted(keep.size(), removed));
+        ra.addFlashAttribute("flashMessage", keep.isEmpty()
+                ? "선택된 파일이 없어 저장하지 않았습니다."
+                : "%d건을 등록했습니다. 목록에서 링크를 복사해 본문에 걸 수 있습니다.%s"
+                        .formatted(keep.size(),
+                                removed > 0 ? " (%d건 정리)".formatted(removed) : ""));
         return "redirect:/adm/file";
     }
 

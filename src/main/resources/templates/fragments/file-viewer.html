@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     공통 문서 뷰어 — 관리자·사용자 화면 어디서나 같은 형식으로 쓴다.
+
+     쓰는 법:
+       <th:block th:replace="~{fragments/file-viewer :: viewer(file=${file})}"/>
+       <!-- 목록에서 여러 건이면 파일마다 반복 호출하면 된다 -->
+
+     형식별로 <b>어디서 파싱하느냐</b>가 다르다(ViewerKind):
+       · 이미지·PDF  → 브라우저가 연다. 서버는 바이트를 흘릴 뿐
+       · HWP/HWPX   → rhwp(WASM)가 브라우저 샌드박스 안에서 연다
+       · 오피스      → LibreOffice 가 서버에서 PDF 로 바꾼 뒤 위와 같이 본다
+       · 그 외       → 미리보기 없이 내려받기 안내
+
+     미리보기는 다운로드와 <b>같은 권한 판정</b>을 받는다. 미리보기만 열어 두면
+     비공개 자료의 내용이 그대로 새기 때문이다.
+     ============================================================================ -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="viewer(file)" class="gp-viewer"
+     th:attr="data-viewer=${file.viewerKind},
+              data-file-id=${file.fileId},
+              data-file-name=${file.originalName},
+              data-src=@{'/file/' + ${file.fileId} + '/view'},
+              data-raw=@{'/file/' + ${file.fileId}}">
+
+    <div class="gp-viewer-bar">
+        <span class="gp-viewer-name text-label-md" th:text="${file.originalName}">문서.pdf</span>
+        <span class="grow"></span>
+        <!-- HWP 는 페이지를 우리가 그리므로 이동 컨트롤을 직접 단다 -->
+        <span class="gp-viewer-pager" hidden>
+            <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                    data-action="viewer-prev" aria-label="이전 쪽">‹</button>
+            <span class="gp-viewer-page text-body-sm" aria-live="polite">1 / 1</span>
+            <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                    data-action="viewer-next" aria-label="다음 쪽">›</button>
+        </span>
+        <a class="krds-btn krds-btn-secondary krds-btn-sm"
+           th:href="@{'/file/' + ${file.fileId}}">내려받기</a>
+    </div>
+
+    <!-- 렌더 대상 — 실제 내용은 /js/file-viewer.js 가 채운다(인라인 스크립트 금지) -->
+    <div class="gp-viewer-stage">
+        <p class="gp-viewer-status text-body-sm">미리보기를 준비하는 중입니다…</p>
+    </div>
+</div>
+
+</body>
+</html>

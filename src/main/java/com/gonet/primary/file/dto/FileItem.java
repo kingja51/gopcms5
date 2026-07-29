@@ -36,6 +36,12 @@ public class FileItem extends Auditable {
     private String downloadAuth;
     private LocalDateTime createdAtView;
 
+    /**
+     * 미리보기 방식 — DB 컬럼이 아니라 확장자에서 파생되는 화면 전용 값이다.
+     * 오피스 변환이 꺼진 환경에서는 서비스가 NONE 으로 덮어쓴다.
+     */
+    private String viewerKind;
+
     public boolean isImage() {
         return "Y".equals(isImageYn);
     }

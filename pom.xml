@@ -871,6 +871,7 @@
                     <include>**/*.html</include>
                     <include>**/*.css</include>
                     <include>**/*.js</include>
+                    <include>**/*.mjs</include>
                     <!-- 이미지 (템플릿 로고·디자인 자산) -->
                     <include>**/*.svg</include>
                     <include>**/*.png</include>
@@ -885,6 +886,16 @@
                     <include>**/*.ttf</include>
                     <include>**/*.otf</include>
                     <include>**/*.eot</include>
+                    <!-- WebAssembly - HWP 뷰어(rhwp) 엔진.
+                         이 화이트리스트에 없으면 파일이 target 에 복사되지 않아
+                         404 가 되고, 브라우저는 "WebAssembly compile 실패" 로만 알린다
+                         (실측으로 잡은 함정 - 원인이 pom 이라는 것이 드러나지 않는다) -->
+                    <include>**/*.wasm</include>
+                    <!-- pdf.js CJK CMap(.bcmap) · 표준 글꼴(.pfb).
+                         없으면 한글 PDF 의 글자가 조용히 빠진 채 렌더된다
+                         (오류도 나지 않아 "빈 페이지" 로만 보인다 — 실측으로 잡은 함정) -->
+                    <include>**/*.bcmap</include>
+                    <include>**/*.pfb</include>
                 </includes>
             </resource>
             <resource>

@@ -7,6 +7,7 @@
       layout:decorate="~{layouts/layout-adm/layout}">
 <head>
     <title>파일 상세</title>
+    <link rel="stylesheet" href="/css/file-viewer.css"/>
 </head>
 <body>
 <div layout:fragment="content">
@@ -29,6 +30,24 @@
             </form>
         </div>
     </div>
+
+    <!-- 미리보기 — 내려받지 않고 내용을 확인한다.
+         다운로드와 같은 권한 판정을 받으므로, 여기서 보인다면 받을 수도 있는 파일이다. -->
+    <section class="ladm-panel" th:if="${file.viewerKind != 'NONE'}" style="margin-bottom:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">미리보기</h2>
+            <span class="grow"></span>
+            <span class="text-body-xs text-fg-subtle"
+                  th:switch="${file.viewerKind}">
+                <span th:case="'HWP'">한글 문서는 브라우저에서 직접 엽니다(서버가 파싱하지 않습니다)</span>
+                <span th:case="'OFFICE'">서버에서 PDF 로 변환해 보여줍니다</span>
+                <span th:case="*">브라우저가 직접 엽니다</span>
+            </span>
+        </div>
+        <div class="ladm-panel-body" style="padding:0">
+            <th:block th:replace="~{fragments/file-viewer :: viewer(file=${file})}"/>
+        </div>
+    </section>
 
     <!-- 검증 결과 — 읽기 전용. 업로드 때 무엇을 확인했는지가 여기 남는다 -->
     <section class="ladm-panel">
@@ -75,6 +94,18 @@
                     <th scope="row">SHA-256</th>
                     <td><code class="text-body-xs" th:text="${file.fileHash}">…</code>
                         <span class="text-body-xs text-fg-subtle">무결성 대조·중복 판정용</span></td>
+                </tr>
+                <tr>
+                    <th scope="row">다운로드 주소</th>
+                    <td>
+                        <!-- 서식 배포 경로 — 본문·메뉴에 이 주소를 건다.
+                             공개 범위가 ANONYMOUS 여야 비로그인 방문자도 받을 수 있다 -->
+                        <input class="krds-input krds-input-sm" readonly
+                               style="max-width:420px" th:value="@{'/file/' + ${file.fileId}}"/>
+                        <button type="button" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                                data-action="copy-text"
+                                th:attr="data-copy=@{'/file/' + ${file.fileId}}">주소 복사</button>
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row">크기</th>
@@ -233,5 +264,9 @@
         </div>
     </section>
 </div>
+
+<th:block layout:fragment="scripts">
+    <script src="/js/file-viewer.js" type="module" defer></script>
+</th:block>
 </body>
 </html>

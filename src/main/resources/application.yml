@@ -96,6 +96,18 @@ gopcms:
       cron: "0 */10 * * * *"
       stale-minutes: 30
       batch-size: 200
+    # 문서 미리보기 — 형식마다 "어디서 파싱하느냐" 가 다르다.
+    #  · 이미지·PDF : 브라우저가 연다 (서버는 바이트를 흘릴 뿐)
+    #  · HWP/HWPX  : rhwp(WASM)가 브라우저 샌드박스 안에서 연다
+    #  · 오피스     : 유일하게 서버가 연다 → 그래서 기본 꺼짐 + 별도 프로세스·타임아웃 격리
+    # LibreOffice 를 켤 때는 OS 레벨에서 전용 계정·네트워크 차단을 함께 걸어야 한다.
+    # 앱이 대신해 줄 수 없는 부분이다.
+    viewer:
+      office:
+        enabled: ${GOPCMS_VIEWER_OFFICE_ENABLED:false}
+        binary: ${GOPCMS_SOFFICE_BIN:soffice}
+        timeout-seconds: 60
+        cache-dir: ${GOPCMS_VIEWER_CACHE_DIR:./data/gopcms/preview}
     clamav:
       # false = NoOpVirusScanQueue. 신규 파일은 PENDING 으로 남으며,
       # PENDING 다운로드 허용은 앞의 다중 방어를 통과했다는 전제 위의 운영 판단이다.

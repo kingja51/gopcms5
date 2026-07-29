@@ -44,7 +44,10 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
      */
     private static final String CSP_TEMPLATE = String.join("; ",
             "default-src 'self'",
-            "script-src 'self' 'nonce-%s'",
+            // 'wasm-unsafe-eval' — HWP 뷰어(rhwp)가 WebAssembly 를 컴파일하려면 필요하다.
+            // eval()·new Function() 을 여는 'unsafe-eval' 과 다르다: WASM 컴파일만 허용하는
+            // 좁은 토큰이라, 문서 파싱을 서버가 아니라 브라우저 샌드박스에 맡기는 대가로 감수한다.
+            "script-src 'self' 'nonce-%s' 'wasm-unsafe-eval'",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data:",
             "font-src 'self'",

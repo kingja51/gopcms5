@@ -3,6 +3,8 @@ package com.gonet.primary.file.controller;
 import com.gonet.common.file.security.FileStorage;
 import com.gonet.logging.file.service.FileDownloadLogger;
 import com.gonet.primary.file.dto.FileItem;
+import com.gonet.primary.file.dto.ViewerKind;
+import com.gonet.primary.file.service.DocumentViewService;
 import com.gonet.primary.file.service.FileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,6 +43,7 @@ public class FileDownUsrController {
     private final FileService fileService;
     private final FileStorage storage;
     private final FileDownloadLogger downloadLogger;
+    private final DocumentViewService documentViewService;
 
     /** 원본 다운로드 — 권한·검사상태를 통과해야 열린다. */
     @GetMapping("/{fileId}")
@@ -82,6 +85,54 @@ public class FileDownUsrController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
         stream(item, storage.resolveThumb(item.getThumbnailPath()), response, false);
+    }
+
+    /**
+     * 미리보기 — 브라우저가 직접 렌더할 수 있는 형태로 내보낸다.
+     *
+     * <p>다운로드와 <b>같은 권한 판정</b>을 받는다. 미리보기만 열어 두면 비공개 자료의 내용이
+     * 그대로 새는 것이라, 여기서 느슨해지면 download_auth 정책 전체가 무의미해진다.
+     *
+     * <p>HWP 는 이 경로로 오지 않는다 — 클라이언트가 원본 바이트를 받아 WASM 으로 직접 연다.
+     */
+    @GetMapping("/{fileId}/view")
+    public void view(@PathVariable String fileId,
+            HttpServletRequest request, HttpServletResponse response) {
+        FileItem item = open(fileId, request, FileDownloadLogger.TYPE_SINGLE);
+        var preview = documentViewService.prepare(item);
+        if (preview.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        streamInline(item, preview.get(), response);
+    }
+
+    /**
+     * 인라인 응답 — 브라우저가 그 자리에서 연다.
+     *
+     * <p>{@code sandbox} 헤더를 붙이는 이유: PDF 안의 스크립트나 외부 자원 요청을 막는다.
+     * 첨부는 어차피 옥텟 스트림으로만 내리지만, 미리보기는 브라우저가 실제로 렌더하므로
+     * 여기서만 별도의 울타리가 필요하다.
+     */
+    private void streamInline(FileItem item, DocumentViewService.Preview preview,
+            HttpServletResponse response) {
+        if (!Files.isReadable(preview.path())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        response.setContentType(preview.contentType());
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, disposition(item, false));
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "private, no-store");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        // 미리보기 응답 자체에도 울타리를 친다 — 문서가 스크립트를 품고 있어도 실행되지 않게
+        response.setHeader("Content-Security-Policy",
+                "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox");
+        try {
+            response.setContentLengthLong(Files.size(preview.path()));
+            try (OutputStream out = response.getOutputStream()) {
+                Files.copy(preview.path(), out);
+            }
+        } catch (IOException e) {
+            log.warn("미리보기 전송 중단 file={}: {}", item.getFileId(), e.toString());
+        }
     }
 
     private void stream(FileItem item, Path path, HttpServletResponse response, boolean attachment) {

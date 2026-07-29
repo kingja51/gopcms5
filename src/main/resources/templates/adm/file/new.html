@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!-- 파일 등록 — 서식·안내문처럼 글에 붙지 않는 파일을 관리자가 직접 올리는 자리.
+     올린 뒤 다운로드 링크를 복사해 컨텐츠 본문이나 메뉴에 걸어 쓴다.
+     같은 화면이 공통 첨부 폼의 점검 경로를 겸한다(업로드 경로가 하나뿐이므로). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>파일 등록</title>
+    <link rel="stylesheet" href="/css/file-picker.css"/>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('파일 등록',
+            '서식·안내문처럼 글에 붙지 않는 파일을 올립니다. 올린 뒤 목록에서 다운로드 링크를 복사해 본문에 걸 수 있습니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <form method="post" th:action="@{/adm/file/new}" class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">파일</h2>
+        </div>
+        <div class="ladm-panel-body ladm-form">
+
+            <!-- 실제 도메인 폼과 같은 방식 — 저장 전에 PK 를 발급해 묶음의 주인을 정한다 -->
+            <input type="hidden" name="entityId" th:value="${entityId}"/>
+            <input type="hidden" name="entityType" value="ETC"/>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="downloadAuth">공개 범위</label>
+                <div class="ladm-form-field">
+                    <select id="downloadAuth" name="downloadAuth" class="krds-select">
+                        <option th:each="a : ${downloadAuths}" th:value="${a}" th:text="${a}"
+                                th:selected="${a == 'ANONYMOUS'}">ANONYMOUS</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        <b>서식처럼 누구나 받아야 하는 파일은 ANONYMOUS</b> 로 둡니다.
+                        그래야 비로그인 방문자도 본문의 링크로 내려받을 수 있습니다.
+                        내부 자료라면 좁은 범위를 고르세요 — 여기서 정한 값이
+                        <b>이 묶음의 파일 전체</b>에 적용됩니다.</p>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <span class="ladm-form-label">파일 선택</span>
+                <div class="ladm-form-field">
+                    <th:block th:replace="~{fragments/file-picker :: picker(
+                            name='attachments',
+                            entityType='ETC',
+                            entityId=${entityId},
+                            siteId=null,
+                            category='ANY',
+                            downloadAuth='ANONYMOUS',
+                            maxFiles=20,
+                            files=null)}"/>
+                    <p class="ladm-hint text-body-xs">
+                        끌어다 놓거나 클릭해서 최대 20개까지. 서버가 확장자와 실제 내용(매직바이트)을
+                        교차 검증하고, 이미지는 다시 인코딩해 원본에 붙어 있던 것을 제거합니다.
+                        올린 직후에는 <b>저장</b>을 눌러야 확정됩니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ladm-form-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{/adm/file}" class="krds-btn krds-btn-secondary">목록</a>
+        </div>
+    </form>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script src="/js/file-picker.js" defer></script>
+</th:block>
+</body>
+</html>
