@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     가입 마법사 단계 표시 — 5단계 고정.
+     본인인증(STEP 3)을 끈 환경에서는 그 칸을 아예 그리지 않는다: 지나갈 수 없는
+     단계를 남겨 두면 "왜 안 넘어가지" 를 사용자가 되묻게 된다.
+     현재 단계는 aria-current 로도 알린다 — 색만으로 구분하면 스크린리더가 못 읽는다.
+     ============================================================================ -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<ol th:fragment="steps(step, identityRequired)" class="join-steps">
+    <li th:each="s : ${ {1,2,3,4,5} }"
+        th:unless="${s == 3 and !identityRequired}"
+        th:classappend="${s == step} ? 'is-current' : (${s < step} ? 'is-done' : '')"
+        th:attr="aria-current=${s == step} ? 'step' : null">
+        <span class="join-steps-no" th:text="${'STEP ' + s}">STEP 1</span>
+        <span class="join-steps-label" th:switch="${s}">
+            <th:block th:case="1">유형 선택</th:block>
+            <th:block th:case="2">약관 동의</th:block>
+            <th:block th:case="3">본인인증</th:block>
+            <th:block th:case="4">정보 입력</th:block>
+            <th:block th:case="5">가입 완료</th:block>
+        </span>
+    </li>
+</ol>
+
+</body>
+</html>

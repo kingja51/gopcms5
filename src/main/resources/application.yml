@@ -96,16 +96,47 @@ gopcms:
     from: no-reply@gopcms.local
     from-name: GOPCMS
 
-  # ── 회원 생명주기 (P10-4) ──────────────────────────────────────────────────
-  # ACTIVE ─[미접속 1년]→ 휴면 ─[+1년]→ 탈퇴(PII 파기) ─[+1년]→ 완전 삭제
-  #
-  # dry-run 이 기본이다. 스케줄은 돌지만 대상만 로그에 남는다 — 배치를 처음 켜는 순간
-  # 오래된 계정이 한꺼번에 사라지는 것이 가장 흔한 사고다. 운영자가 로그로 대상을
-  # 확인하고 명시적으로 false 로 바꿔야 실제 처리가 시작된다.
-  # batch-size 는 1회 상한 — 되돌릴 수 없는 배치에는 상한이 있어야 잘못 돌아도
-  # 피해가 한 배치로 제한된다.
+  # ── 본인인증 (NICE CheckPlus) ──────────────────────────────────────────────
+  # 콜백 URL 은 NICE 콘솔에 등록한 문자열과 한 글자도 다르면 안 된다 — 그래서
+  # 사이트별 경로(/{siteCode}/...)가 아니라 사이트 무관 고정 경로다.
+  # 자격(site-code/site-password)이 비면 기동은 되고 인증 화면만 안내를 띄운다:
+  # 계약 전에도 나머지 기능이 떠야 하기 때문이다.
+  nice:
+    enabled: ${GOPCMS_NICE_ENABLED:true}
+    site-code: ${GOPCMS_NICE_SITE_CODE:}
+    site-password: ${GOPCMS_NICE_SITE_PASSWORD:}
+    return-url: ${GOPCMS_NICE_RETURN_URL:http://127.0.0.1:8080/member/identity/nice/success}
+    error-url: ${GOPCMS_NICE_ERROR_URL:http://127.0.0.1:8080/member/identity/nice/fail}
+    auth-type: ""      # 빈 값 = 사용자가 인증 수단을 고르는 기본 화면
+    customize: ""      # 빈 값 = PC, "Mobile" = 모바일 전용 화면
+
+  # ── 소셜 로그인 (OAuth2) ───────────────────────────────────────────────────
+  # spring-security-oauth2-client 를 쓰지 않고 RestClient 로 직접 처리한다.
+  # 인가가 DB 단일 원천(tb_role_url_access)이라, 자체 필터 체인을 끼워 넣는
+  # 스타터보다 authorization_code 교환만 하는 편이 경계가 분명하다.
+  # client-id 가 비면 그 provider 버튼은 로그인 화면에 아예 나오지 않는다.
+  oauth2:
+    enabled: ${GOPCMS_OAUTH2_ENABLED:true}
+    redirect-base-url: ${GOPCMS_OAUTH2_REDIRECT_BASE_URL:}
+    naver:
+      client-id: ${GOPCMS_OAUTH2_NAVER_CLIENT_ID:}
+      client-secret: ${GOPCMS_OAUTH2_NAVER_CLIENT_SECRET:}
+      callback-url: ${GOPCMS_OAUTH2_NAVER_CALLBACK_URL:}
+    kakao:
+      client-id: ${GOPCMS_OAUTH2_KAKAO_CLIENT_ID:}
+      client-secret: ${GOPCMS_OAUTH2_KAKAO_CLIENT_SECRET:}
+      callback-url: ${GOPCMS_OAUTH2_KAKAO_CALLBACK_URL:}
+    google:
+      client-id: ${GOPCMS_OAUTH2_GOOGLE_CLIENT_ID:}
+      client-secret: ${GOPCMS_OAUTH2_GOOGLE_CLIENT_SECRET:}
+      callback-url: ${GOPCMS_OAUTH2_GOOGLE_CALLBACK_URL:}
+
   member:
     consent-version: "1.0"
+    # 탈퇴 회원의 게시글 작성자 표기 — 화면에 그대로 노출되는 문구다.
+    # 글은 지우지 않는다: 대화의 맥락이 통째로 사라지면 남은 사람들의 글이 읽히지 않는다.
+    # 지워야 하는 것은 "누가 썼는지" 이지 "무엇을 썼는지" 가 아니다.
+    anonymous-writer-name: 탈퇴한 회원
     # ── 이메일 인증번호 (P10-5 휴면 복원) ────────────────────────────────────
     # 관리자 2FA(TOTP)와 다른 것 — 서버가 만들어 메일로 보내고 한 번 쓰면 끝난다.
     # 코드는 평문으로 저장하지 않고(HMAC 해시), 시도 횟수는 세션이 아니라 행에 둔다
@@ -114,6 +145,20 @@ gopcms:
       ttl-minutes: 5
       max-attempts: 5
       resend-cooldown-seconds: 60
+      # 발송 제한은 두 축이다. 쿨다운(위)은 "한 계정에 연달아" 를 막고, 아래는
+      # "한 IP 가 계정을 바꿔 가며" 를 막는다 — 쿨다운만으로는 아이디만 바꾸면
+      # 한 번도 걸리지 않으면서 대량 발송이 가능하다.
+      rate:
+        per-ip: 10
+        window-minutes: 60
+    # ── 회원 생명주기 (P10-4) ────────────────────────────────────────────────
+    # ACTIVE ─[미접속 1년]→ 휴면 ─[+1년]→ 탈퇴(PII 파기) ─[+1년]→ 완전 삭제
+    #
+    # dry-run 이 기본이다. 스케줄은 돌지만 대상만 로그에 남는다 — 배치를 처음 켜는 순간
+    # 오래된 계정이 한꺼번에 사라지는 것이 가장 흔한 사고다. 운영자가 로그로 대상을
+    # 확인하고 명시적으로 false 로 바꿔야 실제 처리가 시작된다.
+    # batch-size 는 1회 상한 — 되돌릴 수 없는 배치에는 상한이 있어야 잘못 돌아도
+    # 피해가 한 배치로 제한된다.
     lifecycle:
       dry-run: true
       batch-size: 200
@@ -126,8 +171,22 @@ gopcms:
 
   # ── 보존기간 (P10-7) ───────────────────────────────────────────────────────
   # 회원 PII 는 탈퇴 시 즉시 파기하고, 이력·원장만 기간을 둔다.
+  # 값을 여기 모으는 이유: 코드 상수로 흩어지면 정책이 바뀔 때 반드시 하나를 빠뜨리고,
+  # 빠뜨린 쪽은 조용히 옛 기간으로 계속 돈다.
+  #   · 통계 stat_* 에 대응하는 키가 없는 것은 누락이 아니다 — 영구 보존이라
+  #     기간이라는 개념이 없고, 값을 두면 언젠가 누군가 파기 기준으로 쓴다.
   retention:
-    withdraw-months: 36
+    withdraw-months: 36          # 탈퇴 원장 tb_member_withdraw
+    privacy-log-months: 60       # 개인정보 접근·파기 이력 — 5년(다른 로그보다 길다)
+    log-months: 36               # 나머지 log_*
+    login-history-months: 36     # tb_login_history — 성격은 로그지만 primary_db 에 있다
+    legal-basis: 개인정보보호법 제21조(개인정보의 파기)
+    # 되돌릴 수 없는 배치의 기본값은 전부 "아무것도 지우지 않는" 쪽이다.
+    purge:
+      enabled: true
+      dry-run: true              # 켜는 순간 몇 년치가 한꺼번에 사라지는 사고를 막는다
+      batch-size: 1000           # 테이블 1개당 1회 상한 — 남으면 다음 회차가 이어받는다
+      cron: "0 20 4 * * *"       # 파일 정리(4시)·회원 생명주기(3시)와 겹치지 않게
 
   # ── 파일 업로드 ────────────────────────────────────────────────────────────
   # 저장 경로는 반드시 웹루트 밖. 정적 자원 경로 안에 두면 톰캣이 파일을 그대로
@@ -186,6 +245,9 @@ gopcms:
     trusted-proxies: ${GOPCMS_TRUSTED_PROXIES:}
     # CSP 를 위반 관찰 전용으로 돌릴 때 true — 신규 화면 도입기에만 임시 사용.
     csp-report-only: false
+    # form-action 에 덧붙일 외부 출처(공백 구분). 본인인증 팝업이 NICE 도메인으로
+    # 폼을 POST 하므로 필요하다 — 비우면 전송이 조용히 차단된다(콘솔에만 위반이 뜬다).
+    csp-form-action-extra: https://nice.checkplus.co.kr
   batch:
     # 역할 계층 closure + 사용자 role_ids/role_codes 스냅샷 재계산 (RoleHierarchyRebuildJob).
     # 정상 경로는 역할·계층을 바꾼 트랜잭션이 RoleService.rebuildHierarchy() 를 직접 호출하는 것.

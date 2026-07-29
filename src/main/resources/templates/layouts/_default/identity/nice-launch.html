@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     NICE 본인인증 — 팝업 1단계(우리 페이지에서 NICE 로 POST).
+
+     layout:decorate 를 쓰지 않는다: 이 페이지는 500x550 팝업 안에서만 열리므로
+     헤더·메뉴·푸터가 들어갈 자리가 없다. 그래서 layouts/_default 아래 있지만
+     사이트 레이아웃을 두르지 않는 유일한 부류다.
+
+     CSP: 인라인 스크립트 금지 규약대로 로직은 /js/nice-auth.js 에 있고, 이 문서는
+     data-* 속성으로만 값을 넘긴다. NICE 도메인으로 폼을 보내야 하므로
+     SecurityHeadersFilter 의 form-action 에 팝업 호스트가 등록돼 있어야 한다.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${purposeLabel}">본인인증</title>
+    <link rel="stylesheet" href="/css/output.css"/>
+    <script src="/js/nice-auth.js" defer></script>
+</head>
+<body class="bg-surface">
+
+<main class="krds-card" style="max-width:420px;margin:24px auto;padding:24px"
+      data-nice-launch th:attr="data-auto=${encData != null} ? 'Y' : 'N'">
+
+    <h1 class="text-heading-sm text-fg-strong" th:text="${purposeLabel}">본인인증</h1>
+    <p class="text-body-sm text-fg-subtle" style="margin-top:4px">
+        NICE 안심본인인증으로 실명을 확인합니다.</p>
+
+    <!-- 암호화 실패(사이트 자격 미설정 등) — 사용자가 할 수 있는 일이 없으므로 창을 닫게 한다 -->
+    <div th:if="${message}" role="alert" class="krds-alert krds-alert-danger"
+         style="margin-top:16px">
+        <span aria-hidden="true">!</span><p th:text="${message}">본인인증을 시작할 수 없습니다.</p>
+    </div>
+
+    <!-- NICE 진입 폼 — 스크립트가 로드되면 즉시 submit 한다.
+         스크립트가 막힌 환경에서는 버튼이 그대로 보여 수동 진행이 가능하다. -->
+    <form th:if="${encData != null}" name="niceForm" method="post"
+          th:action="${popupUrl}">
+        <input type="hidden" name="m" value="checkplusService"/>
+        <input type="hidden" name="EncodeData" th:value="${encData}"/>
+        <button type="submit" class="krds-btn krds-btn-primary krds-btn-lg"
+                style="width:100%;margin-top:20px">본인인증 시작</button>
+    </form>
+
+    <button th:if="${encData == null}" type="button" data-nice-close
+            class="krds-btn krds-btn-secondary" style="width:100%;margin-top:20px">닫기</button>
+
+    <p class="text-body-xs text-fg-subtle" style="margin-top:16px">
+        인증이 끝나면 이 창은 자동으로 닫히고 원래 화면이 이어집니다.</p>
+
+</main>
+
+</body>
+</html>

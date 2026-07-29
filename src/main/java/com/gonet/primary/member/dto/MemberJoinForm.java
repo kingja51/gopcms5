@@ -30,11 +30,6 @@ public class MemberJoinForm {
     private String address;
     private String addressDetail;
 
-    /** 필수 동의 — 둘 다 Y 여야 가입이 된다. */
-    private String termsAgreeYn;
-    private String privacyAgreeYn;
-    /** 선택 동의. */
-    private String marketingAgreeYn;
-    private String smsAgreeYn;
-    private String emailAgreeYn;
+    // 약관 동의는 여기 없다 — 마법사 STEP 2 에서 받아 세션({@link JoinSession})이 들고 있다.
+    // 마지막 폼에 동의 값을 다시 실으면 앞 단계에서 확정한 것을 뒤에서 뒤집을 수 있다.
 }

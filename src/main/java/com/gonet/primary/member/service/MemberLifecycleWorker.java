@@ -3,6 +3,8 @@ package com.gonet.primary.member.service;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
 import com.gonet.config.datasource.MyBatisConfig;
+import com.gonet.logging.purge.dto.PiiPurgeLog;
+import com.gonet.logging.purge.service.PiiPurgeLogService;
 import com.gonet.primary.mail.service.MailService;
 import com.gonet.primary.member.dto.MemberLifecycleTarget;
 import com.gonet.primary.member.mapper.MemberLifecycleMapper;
@@ -28,7 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class MemberLifecycleWorker {
 
+    /** 완전 삭제가 손대는 테이블 — 파기 범위의 증빙이라 실제 순서와 같아야 한다. */
+    private static final String PURGED_TABLES =
+            "tb_member_consent,tb_member_password_history,tb_member_oauth,"
+            + "tb_member_dormant_notice,tb_member_dormant,tb_member,tb_member_withdraw";
+
     private final MemberLifecycleService lifecycleService;
+    private final PiiPurgeLogService piiPurgeLogService;
     private final MemberLifecycleMapper lifecycleMapper;
     private final MailService mailService;
 
@@ -51,8 +59,10 @@ public class MemberLifecycleWorker {
             transactionManager = MyBatisConfig.PRIMARY_TX)
     public boolean withdrawOne(MemberLifecycleTarget target) {
         try {
-            // 메일을 먼저 보낸다 — PII 를 지우고 나면 보낼 주소가 없다
-            sendMail("ACCOUNT_DORMANT_TRANSFERRED", target);
+            // 메일을 먼저 보낸다 — PII 를 지우고 나면 보낼 주소가 없다.
+            // 전용 템플릿을 쓴다(V921): 휴면 전환 문구를 재사용하면 "복원 링크로 다시
+            // 쓸 수 있다" 는 사실과 다른 안내가 나간다 — 탈퇴는 되돌릴 수 없다.
+            sendMail("ACCOUNT_WITHDRAW_NOTICE", target);
             lifecycleService.withdraw(target.getMemberId(), "휴면 1년 경과 자동 탈퇴",
                     "DORMANT_EXPIRED");
             return true;
@@ -72,6 +82,11 @@ public class MemberLifecycleWorker {
             transactionManager = MyBatisConfig.PRIMARY_TX)
     public boolean purgeOne(String memberId) {
         try {
+            // 이력을 먼저 남긴다 — 행이 사라지고 나면 무엇을 지웠는지 적을 근거가 없다.
+            // logging_db 는 크로스 DB 라 이 트랜잭션에 묶이지 않으므로(REQUIRES_NEW),
+            // 순서가 유일한 안전장치다.
+            piiPurgeLogService.writeMemberPurge(memberId,
+                    PiiPurgeLog.REASON_RETENTION_EXPIRED, PURGED_TABLES);
             lifecycleMapper.deleteConsents(memberId);
             lifecycleMapper.deletePasswordHistory(memberId);
             lifecycleMapper.deleteOauth(memberId);

@@ -1,5 +1,6 @@
 package com.gonet.primary.member.service;
 
+import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.crypto.PiiHash;
 import com.gonet.common.service.AbstractCmsService;
 import com.gonet.config.datasource.MyBatisConfig;
@@ -47,12 +48,22 @@ public class MemberPasswordResetServiceImpl extends AbstractCmsService
     private final PiiHash piiHash;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final OtpRateLimiter otpRateLimiter;
 
     @Override
     @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
     public void issueTemporaryPassword(String siteId, String loginId, String email) {
         if (siteId == null || loginId == null || loginId.isBlank()
                 || email == null || email.isBlank()) {
+            return;
+        }
+        // 휴면 복원 인증번호와 같은 발송량 제한을 태운다. 이 경로도 아이디·이메일만 알면
+        // 남의 주소로 메일을 보내게 만들 수 있어, 계정을 바꿔 가며 두드리면 대량 발송이 된다.
+        // 관리자 발급(issueTemporaryPasswordByAdmin)은 제외한다 — 인증을 이미 통과한
+        // 운영자의 업무이고, 여기서 막으면 정작 필요한 순간에 못 쓴다.
+        if (!otpRateLimiter.tryConsume(AuditorContext.currentIp())) {
+            log.warn("비밀번호 찾기 발송 제한 초과 ip={}", AuditorContext.currentIp());
+            // 화면 문구는 성공·실패와 같아야 한다(계정 존재가 새지 않게) — 조용히 끝낸다
             return;
         }
         MemberDto member = memberMapper.findByEmailHash(siteId, piiHash.hash(email));
@@ -63,6 +74,29 @@ public class MemberPasswordResetServiceImpl extends AbstractCmsService
             return;
         }
 
+        issue(member);
+        log.info("임시 비밀번호 발급(본인 요청) member={} site={}", member.getMemberId(), siteId);
+    }
+
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public void issueTemporaryPasswordByAdmin(String memberId) {
+        MemberDto member = memberId == null ? null : memberMapper.findById(memberId);
+        if (member == null) {
+            throw new IllegalStateException("회원을 찾을 수 없습니다.");
+        }
+        if (member.getEmail() == null || member.getEmail().isBlank()) {
+            // 메일로만 전달하므로 주소가 없으면 발급해도 전할 방법이 없다.
+            // 여기서 막지 않으면 비밀번호만 바뀌고 아무도 모르는 계정이 된다.
+            throw new IllegalStateException("등록된 이메일이 없어 임시 비밀번호를 보낼 수 없습니다.");
+        }
+        issue(member);
+        log.info("임시 비밀번호 발급(관리자) member={} actor={}",
+                member.getMemberId(), AuditorContext.currentUserId());
+    }
+
+    /** 발급 본체 — 본인 요청과 관리자 발급이 같이 쓴다. */
+    private void issue(MemberDto member) {
         String temporary = generate();
         // 만료 시각을 과거로 둔다 → 로그인은 되지만 곧바로 변경 화면으로 간다
         memberMapper.updateTemporaryPassword(member.getMemberId(),
@@ -77,8 +111,6 @@ public class MemberPasswordResetServiceImpl extends AbstractCmsService
         model.put("sentAt", LocalDateTime.now());
         // 발송은 비동기 — SMTP 가 느리거나 실패해도 재설정 자체는 이미 커밋된다
         mailService.sendAsync("PASSWORD_RESET", member.getEmail(), model);
-
-        log.info("임시 비밀번호 발급 member={} site={}", member.getMemberId(), siteId);
     }
 
     /**

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     가입 STEP 1 — 유형 선택.
+     소아·청소년(14세 미만)은 본인이 아니라 법정대리인이 본인인증을 한다.
+     그래서 유형을 맨 앞에서 정한다 — 뒤에서 바꾸면 인증을 다시 받아야 한다.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="'회원가입 — ' + ${site != null ? site.siteName : ''}">회원가입</title>
+    <link rel="stylesheet" href="/css/board.css"/>
+    <link rel="stylesheet" href="/css/member.css"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <header class="bbs-head">
+        <h1 class="text-heading-lg">회원가입</h1>
+        <p class="text-body-md text-fg-subtle">
+            <span th:text="${site != null ? site.siteName : ''}">사이트</span> 회원으로 가입합니다.
+        </p>
+    </header>
+
+    <div th:replace="~{fragments/member/join-steps :: steps(${step}, ${identityRequired})}"></div>
+
+    <form method="post" th:action="@{'/' + ${site.siteCode} + '/member/join/type'}">
+
+        <div class="join-types">
+            <label class="join-type">
+                <input type="radio" name="userType" value="ADULT" checked/>
+                <b class="text-label-lg">일반 회원</b>
+                <p>14세 이상 본인이 직접 가입합니다. 본인 명의 휴대전화 또는 인증서로
+                   본인확인을 진행합니다.</p>
+            </label>
+
+            <label class="join-type">
+                <input type="radio" name="userType" value="CHILD"/>
+                <b class="text-label-lg">소아·청소년 회원</b>
+                <p>14세 미만이 가입합니다. 개인정보보호법에 따라 <b>법정대리인</b>이
+                   본인확인을 하고 동의해야 합니다.</p>
+            </label>
+        </div>
+
+        <div class="bbs-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">다음 단계</button>
+            <a th:href="@{'/login'(siteCode=${site.siteCode})}"
+               class="krds-btn krds-btn-secondary">로그인으로</a>
+        </div>
+    </form>
+
+</main>
+</body>
+</html>

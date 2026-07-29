@@ -7,7 +7,7 @@
     <div th:if="${flashOk}" class="krds-alert krds-alert-success" role="status">
         <span aria-hidden="true">✓</span><p th:text="${flashOk}">완료</p>
     </div>
-    <div th:if="${flashError}" class="krds-alert krds-alert-error" role="alert">
+    <div th:if="${flashError}" class="krds-alert krds-alert-danger" role="alert">
         <span aria-hidden="true">!</span><p th:text="${flashError}">오류</p>
     </div>
 </div>

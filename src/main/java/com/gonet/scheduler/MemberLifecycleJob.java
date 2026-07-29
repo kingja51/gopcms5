@@ -76,6 +76,9 @@ public class MemberLifecycleJob {
         List<MemberLifecycleTarget> targets =
                 lifecycleMapper.findDormantTargets(cutoff, batchSize);
         if (targets.isEmpty()) {
+            // 침묵하지 않는다 — 관리자 화면의 수동 실행은 로그가 유일한 확인 수단이라
+            // 아무것도 안 찍히면 "돌았는데 0건" 과 "안 돌았다" 를 구분할 수 없다
+            log.info("[휴면 전환] 대상 없음 (기준 {} 이전 미접속)", cutoff.toLocalDate());
             return;
         }
         if (dryRun) {
@@ -103,6 +106,7 @@ public class MemberLifecycleJob {
         List<MemberLifecycleTarget> targets =
                 lifecycleMapper.findWithdrawTargets(cutoff, batchSize);
         if (targets.isEmpty()) {
+            log.info("[탈퇴 전환] 대상 없음 (휴면 {} 이전)", cutoff.toLocalDate());
             return;
         }
         if (dryRun) {
@@ -127,6 +131,7 @@ public class MemberLifecycleJob {
     public void purgeWithdrawn() {
         List<String> targets = lifecycleMapper.findPurgeTargets(LocalDateTime.now(), batchSize);
         if (targets.isEmpty()) {
+            log.info("[완전 삭제] 보존기한 경과 대상 없음");
             return;
         }
         if (dryRun) {
@@ -150,6 +155,7 @@ public class MemberLifecycleJob {
         List<MemberLifecycleTarget> targets =
                 lifecycleMapper.findNoticeTargets(from, base, stage, batchSize);
         if (targets.isEmpty()) {
+            log.info("[휴면 안내] stage={} 대상 없음", stage);
             return;
         }
         if (dryRun) {

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     회원 목록 — 개인정보는 마스킹이 기본이다.
+     이름/이메일/전화는 암호화 컬럼이라 LIKE 를 걸 수 없다. 그래서 검색이
+     "아이디·닉네임 부분일치" + "이메일·전화 정확일치" 로 갈린다 — 화면 안내가
+     그 제약을 그대로 설명해야 관리자가 헛검색을 하지 않는다.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>회원 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('회원 관리',
+            '가입한 회원을 조회하고 상태를 관리합니다. 개인정보는 마스킹되어 표시되며, 원본 열람과 내려받기는 사유와 함께 이력에 남습니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <!-- 상태 요약 — 잠긴 계정이 쌓이는 것을 먼저 보게 한다 -->
+    <section class="ladm-panel" style="margin-bottom:16px">
+        <div class="ladm-panel-head" style="gap:16px;flex-wrap:wrap">
+            <a th:href="@{/adm/member}" class="krds-badge ladm-badge-on">
+                전체 <span th:text="${page.total()}">0</span></a>
+            <a th:each="s : ${statuses}" class="krds-badge ladm-badge-off"
+               th:href="@{/adm/member(status=${s})}"
+               th:text="${s + ' ' + (statusCounts.containsKey(s) ? statusCounts.get(s) : 0)}">ACTIVE 0</a>
+            <span class="grow"></span>
+            <a th:href="@{/adm/member/dormant}" class="krds-btn krds-btn-secondary krds-btn-sm">휴면 현황</a>
+            <a th:href="@{/adm/member/withdraw}" class="krds-btn krds-btn-secondary krds-btn-sm">탈퇴 원장</a>
+        </div>
+    </section>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form method="get" th:action="@{/adm/member}" class="ladm-search">
+                <label class="sr-only" for="keyword">아이디·닉네임 검색</label>
+                <input id="keyword" name="keyword" class="krds-input krds-input-sm"
+                       th:value="${cond.keyword}" placeholder="아이디·닉네임"/>
+
+                <!-- 암호화 컬럼이라 전체 주소가 아니면 찾히지 않는다 -->
+                <label class="sr-only" for="email">이메일(전체)</label>
+                <input id="email" name="email" class="krds-input krds-input-sm"
+                       th:value="${cond.email}" placeholder="이메일 전체 주소"/>
+
+                <label class="sr-only" for="siteId">사이트</label>
+                <select id="siteId" name="siteId" class="krds-select krds-select-sm">
+                    <option value="">사이트 전체</option>
+                    <option th:each="s : ${sites}" th:value="${s.siteId}"
+                            th:text="${s.siteName}"
+                            th:selected="${s.siteId == cond.siteId}">사이트</option>
+                </select>
+
+                <label class="sr-only" for="status">상태</label>
+                <select id="status" name="status" class="krds-select krds-select-sm">
+                    <option value="">상태 전체</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                            th:selected="${s == cond.status}">ACTIVE</option>
+                </select>
+
+                <label class="sr-only" for="joinType">가입 유형</label>
+                <select id="joinType" name="joinType" class="krds-select krds-select-sm">
+                    <option value="">가입유형 전체</option>
+                    <option th:each="t : ${joinTypes}" th:value="${t}" th:text="${t}"
+                            th:selected="${t == cond.joinType}">HOMEPAGE</option>
+                </select>
+
+                <label class="ladm-check text-body-sm">
+                    <input type="checkbox" name="lockedOnly" value="true"
+                           th:checked="${cond.lockedOnly}"/> 잠금만
+                </label>
+                <label class="ladm-check text-body-sm">
+                    <input type="checkbox" name="unverifiedOnly" value="true"
+                           th:checked="${cond.unverifiedOnly}"/> 미인증만
+                </label>
+
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">검색</button>
+            </form>
+        </div>
+
+        <p class="text-body-xs text-fg-subtle" style="padding:0 16px 12px">
+            이름·이메일·전화는 암호화되어 저장됩니다. 이메일은 <b>전체 주소</b>가 일치해야
+            검색되고, 부분 검색은 아이디·닉네임에만 적용됩니다.
+        </p>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">회원 목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col">아이디</th>
+                    <th scope="col">이름</th>
+                    <th scope="col">이메일</th>
+                    <th scope="col">휴대전화</th>
+                    <th scope="col" class="center">사이트</th>
+                    <th scope="col" class="center">가입유형</th>
+                    <th scope="col" class="center">실명인증</th>
+                    <th scope="col" class="center">상태</th>
+                    <th scope="col" class="center nowrap">최근 로그인</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="m : ${page.content()}">
+                    <td>
+                        <a th:href="@{'/adm/member/' + ${m.memberId}}" class="krds-link"
+                           th:text="${m.loginId}">user1</a>
+                        <span th:if="${m.locked}" class="krds-badge ladm-badge-off"
+                              style="margin-left:6px" title="로그인이 잠겨 있습니다">잠금</span>
+                        <div class="text-body-xs text-fg-subtle" th:if="${m.nickname}"
+                             th:text="${m.nickname}">닉네임</div>
+                    </td>
+                    <td th:text="${m.maskedName}">홍*동</td>
+                    <td th:text="${m.maskedEmail}">ho**@ex.kr</td>
+                    <td th:text="${m.maskedPhone}">010-****-5678</td>
+                    <td class="center text-fg-subtle" th:text="${m.siteCode}">ai</td>
+                    <td class="center text-fg-subtle" th:text="${m.joinType}">HOMEPAGE</td>
+                    <td class="center">
+                        <span class="krds-badge"
+                              th:classappend="${m.verified} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${m.verified} ? '완료' : '미인증'">완료</span>
+                    </td>
+                    <td class="center">
+                        <span class="krds-badge"
+                              th:classappend="${m.status == 'ACTIVE'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${m.status}">ACTIVE</span>
+                    </td>
+                    <td class="center nowrap text-body-xs text-fg-subtle"
+                        th:text="${m.lastLoginAt != null
+                                  ? #temporals.format(m.lastLoginAt, 'yyyy-MM-dd') : '-'}">-</td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(9, ${page.total() == 0}, null)}"></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/member')}"></nav>
+    </section>
+
+    <!--
+      내려받기 — 사유 없이는 버튼이 동작하지 않는다(서버가 400 으로 막는다).
+      파일에도 마스킹된 값이 실린다: 파일은 통제 밖으로 나가면 회수할 수 없다.
+    -->
+    <section class="ladm-panel" style="margin-top:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg">목록 내려받기</h2>
+        </div>
+        <form method="get" th:action="@{/adm/member/export}" class="ladm-search"
+              style="padding:0 16px 16px">
+            <input type="hidden" name="keyword" th:value="${cond.keyword}"/>
+            <input type="hidden" name="email" th:value="${cond.email}"/>
+            <input type="hidden" name="siteId" th:value="${cond.siteId}"/>
+            <input type="hidden" name="status" th:value="${cond.status}"/>
+            <input type="hidden" name="joinType" th:value="${cond.joinType}"/>
+            <label class="sr-only" for="exportReason">내려받기 사유</label>
+            <input id="exportReason" name="reason" class="krds-input krds-input-sm"
+                   style="min-width:320px" required minlength="5"
+                   placeholder="내려받기 사유 (5자 이상 · 개인정보는 적지 마세요)"/>
+            <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">CSV 받기</button>
+            <span class="text-body-xs text-fg-subtle">
+                현재 검색 조건이 그대로 적용되며, 개인정보는 마스킹된 채로 저장됩니다.</span>
+        </form>
+    </section>
+
+</div>
+</body>
+</html>

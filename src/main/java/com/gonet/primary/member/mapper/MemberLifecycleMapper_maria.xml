@@ -224,6 +224,23 @@
     </select>
 
     <!--
+      실명인증 복원 — DI 해시로 찾는다. 사이트를 함께 걸어야 다른 사이트의 휴면 계정이
+      딸려 오지 않는다(회원은 사이트에 속한다).
+      di_hash 가 NULL 인 계정(실명인증 없이 가입)은 이 경로로 복원할 수 없다 —
+      대조할 값이 없으므로 조건에서 자연히 빠진다.
+    -->
+    <select id="findDormantByDiHash" resultMap="dormantMemberMap">
+        SELECT member_id, site_id, site_code, login_id, password, role_ids,
+               member_name, email, email_hash, di_hash, status
+        FROM tb_member_dormant
+        WHERE site_id = #{siteId}
+          AND di_hash = #{diHash}
+          AND delete_yn = 'N'
+          AND restored_at IS NULL
+        LIMIT 1
+    </select>
+
+    <!--
       역이관 — 휴면 전환의 반대. status 를 ACTIVE 로 되돌리고 last_login_at 을 지금으로
       찍는다(안 찍으면 복원한 그날 다시 휴면 대상이 된다).
       privacy/terms 동의는 가입 때 받은 것이라 'Y' 로 되살린다 — NOT NULL 컬럼이다.
@@ -255,5 +272,30 @@
     <delete id="deleteNoticesByMember">
         DELETE FROM tb_member_dormant_notice WHERE member_id = #{memberId}
     </delete>
+
+    <!-- ── 작성자 익명화 (P10-4) ────────────────────────────────────────
+         writer_name 은 개인정보다. 회원 PII 를 파기하면서 게시판에 실명이 남으면
+         "즉시 파기" 가 말뿐이 된다. 글 자체는 서비스 연속성을 위해 보존한다.
+
+         writer_user_id 는 남긴다 — 회원 행이 사라진 뒤에는 그 값으로 사람을 되짚을 수
+         없고, 같은 작성자의 글을 묶어 보는 운영 기능이 거기에 걸려 있다.
+
+         이미 익명 처리된 행은 건드리지 않는다(재실행해도 결과가 같아야 한다).
+    -->
+    <update id="anonymizeArticles">
+        UPDATE tb_bbs_article
+           SET writer_name = #{anonymousName}
+         WHERE writer_user_id = #{memberId}
+           AND writer_user_type = 'MEMBER'
+           AND (writer_name IS NULL OR writer_name &lt;&gt; #{anonymousName})
+    </update>
+
+    <update id="anonymizeComments">
+        UPDATE tb_bbs_comment
+           SET writer_name = #{anonymousName}
+         WHERE writer_user_id = #{memberId}
+           AND writer_user_type = 'MEMBER'
+           AND (writer_name IS NULL OR writer_name &lt;&gt; #{anonymousName})
+    </update>
 
 </mapper>

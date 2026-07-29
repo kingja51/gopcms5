@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     회원 상세 — 마스킹이 기본, 원본 열람은 사유를 남기고 전환한다.
+
+     DI 는 해제해도 보여 주지 않는다(전 기관 공통 식별자라 화면에 띄울 업무상 이유가 없다).
+     화면 아래에 이 회원에 대한 접근 이력을 함께 보여 준다 — 취급 내역이 화면에서
+     바로 보이지 않으면 "누가 봤는지" 를 아무도 확인하지 않게 된다.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>회원 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('회원 상세',
+            '회원 정보를 확인하고 상태를 관리합니다. 관리자는 회원을 새로 만들 수 없습니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+    <div th:if="${flashMessage}" class="krds-alert krds-alert-warning" role="alert"
+         style="margin-bottom:16px">
+        <span aria-hidden="true">!</span><p th:text="${flashMessage}">안내</p>
+    </div>
+
+    <div th:if="${reveal}" class="krds-alert krds-alert-warning" role="status"
+         style="margin-bottom:16px">
+        <span aria-hidden="true">!</span>
+        <p>원본이 표시되고 있습니다. 이 열람은 사유와 함께 접근 이력에 기록되었습니다.</p>
+    </div>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg" th:text="${member.loginId}">user1</h2>
+            <span class="krds-badge"
+                  th:classappend="${member.status == 'ACTIVE'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                  th:text="${member.status}">ACTIVE</span>
+            <span class="grow"></span>
+            <a th:href="@{/adm/member}" class="krds-btn krds-btn-secondary krds-btn-sm">목록</a>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table">
+                <caption class="sr-only">회원 정보</caption>
+                <tbody>
+                <tr><th scope="row">회원 ID</th><td><code th:text="${member.memberId}">MBR_</code></td></tr>
+                <tr><th scope="row">사이트</th><td th:text="${member.siteCode}">ai</td></tr>
+                <tr><th scope="row">닉네임</th><td th:text="${member.nickname} ?: '-'">-</td></tr>
+                <tr><th scope="row">이름</th><td th:text="${view.name}">홍*동</td></tr>
+                <tr>
+                    <th scope="row">이메일</th>
+                    <td>
+                        <span th:text="${view.email}">ho**@ex.kr</span>
+                        <span class="krds-badge"
+                              th:classappend="${member.emailVerifiedYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${member.emailVerifiedYn == 'Y'} ? '인증됨' : '미인증'">인증됨</span>
+                    </td>
+                </tr>
+                <tr><th scope="row">휴대전화</th><td th:text="${view.phone}">010-****-5678</td></tr>
+                <tr><th scope="row">생년월일</th><td th:text="${view.birthDate}">1990-**-**</td></tr>
+                <tr><th scope="row">성별</th><td th:text="${member.gender}">M</td></tr>
+                <tr>
+                    <th scope="row">주소</th>
+                    <td>
+                        <span th:text="${view.address}">-</span>
+                        <span th:text="${view.addressDetail}">-</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">본인확인(DI)</th>
+                    <td>
+                        <span th:text="${view.di}">(설정됨)</span>
+                        <span class="text-body-xs text-fg-subtle">
+                            DI 값은 열람 사유를 적어도 화면에 표시하지 않습니다.</span>
+                    </td>
+                </tr>
+                <tr th:if="${member.parentName}">
+                    <th scope="row">법정대리인</th><td th:text="${view.parentName}">홍*동</td>
+                </tr>
+                <tr><th scope="row">가입 유형</th><td th:text="${member.joinType}">HOMEPAGE</td></tr>
+                <tr>
+                    <th scope="row">소셜 연결</th>
+                    <td>
+                        <span th:if="${oauthLinks.isEmpty()}" class="text-fg-subtle">없음</span>
+                        <span th:each="o : ${oauthLinks}" class="krds-badge"
+                              th:classappend="${o.useYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${o.provider}">NAVER</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">로그인 실패</th>
+                    <td>
+                        <span th:text="${member.loginFailCount} ?: 0">0</span>회
+                        <span th:if="${member.lockedUntil}" class="krds-badge ladm-badge-off"
+                              th:text="'잠금 해제 예정 ' + ${#temporals.format(member.lockedUntil, 'yyyy-MM-dd HH:mm')}">잠금</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">최근 로그인</th>
+                    <td th:text="${member.lastLoginAt != null
+                                  ? #temporals.format(member.lastLoginAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">가입일</th>
+                    <td th:text="${member.createdAt != null
+                                  ? #temporals.format(member.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 마스킹 해제 — 사유가 URL 에 남으므로 개인정보를 적지 않도록 안내한다 -->
+    <section class="ladm-panel" style="margin-top:16px" th:unless="${reveal}">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg">원본 열람</h2>
+        </div>
+        <form method="get" th:action="@{'/adm/member/' + ${member.memberId}}" class="ladm-search"
+              style="padding:0 16px 16px">
+            <label class="sr-only" for="reason">열람 사유</label>
+            <input id="reason" name="reason" class="krds-input krds-input-sm"
+                   style="min-width:360px" required minlength="5"
+                   placeholder="열람 사유 (5자 이상 · 사유에 개인정보를 적지 마세요)"/>
+            <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">마스킹 해제</button>
+        </form>
+    </section>
+
+    <section class="ladm-panel" style="margin-top:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg">계정 처리</h2>
+        </div>
+        <div style="padding:0 16px 16px;display:grid;gap:16px">
+
+            <form method="post" th:action="@{'/adm/member/' + ${member.memberId} + '/status'}"
+                  class="ladm-search">
+                <label class="sr-only" for="status">변경할 상태</label>
+                <select id="status" name="status" class="krds-select krds-select-sm">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                            th:selected="${s == member.status}">ACTIVE</option>
+                </select>
+                <input name="reason" class="krds-input krds-input-sm" style="min-width:240px"
+                       placeholder="변경 사유 (선택)"/>
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">상태 변경</button>
+                <span class="text-body-xs text-fg-subtle">
+                    ACTIVE 로 되돌리면 잠금과 실패 횟수도 함께 초기화됩니다.</span>
+            </form>
+
+            <form method="post" th:action="@{'/adm/member/' + ${member.memberId} + '/unlock'}"
+                  class="ladm-search">
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">잠금 해제</button>
+                <span class="text-body-xs text-fg-subtle">
+                    실패 횟수를 0으로 되돌립니다. 잠금 이력이 있는 계정은 다음 로그인에서
+                    자동입력 방지 문답을 한 번 더 거칩니다.</span>
+            </form>
+
+            <form method="post" th:action="@{'/adm/member/' + ${member.memberId} + '/password'}"
+                  class="ladm-search">
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">
+                    임시 비밀번호 발급</button>
+                <span class="text-body-xs text-fg-subtle">
+                    회원 이메일로만 발송되며 <b>관리자에게는 표시되지 않습니다</b>.
+                    발급 즉시 만료 상태라 회원이 로그인하면 변경 화면으로 이동합니다.</span>
+            </form>
+
+        </div>
+    </section>
+
+    <!-- 되돌릴 수 없는 처리는 다른 패널에, 사유를 필수로 -->
+    <section class="ladm-panel" style="margin-top:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg text-danger-fg">강제 탈퇴</h2>
+        </div>
+        <form method="post" th:action="@{'/adm/member/' + ${member.memberId} + '/withdraw'}"
+              class="ladm-search" style="padding:0 16px 16px">
+            <label class="sr-only" for="withdrawReason">탈퇴 사유</label>
+            <input id="withdrawReason" name="reason" class="krds-input krds-input-sm"
+                   style="min-width:360px" required minlength="5" placeholder="탈퇴 사유 (필수)"/>
+            <button type="submit" class="krds-btn krds-btn-point krds-btn-sm"
+                    data-confirm="강제 탈퇴하면 개인정보가 즉시 파기되고 되돌릴 수 없습니다. 진행할까요?">강제 탈퇴</button>
+            <span class="text-body-xs text-fg-subtle">
+                개인정보가 즉시 파기되고 탈퇴 원장에 해시만 남습니다. <b>되돌릴 수 없습니다.</b></span>
+        </form>
+    </section>
+
+    <!-- 이 회원에 대한 취급 내역 — 화면에서 바로 보여야 실제로 확인된다 -->
+    <section class="ladm-panel" style="margin-top:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg">개인정보 접근 이력</h2>
+            <span class="text-body-xs text-fg-subtle">최근 20건</span>
+        </div>
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">이 회원에 대한 개인정보 접근 이력</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="nowrap">일시</th>
+                    <th scope="col">취급자</th>
+                    <th scope="col" class="center">업무</th>
+                    <th scope="col" class="center">결과</th>
+                    <th scope="col">사유</th>
+                    <th scope="col">IP</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="a : ${accessLogs}">
+                    <td class="nowrap text-body-xs"
+                        th:text="${a.accessedAt != null
+                                  ? #temporals.format(a.accessedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
+                    <td th:text="${a.actorLoginId != null ? a.actorLoginId : a.actorUserId}">admin</td>
+                    <td class="center" th:text="${a.accessAction}">READ</td>
+                    <td class="center">
+                        <span class="krds-badge"
+                              th:classappend="${a.result == 'SUCCESS'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${a.result}">SUCCESS</span>
+                    </td>
+                    <td class="text-body-xs" th:text="${a.accessReason != null ? a.accessReason
+                                  : (a.failReason != null ? a.failReason : '-')}">-</td>
+                    <td class="text-body-xs text-fg-subtle" th:text="${a.clientIp}">127.0.0.1</td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(6, ${accessLogs.isEmpty()}, null)}"></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+</body>
+</html>

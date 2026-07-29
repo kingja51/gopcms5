@@ -11,6 +11,8 @@
 <head>
     <title>휴면 계정 복원</title>
     <link rel="stylesheet" href="/css/board.css"/>
+    <link rel="stylesheet" href="/css/member.css"/>
+    <script src="/js/nice-auth.js" defer></script>
 </head>
 <body>
 <main layout:fragment="content">
@@ -26,10 +28,26 @@
          style="max-width:640px;margin:0 auto 24px">
         <span aria-hidden="true">✓</span><p th:text="${flashOk}">완료</p>
     </div>
-    <div th:if="${flashError}" class="krds-alert krds-alert-error" role="alert"
+    <div th:if="${flashError}" class="krds-alert krds-alert-danger" role="alert"
          style="max-width:640px;margin:0 auto 24px">
         <span aria-hidden="true">!</span><p th:text="${flashError}">오류</p>
     </div>
+
+    <!-- 실명인증 경로 — 아이디·비밀번호를 묻지 않는다.
+         비밀번호를 잊어 못 들어오는 것이 휴면의 흔한 사정이라, 그걸 요구하면
+         복원 수단이 하나 더 필요해진다. -->
+    <div th:if="${niceReady and !hasTarget}" class="join-verify"
+         style="max-width:640px;margin:0 auto 24px">
+        <p class="text-body-md" style="margin:0">
+            <b>실명인증으로 바로 복원</b></p>
+        <p>가입할 때 본인인증을 하셨다면 아이디·비밀번호 없이 복원할 수 있습니다.</p>
+        <button type="button" class="krds-btn krds-btn-primary"
+                style="margin-top:16px" th:attr="data-nice-open=${niceUrl}">
+            실명인증으로 복원</button>
+    </div>
+
+    <p th:if="${niceReady and !hasTarget}" class="social-divider"
+       style="max-width:640px;margin:0 auto">또는 아이디·비밀번호로 확인</p>
 
     <!-- ① 본인 확인 -->
     <form th:unless="${hasTarget}" method="post" class="bbs-form"

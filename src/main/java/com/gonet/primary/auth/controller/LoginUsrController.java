@@ -1,6 +1,7 @@
 package com.gonet.primary.auth.controller;
 
 import com.gonet.config.security.CaptchaService;
+import com.gonet.primary.member.oauth2.service.OAuth2Service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -17,12 +18,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class LoginUsrController {
 
     private final CaptchaService captchaService;
+    private final OAuth2Service oauth2Service;
 
     @GetMapping("/login")
     public String loginForm(HttpServletRequest request, Model model) {
         if (captchaService.isRequired(request.getSession(false))) {
             model.addAttribute("captchaQuestion", captchaService.issue(request.getSession(true)));
         }
+        // 자격이 들어온 provider 만 버튼을 그린다 — 눌러도 안 되는 버튼을 두지 않는다
+        model.addAttribute("socialProviders", oauth2Service.configuredProviders());
         return "front/member/login";
     }
 }

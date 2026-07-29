@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- 가입 STEP 5 — 완료. 아이디는 flash 로만 넘어온다(새로고침하면 사라진다). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="'가입 완료 — ' + ${site != null ? site.siteName : ''}">가입 완료</title>
+    <link rel="stylesheet" href="/css/board.css"/>
+    <link rel="stylesheet" href="/css/member.css"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <header class="bbs-head">
+        <h1 class="text-heading-lg">가입 완료</h1>
+    </header>
+
+    <div th:replace="~{fragments/member/join-steps :: steps(${step}, ${identityRequired})}"></div>
+
+    <div class="join-verify">
+        <p class="text-heading-sm text-fg-strong" style="margin:0">
+            회원가입이 완료되었습니다.</p>
+        <p th:if="${joinedLoginId}">
+            아이디 <b th:text="${joinedLoginId}">user1</b> 로 로그인할 수 있습니다.</p>
+        <p>등록하신 이메일로 인증 메일이 발송됩니다. 인증을 마쳐야 비밀번호 찾기 등
+           일부 기능을 이용할 수 있습니다.</p>
+
+        <div class="bbs-actions" style="justify-content:center;margin-top:24px">
+            <a th:href="@{'/login'(siteCode=${site.siteCode})}"
+               class="krds-btn krds-btn-primary">로그인하기</a>
+            <a th:href="@{'/' + ${site.siteCode} + '/index'}"
+               class="krds-btn krds-btn-secondary">홈으로</a>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

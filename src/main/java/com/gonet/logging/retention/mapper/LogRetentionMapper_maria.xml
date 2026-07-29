@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  로그 파기 — logging_db.
+
+  테이블명이 SQL 에 들어가야 하는데 #{} 로는 바인딩할 수 없고 ${} 는 금지 규약이다.
+  그래서 문장을 테이블마다 <b>미리 적어 두고</b> 파라미터로 고르기만 한다.
+  파라미터는 <when test> 의 비교값으로만 쓰이고 SQL 문자열이 되지 않는다.
+
+  기준 컬럼 이름이 테이블마다 다르다(logged_at / downloaded_at / accessed_at) —
+  이것도 분기를 나눠 적어야 하는 이유다.
+
+  log_pii_purge 는 여기 없다. 파기 기록을 같은 배치가 지우는 구조를 만들지 않는다
+  (RetentionTarget 에 제외 사유를 명시).
+-->
+<mapper namespace="com.gonet.logging.retention.mapper.LogRetentionMapper">
+
+    <select id="countExpired" resultType="int">
+        <choose>
+            <when test="table == 'log_access'">
+                SELECT COUNT(*) FROM log_access WHERE logged_at &lt; #{cutoff}
+            </when>
+            <when test="table == 'log_audit'">
+                SELECT COUNT(*) FROM log_audit WHERE logged_at &lt; #{cutoff}
+            </when>
+            <when test="table == 'log_error'">
+                SELECT COUNT(*) FROM log_error WHERE logged_at &lt; #{cutoff}
+            </when>
+            <when test="table == 'log_security'">
+                SELECT COUNT(*) FROM log_security WHERE logged_at &lt; #{cutoff}
+            </when>
+            <when test="table == 'log_file_download'">
+                SELECT COUNT(*) FROM log_file_download WHERE downloaded_at &lt; #{cutoff}
+            </when>
+            <when test="table == 'log_privacy_access'">
+                SELECT COUNT(*) FROM log_privacy_access WHERE accessed_at &lt; #{cutoff}
+            </when>
+        </choose>
+    </select>
+
+    <!--
+      오래된 것부터 지운다(ORDER BY). 상한만 두고 순서를 안 정하면 매 회차가 어디를
+      지웠는지 알 수 없고, 가장 오래된 기록이 영영 안 지워질 수도 있다.
+    -->
+    <delete id="deleteExpired">
+        <choose>
+            <when test="table == 'log_access'">
+                DELETE FROM log_access WHERE logged_at &lt; #{cutoff}
+                ORDER BY logged_at LIMIT #{limit}
+            </when>
+            <when test="table == 'log_audit'">
+                DELETE FROM log_audit WHERE logged_at &lt; #{cutoff}
+                ORDER BY logged_at LIMIT #{limit}
+            </when>
+            <when test="table == 'log_error'">
+                DELETE FROM log_error WHERE logged_at &lt; #{cutoff}
+                ORDER BY logged_at LIMIT #{limit}
+            </when>
+            <when test="table == 'log_security'">
+                DELETE FROM log_security WHERE logged_at &lt; #{cutoff}
+                ORDER BY logged_at LIMIT #{limit}
+            </when>
+            <when test="table == 'log_file_download'">
+                DELETE FROM log_file_download WHERE downloaded_at &lt; #{cutoff}
+                ORDER BY downloaded_at LIMIT #{limit}
+            </when>
+            <when test="table == 'log_privacy_access'">
+                DELETE FROM log_privacy_access WHERE accessed_at &lt; #{cutoff}
+                ORDER BY accessed_at LIMIT #{limit}
+            </when>
+        </choose>
+    </delete>
+
+</mapper>

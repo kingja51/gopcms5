@@ -57,6 +57,7 @@ public class DormantRestoreServiceImpl extends AbstractCmsService
     private final PiiHash piiHash;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final OtpRateLimiter otpRateLimiter;
 
     @Override
     public String findDormantMemberId(String siteId, String loginId, String rawPassword) {
@@ -74,6 +75,14 @@ public class DormantRestoreServiceImpl extends AbstractCmsService
     @Override
     @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
     public void issueCode(String memberId) {
+        // 발송량 제한을 먼저 본다 — 계정별 쿨다운은 "한 계정에 연달아" 만 막는다.
+        // 아이디를 바꿔 가며 계정마다 한 번씩 요청하면 쿨다운에 한 번도 걸리지 않으면서
+        // 다수에게 메일을 보낼 수 있다(우리 서버가 스팸 발신자가 된다).
+        if (!otpRateLimiter.tryConsume(AuditorContext.currentIp())) {
+            log.warn("휴면 복원 코드 발송 제한 초과 ip={}", AuditorContext.currentIp());
+            throw new IllegalStateException(
+                    "인증번호 발송 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.");
+        }
         MemberOtp previous = otpMapper.findLatest(memberId, PURPOSE);
         if (previous != null && previous.getCreatedAtView() != null
                 && previous.getCreatedAtView()
@@ -139,6 +148,23 @@ public class DormantRestoreServiceImpl extends AbstractCmsService
         otpMapper.markVerified(otp.getOtpId());
         restore(memberId);
         return true;
+    }
+
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public String restoreByIdentity(String siteId, String di) {
+        if (siteId == null || di == null || di.isBlank()) {
+            return null;
+        }
+        MemberDto dormant = lifecycleMapper.findDormantByDiHash(siteId, piiHash.hash(di));
+        if (dormant == null) {
+            // 휴면이 아니거나 다른 사이트 계정이다 — 어느 쪽인지 알려 주지 않는다
+            log.info("실명인증 복원 — 대상 없음 site={}", siteId);
+            return null;
+        }
+        restore(dormant.getMemberId());
+        log.info("실명인증 복원 완료 member={}", dormant.getMemberId());
+        return dormant.getLoginId();
     }
 
     /**

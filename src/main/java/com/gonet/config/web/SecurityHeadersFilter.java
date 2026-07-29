@@ -55,10 +55,21 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
             "frame-ancestors 'none'",
             "object-src 'none'",
             "base-uri 'self'",
-            "form-action 'self'");
+            // %s 두 번째 — form-action 추가 출처. 기본은 'self' 뿐이고, 본인인증처럼
+            // 외부 도메인으로 폼을 보내야 하는 화면만 설정으로 열어 준다.
+            "form-action 'self'%s");
 
     @Value("${gopcms.security.csp-report-only:false}")
     private boolean reportOnly;
+
+    /**
+     * form-action 에 덧붙일 출처(공백 구분) — NICE 본인인증 팝업이 대표 사례다.
+     *
+     * <p>이 값이 비면 본인인증 폼 전송이 CSP 에 막힌다(콘솔에만 위반이 찍히고 화면은
+     * 아무 반응이 없어 원인을 찾기 어렵다). 계약 도메인이 바뀌면 여기만 고친다.
+     */
+    @Value("${gopcms.security.csp-form-action-extra:https://nice.checkplus.co.kr}")
+    private String formActionExtra;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -70,12 +81,17 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
 
         response.setHeader(reportOnly
                 ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy",
-                CSP_TEMPLATE.formatted(nonce));
+                CSP_TEMPLATE.formatted(nonce, extraFormAction()));
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("Referrer-Policy", "same-origin");
         response.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
         response.setHeader("Cross-Origin-Opener-Policy", "same-origin");
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extraFormAction() {
+        return formActionExtra == null || formActionExtra.isBlank()
+                ? "" : " " + formActionExtra.trim();
     }
 }

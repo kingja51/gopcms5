@@ -1,0 +1,184 @@
+/* ============================================================================
+   회원 화면 — 가입 마법사·로그인 보조 스타일.
+
+   KRDS 토큰(var(--c-*), var(--brand-*))만 쓴다. raw hex 와 Tailwind 기본색은
+   리브랜딩(--brand-* 스왑)에서 혼자 남아 어긋나므로 금지다.
+   ============================================================================ */
+
+/* ── 단계 표시 ───────────────────────────────────────────────────────────── */
+.join-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 24px;
+    padding: 0;
+    list-style: none;
+}
+
+.join-steps li {
+    flex: 1 1 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 16px;
+    border: 1px solid var(--c-line);
+    border-radius: 8px;
+    background-color: var(--c-surface);
+    color: var(--c-fg-subtle);
+}
+
+.join-steps-no {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.join-steps-label { font-size: 14px; }
+
+/* 지나온 단계 — 완료 표시만 하고 시선은 끌지 않는다 */
+.join-steps li.is-done {
+    border-color: var(--brand-30);
+    color: var(--brand-50);
+}
+
+.join-steps li.is-current {
+    border-color: var(--brand-50);
+    background-color: var(--brand-5);
+    color: var(--brand-60);
+    font-weight: 700;
+}
+
+/* ── 유형 선택 카드 ──────────────────────────────────────────────────────── */
+.join-types {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    margin-bottom: 24px;
+}
+
+/* label 전체가 클릭 영역 — 라디오 점만 누르게 두면 손가락으로 맞히기 어렵다 */
+.join-type {
+    display: block;
+    padding: 20px;
+    border: 1px solid var(--c-line);
+    border-radius: 12px;
+    background-color: var(--c-surface);
+    cursor: pointer;
+}
+
+.join-type:hover { border-color: var(--brand-40); }
+
+/* 키보드 포커스가 라디오에 있을 때 카드 전체가 반응해야 위치를 알 수 있다 */
+.join-type:has(input:focus-visible) { outline: 2px solid var(--brand-50); outline-offset: 2px; }
+.join-type:has(input:checked) {
+    border-color: var(--brand-50);
+    background-color: var(--brand-5);
+}
+
+.join-type input { margin-right: 8px; }
+.join-type b { display: inline-block; margin-bottom: 4px; }
+.join-type p { margin: 4px 0 0; color: var(--c-fg-subtle); font-size: 13px; }
+
+/* ── 약관 ────────────────────────────────────────────────────────────────── */
+.join-terms { display: grid; gap: 16px; margin-bottom: 24px; }
+
+.join-term {
+    border: 1px solid var(--c-line);
+    border-radius: 8px;
+    background-color: var(--c-surface);
+}
+
+.join-term > summary {
+    padding: 16px;
+    cursor: pointer;
+    font-weight: 700;
+    list-style: none;
+}
+
+.join-term > summary::-webkit-details-marker { display: none; }
+.join-term > summary::after { content: ' ▾'; color: var(--c-fg-subtle); }
+.join-term[open] > summary::after { content: ' ▴'; }
+
+.join-term-body {
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 0 16px 16px;
+    color: var(--c-fg-subtle);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.join-term-agree {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--c-line);
+}
+
+/* ── 본인인증 안내 ───────────────────────────────────────────────────────── */
+.join-verify {
+    padding: 32px 24px;
+    border: 1px solid var(--c-line);
+    border-radius: 12px;
+    background-color: var(--c-surface);
+    text-align: center;
+}
+
+.join-verify p { margin: 8px 0 0; color: var(--c-fg-subtle); }
+
+/* ── 소셜 로그인 버튼 ────────────────────────────────────────────────────── */
+.social-login { display: grid; gap: 8px; margin-top: 16px; }
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: 1px solid var(--c-line);
+    border-radius: 8px;
+    background-color: var(--c-surface);
+    color: var(--c-fg);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.social-btn:hover { border-color: var(--brand-40); }
+
+/* provider 색은 각 사의 브랜드 규정이라 KRDS 토큰으로 대체할 수 없다.
+   사이트 테마 스왑 대상이 아니므로 여기서만 고정값을 둔다. */
+.social-btn-naver  { background-color: #03c75a; border-color: #03c75a; color: #fff; }
+.social-btn-kakao  { background-color: #fee500; border-color: #fee500; color: #191919; }
+.social-btn-google { background-color: #fff; }
+
+.social-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    color: var(--c-fg-subtle);
+    font-size: 13px;
+}
+
+.social-divider::before,
+.social-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--c-line);
+}
+
+/* ── 로그인 보조 링크 ────────────────────────────────────────────────────── */
+.login-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 16px;
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+.login-links a { color: var(--c-fg-subtle); }
+.login-links a:hover { color: var(--brand-60); }

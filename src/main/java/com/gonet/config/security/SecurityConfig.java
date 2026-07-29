@@ -96,6 +96,12 @@ public class SecurityConfig {
         http.authenticationProvider(memberProvider)
                 // front 공개 여부까지 DB 규칙이 결정 — 회원 전용 영역(/{sc}/member/**)은 규칙으로 조임
                 .authorizeHttpRequests(auth -> auth.anyRequest().access(authorizationManager))
+                // NICE 콜백은 외부 도메인(nice.checkplus.co.kr)이 POST 한다 — 우리 폼이
+                // 아니므로 CSRF 토큰이 있을 수 없다. 대신 세션에 둔 요청번호(REQ_SEQ)와
+                // 응답의 REQ_SEQ 를 대조해 남이 만든 EncodeData 를 막는다.
+                // 예외는 이 두 경로로 끝난다 — 넓히면 인증 흐름 전체가 열린다.
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/member/identity/nice/success", "/member/identity/nice/fail"))
                 // 미인증 차단 → 원래 사이트의 로그인 폼(/login?siteCode=)으로 유도
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
                 .addFilterAfter(new ActorCaptureFilter(), SecurityContextHolderFilter.class)

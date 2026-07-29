@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  log_pii_purge — 개인정보 파기 이력.
+  insert 만 있다. UPDATE/DELETE 문을 두지 않는 것이 곧 "이 기록은 고치지 않는다" 는 선언이다.
+-->
+<mapper namespace="com.gonet.logging.purge.mapper.PiiPurgeLogMapper">
+
+    <insert id="insert" parameterType="com.gonet.logging.purge.dto.PiiPurgeLog">
+        INSERT INTO log_pii_purge (
+            pii_purge_log_id, user_type, user_id_hash, purged_at,
+            purge_reason, table_list, legal_basis, created_by, created_ip
+        ) VALUES (
+            #{piiPurgeLogId}, #{userType}, #{userIdHash}, NOW(),
+            #{purgeReason}, #{tableList}, #{legalBasis}, #{createdBy}, #{createdIp}
+        )
+    </insert>
+
+</mapper>

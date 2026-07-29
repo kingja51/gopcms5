@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  관리자 회원 조회.
+
+  PII 컬럼은 typeHandler 를 명시해야 복호화된다 — MyBatis 는 DTO 의 @Encrypt 를 보지
+  않는다. 빠뜨리면 화면에 {AG}… 암호문이 그대로 뜬다(P10-1 에서 vw_user_login 이
+  같은 이유로 암호문을 노출했다).
+
+  검색 조건이 암호화 정책에 묶여 있다:
+    · 이름/이메일/전화는 AES-GCM 이라 LIKE 불가 → 해시 컬럼 정확 매칭만
+    · keyword LIKE 는 평문 컬럼(login_id, nickname) 에만 건다
+  ESCAPE 는 '|' — 벤더별 문자열 해석 차이를 피하려는 프로젝트 규약(PageRequest 참조).
+-->
+<mapper namespace="com.gonet.primary.member.mapper.MemberAdmMapper">
+
+    <resultMap id="admRowMap" type="com.gonet.primary.member.dto.MemberAdmRow">
+        <id property="memberId" column="member_id"/>
+        <result property="siteId" column="site_id"/>
+        <result property="siteCode" column="site_code"/>
+        <result property="loginId" column="login_id"/>
+        <result property="nickname" column="nickname"/>
+        <result property="memberName" column="member_name"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="email" column="email"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="phone" column="phone"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="birthYear" column="birth_year"/>
+        <result property="gender" column="gender"/>
+        <result property="status" column="status"/>
+        <result property="joinType" column="join_type"/>
+        <result property="emailVerifiedYn" column="email_verified_yn"/>
+        <result property="diSetYn" column="di_set_yn"/>
+        <result property="loginFailCount" column="login_fail_count"/>
+        <result property="lockedUntil" column="locked_until"/>
+        <result property="lastLoginAt" column="last_login_at"/>
+        <result property="lastAccessAt" column="last_access_at"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!--
+      di_set_yn — DI 값 자체는 목록에 싣지 않는다. 실명인증 여부만 알면 되고,
+      전 기관 공통 식별자를 목록 쿼리로 끌어오면 그만큼 노출 면이 넓어진다.
+    -->
+    <sql id="admRowColumns">
+        m.member_id, m.site_id, m.site_code, m.login_id, m.nickname,
+        m.member_name, m.email, m.phone, m.birth_year, m.gender,
+        m.status, m.join_type, m.email_verified_yn,
+        CASE WHEN m.di_hash IS NULL THEN 'N' ELSE 'Y' END AS di_set_yn,
+        m.login_fail_count, m.locked_until, m.last_login_at, m.last_access_at, m.created_at
+    </sql>
+
+    <sql id="admWhere">
+        WHERE m.delete_yn = 'N'
+        <if test="siteId != null and siteId != ''">
+            AND m.site_id = #{siteId}
+        </if>
+        <if test="status != null and status != ''">
+            AND m.status = #{status}
+        </if>
+        <if test="joinType != null and joinType != ''">
+            AND m.join_type = #{joinType}
+        </if>
+        <if test="keyword != null">
+            AND (m.login_id LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR m.nickname LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
+        </if>
+        <!--
+          해시는 서비스가 만들어 넣는다 — 정규화 규칙(소문자·trim·숫자만)이 정책이라
+          SQL 이 정할 수 없고, 가입 때 넣은 해시와 같은 규칙이어야 값이 맞는다.
+          email/phone(입력값)이 아니라 emailHash/phoneHash 를 본다.
+        -->
+        <if test="emailHash != null and emailHash != ''">
+            AND m.email_hash = #{emailHash}
+        </if>
+        <if test="phoneHash != null and phoneHash != ''">
+            AND m.phone_hash = #{phoneHash}
+        </if>
+        <if test="lockedOnly">
+            AND m.locked_until IS NOT NULL AND m.locked_until &gt; NOW()
+        </if>
+        <if test="unverifiedOnly">
+            AND m.di_hash IS NULL
+        </if>
+    </sql>
+
+    <select id="findPage" resultMap="admRowMap">
+        SELECT <include refid="admRowColumns"/>
+          FROM tb_member m
+        <include refid="admWhere"/>
+         ORDER BY m.created_at DESC, m.member_id DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_member m
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findForExport" resultMap="admRowMap">
+        SELECT <include refid="admRowColumns"/>
+          FROM tb_member m
+        <include refid="admWhere"/>
+         ORDER BY m.created_at DESC, m.member_id DESC
+         LIMIT #{exportLimit}
+    </select>
+
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT m.status AS status, COUNT(*) AS cnt
+          FROM tb_member m
+         WHERE m.delete_yn = 'N'
+        <if test="siteId != null and siteId != ''">
+           AND m.site_id = #{siteId}
+        </if>
+         GROUP BY m.status
+    </select>
+
+    <!--
+      ACTIVE 로 되돌릴 때 잠금 흔적을 함께 지운다. 상태만 바꾸고 locked_until 이 남으면
+      화면상 활성인데 로그인은 막히는 계정이 되고, 원인이 화면 어디에도 보이지 않는다.
+    -->
+    <update id="updateStatus">
+        UPDATE tb_member
+           SET status = #{status},
+        <if test="status == 'ACTIVE'">
+               login_fail_count = 0,
+               locked_until = NULL,
+        </if>
+               updated_by = #{actor},
+               updated_ip = #{actorIp}
+         WHERE member_id = #{memberId}
+           AND delete_yn = 'N'
+    </update>
+
+    <update id="unlock">
+        UPDATE tb_member
+           SET login_fail_count = 0,
+               locked_until = NULL,
+               <!-- 잠금을 겪은 계정은 다음 로그인에 CAPTCHA 를 거친다 — 해제해도 유지 -->
+               status = CASE WHEN status = 'LOCKED' THEN 'ACTIVE' ELSE status END,
+               updated_by = #{actor},
+               updated_ip = #{actorIp}
+         WHERE member_id = #{memberId}
+           AND delete_yn = 'N'
+    </update>
+
+    <!-- ── 휴면 현황 ────────────────────────────────────────────────────── -->
+
+    <resultMap id="dormantRowMap" type="com.gonet.primary.member.dto.MemberDormantRow">
+        <id property="memberId" column="member_id"/>
+        <result property="siteCode" column="site_code"/>
+        <result property="loginId" column="login_id"/>
+        <result property="memberName" column="member_name"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="email" column="email"
+                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="dormantAt" column="dormant_at"/>
+        <result property="dormantReason" column="dormant_reason"/>
+        <result property="restoredAt" column="restored_at"/>
+        <result property="lastLoginAt" column="last_login_at"/>
+    </resultMap>
+
+    <sql id="dormantWhere">
+        WHERE d.delete_yn = 'N'
+        <if test="siteId != null and siteId != ''">
+            AND d.site_id = #{siteId}
+        </if>
+        <if test="keyword != null">
+            AND d.login_id LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+        </if>
+    </sql>
+
+    <select id="findDormantPage" resultMap="dormantRowMap">
+        SELECT d.member_id, d.site_code, d.login_id, d.member_name, d.email,
+               d.dormant_at, d.dormant_reason, d.restored_at, d.last_login_at
+          FROM tb_member_dormant d
+        <include refid="dormantWhere"/>
+         ORDER BY d.dormant_at DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countDormantPage" resultType="int">
+        SELECT COUNT(*) FROM tb_member_dormant d
+        <include refid="dormantWhere"/>
+    </select>
+
+    <!-- ── 탈퇴 원장 ────────────────────────────────────────────────────── -->
+
+    <resultMap id="withdrawRowMap" type="com.gonet.primary.member.dto.MemberWithdrawRow">
+        <id property="memberId" column="member_id"/>
+        <result property="siteCode" column="site_code"/>
+        <result property="withdrawAt" column="withdraw_at"/>
+        <result property="withdrawReason" column="withdraw_reason"/>
+        <result property="withdrawStatus" column="withdraw_status"/>
+        <result property="retentionExpireAt" column="retention_expire_at"/>
+        <result property="legalBasis" column="legal_basis"/>
+        <result property="diHash" column="di_hash"/>
+    </resultMap>
+
+    <!--
+      원장에는 평문 식별자가 없다(login_id_hash·di_hash 뿐). 그래서 keyword 검색이
+      성립하지 않는다 — 화면에도 검색창을 두지 않는다.
+    -->
+    <sql id="withdrawWhere">
+        <where>
+            <if test="siteId != null and siteId != ''">
+                AND w.site_id = #{siteId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="findWithdrawPage" resultMap="withdrawRowMap">
+        SELECT w.member_id, w.site_code, w.withdraw_at, w.withdraw_reason,
+               w.withdraw_status, w.retention_expire_at, w.legal_basis, w.di_hash
+          FROM tb_member_withdraw w
+        <include refid="withdrawWhere"/>
+         ORDER BY w.withdraw_at DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countWithdrawPage" resultType="int">
+        SELECT COUNT(*) FROM tb_member_withdraw w
+        <include refid="withdrawWhere"/>
+    </select>
+
+</mapper>

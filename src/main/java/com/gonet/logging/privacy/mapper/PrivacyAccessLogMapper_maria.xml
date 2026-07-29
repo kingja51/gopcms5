@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  log_privacy_access — 개인정보 접근 이력.
+  이 테이블은 암호화하지 않는다. 담긴 것은 "취급자가 누구인지"와 "무엇을 했는지"이고
+  정보주체의 PII 자체는 없다(target_id 는 회원 ID, pii_fields 는 항목명 CSV).
+-->
+<mapper namespace="com.gonet.logging.privacy.mapper.PrivacyAccessLogMapper">
+
+    <resultMap id="privacyLogMap" type="com.gonet.logging.privacy.dto.PrivacyAccessLog">
+        <result property="actorUserId" column="actor_user_id"/>
+        <result property="actorUserType" column="actor_user_type"/>
+        <result property="actorLoginId" column="actor_login_id"/>
+        <result property="clientIp" column="client_ip"/>
+        <result property="userAgent" column="user_agent"/>
+        <result property="sessionId" column="session_id"/>
+        <result property="requestUri" column="request_uri"/>
+        <result property="httpMethod" column="http_method"/>
+        <result property="traceId" column="trace_id"/>
+        <result property="targetEntity" column="target_entity"/>
+        <result property="targetUserType" column="target_user_type"/>
+        <result property="targetId" column="target_id"/>
+        <result property="targetCount" column="target_count"/>
+        <result property="piiFields" column="pii_fields"/>
+        <result property="accessAction" column="access_action"/>
+        <result property="accessReason" column="access_reason"/>
+        <result property="result" column="result"/>
+        <result property="failReason" column="fail_reason"/>
+        <result property="accessedAt" column="accessed_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.gonet.logging.privacy.dto.PrivacyAccessLog">
+        INSERT INTO log_privacy_access (
+            actor_user_id, actor_user_type, actor_login_id,
+            client_ip, user_agent, session_id, request_uri, http_method, trace_id,
+            target_entity, target_user_type, target_id, target_count, pii_fields,
+            access_action, access_reason, result, fail_reason,
+            accessed_at, created_by, created_ip
+        ) VALUES (
+            #{actorUserId}, #{actorUserType}, #{actorLoginId},
+            #{clientIp}, #{userAgent}, #{sessionId}, #{requestUri}, #{httpMethod}, #{traceId},
+            #{targetEntity}, #{targetUserType}, #{targetId}, #{targetCount}, #{piiFields},
+            #{accessAction}, #{accessReason}, #{result}, #{failReason},
+            NOW(), #{actorUserId}, #{clientIp}
+        )
+    </insert>
+
+    <select id="recentByTarget" resultMap="privacyLogMap">
+        SELECT * FROM log_privacy_access
+         WHERE target_entity = #{targetEntity}
+           AND target_id = #{targetId}
+         ORDER BY accessed_at DESC
+         LIMIT #{limit}
+    </select>
+
+</mapper>

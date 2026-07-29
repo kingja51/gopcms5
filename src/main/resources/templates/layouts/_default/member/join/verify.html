@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     가입 STEP 3 — 본인인증(NICE).
+     인증창은 팝업으로 열리고, 끝나면 이 페이지가 스스로 다시 열린다(/js/nice-auth.js).
+     COOP 로 window.opener 가 끊길 수 있어 localStorage/BroadcastChannel 도 함께 듣는다.
+     계약 자격이 없으면 버튼을 감추고 사유를 적는다 — 눌러도 안 되는 버튼보다 낫다.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="'본인인증 — ' + ${site != null ? site.siteName : ''}">본인인증</title>
+    <link rel="stylesheet" href="/css/board.css"/>
+    <link rel="stylesheet" href="/css/member.css"/>
+    <script src="/js/nice-auth.js" defer></script>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <header class="bbs-head">
+        <h1 class="text-heading-lg">본인인증</h1>
+        <p class="text-body-md text-fg-subtle"
+           th:text="${join.child}
+                    ? '법정대리인의 본인확인이 필요합니다.'
+                    : '실명 확인을 위해 본인인증을 진행합니다.'">본인확인</p>
+    </header>
+
+    <div th:replace="~{fragments/member/join-steps :: steps(${step}, ${identityRequired})}"></div>
+
+    <div class="join-verify">
+
+        <th:block th:if="${niceReady}">
+            <p class="text-body-md" th:text="${join.child}
+               ? '자녀 명의가 아닌 법정대리인 명의로 인증해 주세요.'
+               : '휴대전화·인증서 등 원하는 수단을 인증 창에서 선택할 수 있습니다.'">안내</p>
+            <button type="button" class="krds-btn krds-btn-primary krds-btn-lg"
+                    style="margin-top:20px" th:attr="data-nice-open=${niceUrl}"
+                    th:text="${join.child} ? '법정대리인 인증하기' : '본인인증 하기'">본인인증 하기</button>
+            <p class="text-body-xs text-fg-subtle" style="margin-top:12px">
+                인증 창이 뜨지 않으면 브라우저의 팝업 차단을 해제해 주세요.</p>
+        </th:block>
+
+        <!-- 계약 자격 미설정 — 사용자가 할 수 있는 일이 없으므로 버튼을 내리고 사유만 남긴다 -->
+        <div th:unless="${niceReady}" class="krds-alert krds-alert-warning" role="alert">
+            <span aria-hidden="true">!</span>
+            <p>본인인증 서비스가 아직 연결되지 않았습니다. 사이트 관리자에게 문의해 주세요.</p>
+        </div>
+
+    </div>
+
+    <div class="bbs-actions">
+        <a th:href="@{'/' + ${site.siteCode} + '/member/join/terms'}"
+           class="krds-btn krds-btn-secondary">이전</a>
+    </div>
+
+</main>
+</body>
+</html>

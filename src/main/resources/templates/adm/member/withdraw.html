@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     탈퇴 원장.
+
+     검색창이 없다 — 원장에는 평문 식별자가 없다(login_id_hash·di_hash 뿐). 아이디로
+     찾을 수 있게 하려면 평문을 남겨야 하는데, 그건 "탈퇴 시 개인정보 즉시 파기" 원칙과
+     정면으로 어긋난다. 사람을 찾는 화면이 아니라 대조·소명 자료를 보는 화면이다.
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>탈퇴 원장</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('탈퇴 원장',
+            '탈퇴한 회원의 기록입니다. 개인정보는 파기되고 대조용 해시만 남습니다 — 재가입 제한·중복가입 차단·분쟁 대응의 근거입니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form method="get" th:action="@{/adm/member/withdraw}" class="ladm-search">
+                <label class="sr-only" for="siteId">사이트</label>
+                <select id="siteId" name="siteId" class="krds-select krds-select-sm">
+                    <option value="">사이트 전체</option>
+                    <option th:each="s : ${sites}" th:value="${s.siteId}" th:text="${s.siteName}"
+                            th:selected="${s.siteId == cond.siteId}">사이트</option>
+                </select>
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">조회</button>
+                <span class="text-body-xs text-fg-subtle">
+                    이 원장에는 이름·아이디가 남아 있지 않아 사람으로는 검색할 수 없습니다.</span>
+            </form>
+            <span class="grow"></span>
+            <a th:href="@{/adm/member/dormant}" class="krds-btn krds-btn-secondary krds-btn-sm">휴면 현황</a>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">탈퇴 원장</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="center nowrap">탈퇴일</th>
+                    <th scope="col" class="center">사이트</th>
+                    <th scope="col" class="center">유형</th>
+                    <th scope="col">사유</th>
+                    <th scope="col">DI 해시</th>
+                    <th scope="col" class="center nowrap">보존 만료</th>
+                    <th scope="col">근거</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="w : ${page.content()}">
+                    <td class="center nowrap text-body-xs"
+                        th:text="${w.withdrawAt != null
+                                  ? #temporals.format(w.withdrawAt, 'yyyy-MM-dd') : '-'}">-</td>
+                    <td class="center text-fg-subtle" th:text="${w.siteCode}">ai</td>
+                    <td class="center">
+                        <span class="krds-badge ladm-badge-off"
+                              th:text="${w.withdrawStatus}">USER_REQUEST</span>
+                    </td>
+                    <td class="text-body-xs" th:text="${w.withdrawReason} ?: '-'">-</td>
+                    <td><code class="text-body-xs" th:text="${w.diHashShort}">-</code></td>
+                    <td class="center nowrap text-body-xs">
+                        <span th:text="${w.retentionExpireAt != null
+                                        ? #temporals.format(w.retentionExpireAt, 'yyyy-MM-dd') : '-'}">-</span>
+                        <span th:if="${w.expired}" class="krds-badge ladm-badge-off"
+                              title="완전 삭제 배치의 대상입니다">만료</span>
+                    </td>
+                    <td class="text-body-xs text-fg-subtle" th:text="${w.legalBasis} ?: '-'">-</td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(7, ${page.total() == 0}, null)}"></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/member/withdraw')}"></nav>
+    </section>
+
+</div>
+</body>
+</html>

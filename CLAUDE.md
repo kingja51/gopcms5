@@ -24,6 +24,7 @@ conventions.md §3~4). 컨트롤러 클래스 접미어(Usr/Adm/Api)는 동일 �
 - [doc/template-resolver-design.md](doc/template-resolver-design.md) — 3축(layout·template·theme) 템플릿 아키텍처 + ViewResolver 설계. **템플릿/레이아웃 질문은 여기부터.**
 - [doc/conventions.md](doc/conventions.md) — PK(`대문자접두어3+"_"+UUIDv7`=varchar(40))·접두어 레지스트리·컨트롤러 네이밍. **식별자/네이밍 질문은 여기부터.**
 - [doc/flyway-migration.md](doc/flyway-migration.md) — SQL 마이그레이션 규약(버전 정책·벤더 폴더·작업 절차).
+- [doc/member-domain.md](doc/member-domain.md) — 회원 도메인 기능별 개발 매뉴얼(가입·본인인증·소셜·휴면/탈퇴·PII·보존기간). **회원 관련 작업은 여기부터.**
 - [design-md/styleguide/SG-krds.md](design-md/styleguide/SG-krds.md) — KRDS × Tailwind v4 토큰·프리셋. **화면 작업의 단일 기준.** 데모: SG-krds.html.
 - [wireframe/index.html](wireframe/index.html) — 레이아웃 설계안 A~G(frame001~007) 원전.
 - 위 정본 외 **`.md` 임의 생성 금지** — 사용자 명시 요청 시만.

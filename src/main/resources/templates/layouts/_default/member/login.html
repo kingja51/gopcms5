@@ -1,12 +1,19 @@
 <!DOCTYPE html>
-<!-- 사용자 로그인 — /login?siteCode={sc}. SiteResolveFilter 가 siteCode 파라미터로
-     사이트를 해석하므로 해당 사이트의 레이아웃·테마 안에서 렌더된다.
-     hidden siteCode 가 인증(MemberAuthenticationProvider)의 사이트 스코프를 전달. -->
+<!-- ============================================================================
+     사용자 로그인 — /login?siteCode={sc}.
+     SiteResolveFilter 가 siteCode 파라미터로 사이트를 해석하므로 해당 사이트의
+     레이아웃·테마 안에서 렌더된다. hidden siteCode 가 인증(MemberAuthenticationProvider)의
+     사이트 스코프를 전달한다.
+
+     소셜 버튼은 자격이 설정된 provider 만 그린다(SocialLoginModelAdvice) — 누르면
+     "준비 중" 이 뜨는 버튼을 두느니 아예 보이지 않는 편이 낫다.
+     ============================================================================ -->
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{${siteLayout}}">
 <head>
     <title th:text="${'로그인 — ' + (site != null ? site.siteName : 'gopcms5')}">로그인</title>
+    <link rel="stylesheet" href="/css/member.css"/>
 </head>
 <body>
 <main layout:fragment="content">
@@ -16,11 +23,25 @@
         <p class="text-body-sm text-fg-subtle" style="margin-top:4px"
            th:text="${site != null ? site.siteName + ' 회원 로그인' : '회원 로그인'}">회원 로그인</p>
 
-        <div th:if="${param.error}" role="alert" class="krds-alert krds-alert-danger" style="margin-top:16px">
-            <span aria-hidden="true">✕</span><p>로그인에 실패했습니다. 입력 정보를 확인해 주세요.</p>
+        <!-- 실패 사유는 거친 분류만 온다 — 어느 단계에서 막혔는지 자세히 알려 주지 않는다 -->
+        <div th:if="${param.error}" role="alert" class="krds-alert krds-alert-danger"
+             style="margin-top:16px">
+            <span aria-hidden="true">✕</span>
+            <p th:switch="${param.error[0]}">
+                <th:block th:case="'social'">소셜 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.</th:block>
+                <th:block th:case="'cancel'">소셜 로그인이 취소되었습니다.</th:block>
+                <th:block th:case="'site'">이 사이트에서 사용할 수 없는 계정입니다.</th:block>
+                <th:block th:case="'state'">로그인할 수 없는 계정 상태입니다. 관리자에게 문의해 주세요.</th:block>
+                <th:block th:case="*">로그인에 실패했습니다. 입력 정보를 확인해 주세요.</th:block>
+            </p>
         </div>
-        <div th:if="${param.expired}" role="alert" class="krds-alert krds-alert-warning" style="margin-top:16px">
+        <div th:if="${param.expired}" role="alert" class="krds-alert krds-alert-warning"
+             style="margin-top:16px">
             <span aria-hidden="true">!</span><p>다른 기기에서 로그인되어 이 세션이 종료되었습니다.</p>
+        </div>
+        <div th:if="${flashOk}" role="status" class="krds-alert krds-alert-success"
+             style="margin-top:16px">
+            <span aria-hidden="true">✓</span><p th:text="${flashOk}">완료</p>
         </div>
 
         <form th:action="@{/login}" method="post" style="margin-top:24px;display:grid;gap:16px">
@@ -28,7 +49,8 @@
                    th:value="${site != null ? site.siteCode : ''}"/>
             <div>
                 <label for="username" class="text-label-sm font-bold">아이디</label>
-                <input id="username" name="username" class="krds-input" autocomplete="username" required autofocus/>
+                <input id="username" name="username" class="krds-input" autocomplete="username"
+                       required autofocus/>
             </div>
             <div>
                 <label for="password" class="text-label-sm font-bold">비밀번호</label>
@@ -43,11 +65,29 @@
                 <input id="captchaAnswer" name="captchaAnswer" type="text" inputmode="numeric"
                        class="krds-input" autocomplete="off" required/>
             </div>
-            <button type="submit" class="krds-btn krds-btn-primary krds-btn-lg" style="width:100%">로그인</button>
+            <button type="submit" class="krds-btn krds-btn-primary krds-btn-lg"
+                    style="width:100%">로그인</button>
         </form>
 
-        <p class="text-body-xs text-fg-subtle" style="margin-top:16px">
-            회원가입·아이디/비밀번호 찾기는 회원 도메인 페이즈에서 제공됩니다.</p>
+        <!-- 설정된 provider 가 하나도 없으면 구분선까지 통째로 사라진다 -->
+        <th:block th:if="${socialProviders != null and !socialProviders.isEmpty()}">
+            <p class="social-divider">간편 로그인</p>
+            <div class="social-login">
+                <a th:each="p : ${socialProviders}"
+                   th:href="@{'/member/oauth2/' + ${p.name().toLowerCase()}
+                             (siteCode=${site != null ? site.siteCode : null})}"
+                   class="social-btn"
+                   th:classappend="${'social-btn-' + p.name().toLowerCase()}"
+                   th:text="${p.label() + '로 로그인'}">네이버로 로그인</a>
+            </div>
+        </th:block>
+
+        <nav class="login-links" aria-label="계정 도움말">
+            <a th:href="@{'/' + ${site.siteCode} + '/member/join'}">회원가입</a>
+            <a th:href="@{'/' + ${site.siteCode} + '/member/find-id'}">아이디 찾기</a>
+            <a th:href="@{'/' + ${site.siteCode} + '/member/find-password'}">비밀번호 찾기</a>
+            <a th:href="@{'/' + ${site.siteCode} + '/member/dormant'}">휴면 계정 복원</a>
+        </nav>
     </div>
 
 </main>

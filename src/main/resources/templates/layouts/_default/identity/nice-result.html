@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     NICE 본인인증 — 팝업 2단계(콜백 결과). 성공/실패 한 장으로 처리한다.
+
+     성공하면 화면을 보여 줄 이유가 없다: 스크립트가 부모창을 nextUrl 로 보내고
+     창을 닫는다. 실패해야만 사람이 읽을 내용이 남는다.
+
+     부모창에 신호를 보내는 경로가 셋인 이유 — COOP(same-origin) 아래서 팝업이
+     NICE 도메인을 한 번 거치면 window.opener 가 끊긴다. 그래서 same-origin 두 창이
+     쓸 수 있는 localStorage / BroadcastChannel 을 폴백으로 함께 쏜다(/js/nice-auth.js).
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>본인인증 결과</title>
+    <link rel="stylesheet" href="/css/output.css"/>
+    <script src="/js/nice-auth.js" defer></script>
+</head>
+<body class="bg-surface">
+
+<main data-nice-result
+      th:attr="data-success=${success} ? 'Y' : 'N', data-next=${nextUrl}"
+      class="krds-card" style="max-width:420px;margin:24px auto;padding:24px">
+
+    <!-- 성공 — 스크립트가 즉시 창을 닫는다. 폴백이 모두 막힌 환경에서만 보인다. -->
+    <th:block th:if="${success}">
+        <h1 class="text-heading-sm text-fg-strong">본인인증 완료</h1>
+        <p class="text-body-sm text-fg-subtle" style="margin-top:8px">
+            창이 자동으로 닫히지 않으면 직접 닫고 원래 화면으로 돌아가 주세요.</p>
+        <button type="button" data-nice-close
+                class="krds-btn krds-btn-primary" style="width:100%;margin-top:20px">닫기</button>
+    </th:block>
+
+    <th:block th:unless="${success}">
+        <h1 class="text-heading-sm text-fg-strong">본인인증 실패</h1>
+        <div role="alert" class="krds-alert krds-alert-danger" style="margin-top:16px">
+            <span aria-hidden="true">!</span>
+            <p th:text="${result != null and result.message != null}
+                        ? ${result.message}
+                        : '본인인증을 완료하지 못했습니다. 창을 닫고 다시 시도해 주세요.'">사유</p>
+        </div>
+        <p class="text-body-xs text-fg-subtle" style="margin-top:8px"
+           th:if="${result != null and result.returnCode != 0}">
+            응답 코드 <span th:text="${result.returnCode}">0</span>
+        </p>
+        <button type="button" data-nice-close
+                class="krds-btn krds-btn-secondary" style="width:100%;margin-top:20px">닫기</button>
+    </th:block>
+
+</main>
+
+</body>
+</html>

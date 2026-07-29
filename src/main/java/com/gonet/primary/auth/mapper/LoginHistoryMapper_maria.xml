@@ -26,4 +26,19 @@
         LIMIT 1 OFFSET 1
     </select>
 
+    <!--
+      보존기간 파기 (P10-7) — 36개월. 이 테이블은 logging_db 가 아니라 primary 에 있어
+      로그 파기 배치가 여기만 다른 DataSource 로 들른다.
+    -->
+    <select id="countExpired" resultType="int">
+        SELECT COUNT(*) FROM tb_login_history WHERE attempted_at &lt; #{cutoff}
+    </select>
+
+    <delete id="deleteExpired">
+        DELETE FROM tb_login_history
+         WHERE attempted_at &lt; #{cutoff}
+         ORDER BY attempted_at
+         LIMIT #{limit}
+    </delete>
+
 </mapper>

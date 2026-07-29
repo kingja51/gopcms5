@@ -105,6 +105,18 @@ public interface MemberLifecycleMapper {
     com.gonet.primary.member.dto.MemberDto findDormantById(@Param("memberId") String memberId);
 
     /**
+     * 본인인증(DI)으로 휴면 계정 찾기 — 실명인증 복원 경로의 진입점.
+     *
+     * <p>아이디·비밀번호를 묻지 않는다. 비밀번호를 잊어 못 들어오는 경우가 휴면의
+     * 흔한 사정이라, 그것을 요구하면 복원 수단이 하나 더 필요해진다. DI 는 그 자체로
+     * 본인 확인이 끝난 값이다.
+     *
+     * <p>DI 는 암호문이라 {@code =} 를 걸 수 없어 해시로 찾는다.
+     */
+    com.gonet.primary.member.dto.MemberDto findDormantByDiHash(@Param("siteId") String siteId,
+            @Param("diHash") String diHash);
+
+    /**
      * 복원 — 감춰 둔 tb_member 행을 되살린다(status=ACTIVE, delete_yn='N').
      *
      * <p>휴면 전환이 소프트 삭제라 행이 그대로 있다. 마지막 로그인을 지금으로 찍지 않으면
@@ -121,4 +133,23 @@ public interface MemberLifecycleMapper {
 
     /** 로그인하면 안내 이력을 지운다 — 다음 사이클에 다시 보내야 한다. */
     int deleteNoticesByMember(@Param("memberId") String memberId);
+
+    /**
+     * 게시글 작성자 익명화 — 탈퇴 시 {@code writer_name} 을 표시용 문구로 바꾼다.
+     *
+     * <p>{@code writer_name} 은 그 자체로 개인정보다. 회원 본체의 PII 를 파기하면서
+     * 게시판에 실명이 그대로 남아 있으면 "즉시 파기" 가 말뿐이 된다.
+     *
+     * <p>{@code writer_user_id} 는 <b>남긴다</b>. 회원 행이 사라진 뒤에는 그 값으로
+     * 사람을 되짚을 수 없어 식별정보가 아니고, 같은 작성자의 글을 묶어 보는
+     * 운영·중재 기능이 여기에 걸려 있다.
+     *
+     * @return 바뀐 행 수
+     */
+    int anonymizeArticles(@Param("memberId") String memberId,
+            @Param("anonymousName") String anonymousName);
+
+    /** 댓글 작성자 익명화 — 게시글과 같은 이유. */
+    int anonymizeComments(@Param("memberId") String memberId,
+            @Param("anonymousName") String anonymousName);
 }

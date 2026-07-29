@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  tb_member_oauth — 회원 ↔ 외부 계정 연결.
+  provider_user_id 는 PII 가 아니라 provider 가 준 불투명 식별자라 평문으로 둔다.
+  email_at_link/name_at_link 도 "연결 당시 이랬다" 는 감사 스냅샷이라 암호화하지 않는다
+  — 암호화하면 조회 때마다 풀어야 하고, 회원 본체(tb_member.email)와 달리 조회 대상도 아니다.
+-->
+<mapper namespace="com.gonet.primary.member.oauth2.mapper.MemberOAuthMapper">
+
+    <resultMap id="oauthMap" type="com.gonet.primary.member.oauth2.dto.MemberOAuthDto">
+        <id property="memberOauthId" column="member_oauth_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="provider" column="provider"/>
+        <result property="providerUserId" column="provider_user_id"/>
+        <result property="emailAtLink" column="email_at_link"/>
+        <result property="nameAtLink" column="name_at_link"/>
+        <result property="linkedAt" column="linked_at"/>
+        <result property="lastLoginAt" column="last_login_at"/>
+        <result property="useYn" column="use_yn"/>
+        <result property="deleteYn" column="delete_yn"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdIp" column="created_ip"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="updatedIp" column="updated_ip"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.gonet.primary.member.oauth2.dto.MemberOAuthDto">
+        INSERT INTO tb_member_oauth (
+            member_oauth_id, member_id, provider, provider_user_id,
+            email_at_link, name_at_link, linked_at,
+            use_yn, delete_yn, created_by, created_ip
+        ) VALUES (
+            #{memberOauthId}, #{memberId}, #{provider}, #{providerUserId},
+            #{emailAtLink}, #{nameAtLink}, NOW(),
+            'Y', 'N', #{createdBy}, #{createdIp}
+        )
+    </insert>
+
+    <select id="findByProviderUser" resultMap="oauthMap">
+        SELECT *
+          FROM tb_member_oauth
+         WHERE provider = #{provider}
+           AND provider_user_id = #{providerUserId}
+           AND use_yn = 'Y'
+           AND delete_yn = 'N'
+         LIMIT 1
+    </select>
+
+    <select id="findByMember" resultMap="oauthMap">
+        SELECT *
+          FROM tb_member_oauth
+         WHERE member_id = #{memberId}
+           AND delete_yn = 'N'
+         ORDER BY linked_at
+    </select>
+
+    <update id="updateLastLogin">
+        UPDATE tb_member_oauth
+           SET last_login_at = NOW()
+         WHERE member_oauth_id = #{memberOauthId}
+    </update>
+
+    <!--
+      해제는 delete_yn='Y' 로 표시한다. uk_oauth_provider_user 가 delete_yn 을 포함하므로
+      해제된 행이 남아 있어도 같은 계정을 다시 연결할 수 있다 — 단, 해제 이력이 둘 이상
+      쌓이면 (provider, provider_user_id, 'Y') 가 겹쳐 두 번째 해제가 막힌다.
+      그래서 use_yn 만 내리고 delete_yn 은 그대로 둔다: 조회는 use_yn='Y' 로 거른다.
+    -->
+    <update id="deactivate">
+        UPDATE tb_member_oauth
+           SET use_yn = 'N'
+         WHERE member_oauth_id = #{memberOauthId}
+    </update>
+
+</mapper>
