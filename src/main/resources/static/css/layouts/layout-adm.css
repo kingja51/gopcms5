@@ -190,6 +190,18 @@ a.ladm-stat:hover { border-color: var(--brand-50); background-color: var(--brand
     color: var(--c-fg-subtle); white-space: nowrap; cursor: pointer;
 }
 .ladm-check input { accent-color: var(--brand-50); }
+
+/* 분류 행 — 표가 아니라 폼 한 줄. <tr> 안에 <form> 은 파싱 규칙상 밖으로 끌려 나간다 */
+.ladm-catrow {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--c-divider, var(--c-line));
+}
+.ladm-catrow:last-child { border-bottom: 0; }
+.ladm-catrow .grow { flex: 1; }
+.ladm-catrow input[name="categoryCode"] { max-width: 150px; }
+.ladm-catrow input[name="categoryName"] { max-width: 220px; }
+.ladm-catrow input[name="sortOrder"] { max-width: 90px; }
 .ladm-stat-sub b { color: var(--c-fg); font-weight: 700; }
 
 /* ── 차트 ─────────────────────────────────────────────────────────────────

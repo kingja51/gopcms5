@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!-- 게시판 목록 — 규모(글·분류 수)를 함께 보여준다. 지울 수 있는 게시판인지
+     눌러 보기 전에 알 수 있어야 하기 때문. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>게시판 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('게시판 관리',
+            '사이트별 게시판과 정책을 관리합니다. 읽기·쓰기·첨부 권한은 게시판마다 따로 정합니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form method="get" th:action="@{/adm/board}" class="ladm-search">
+                <label class="sr-only" for="keyword">게시판 검색</label>
+                <input id="keyword" name="keyword" class="krds-input krds-input-sm"
+                       th:value="${cond.keyword}" placeholder="코드 · 이름"/>
+                <label class="sr-only" for="siteId">사이트</label>
+                <select id="siteId" name="siteId" class="krds-select krds-select-sm"
+                        data-submit-on-change>
+                    <option value="">사이트 전체</option>
+                    <option th:each="s : ${sites}" th:value="${s.siteId}"
+                            th:text="${s.siteName}" th:selected="${s.siteId == cond.siteId}">사이트</option>
+                </select>
+                <label class="sr-only" for="bbsType">유형</label>
+                <select id="bbsType" name="bbsType" class="krds-select krds-select-sm"
+                        data-submit-on-change>
+                    <option value="">유형 전체</option>
+                    <option th:each="t : ${types}" th:value="${t}"
+                            th:text="${T(com.gonet.primary.board.dto.BbsType).label(t)}"
+                            th:selected="${t == cond.bbsType}">공지</option>
+                </select>
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">검색</button>
+            </form>
+            <span class="grow"></span>
+            <a th:href="@{/adm/board/form}" class="krds-btn krds-btn-primary krds-btn-sm">등록</a>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">사이트별 게시판 목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col">사이트</th>
+                    <th scope="col">코드</th>
+                    <th scope="col">이름</th>
+                    <th scope="col" class="center">유형</th>
+                    <th scope="col" class="center">읽기 / 쓰기</th>
+                    <th scope="col" class="center">첨부 권한</th>
+                    <th scope="col" class="num">글</th>
+                    <th scope="col" class="num">분류</th>
+                    <th scope="col" class="center">사용</th>
+                    <th scope="col" class="center nowrap">바로가기</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${page.content()}">
+                    <td class="text-fg-subtle" th:text="${b.siteName}">사이트</td>
+                    <td>
+                        <a th:href="@{/adm/board/form(bbsMasterId=${b.bbsMasterId})}"
+                           class="krds-link" th:text="${b.bbsCode}">notice</a>
+                        <!-- 통합 게시판은 글을 직접 갖지 않는다 — 목록에서 구분되어야 한다 -->
+                        <span th:if="${b.aggregator}" class="krds-badge ladm-badge-on"
+                              style="margin-left:6px">통합</span>
+                    </td>
+                    <td th:text="${b.bbsName}">공지사항</td>
+                    <td class="center text-fg-subtle"
+                        th:text="${T(com.gonet.primary.board.dto.BbsType).label(b.bbsType)}">공지</td>
+                    <td class="center text-body-xs text-fg-subtle">
+                        <span th:text="${b.readAuth}">ALL</span> /
+                        <span th:text="${b.writeAuth}">ADMIN</span>
+                    </td>
+                    <td class="center text-body-xs text-fg-subtle" th:text="${b.downloadAuth}">ANONYMOUS</td>
+                    <td class="num" th:text="${b.articleCount}">0</td>
+                    <td class="num" th:text="${b.categoryCount}">0</td>
+                    <td class="center">
+                        <span class="krds-badge"
+                              th:classappend="${b.useYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${b.useYn == 'Y'} ? '사용' : '중지'">사용</span>
+                    </td>
+                    <td class="center nowrap">
+                        <!-- 사용자 화면은 /bbs/{siteCode}/{bbsCode} — 프로그램이 앞에 온다 -->
+                        <a th:href="@{'/bbs/' + ${b.siteCode} + '/' + ${b.bbsCode}}" target="_blank"
+                           class="krds-btn krds-btn-tertiary krds-btn-sm">게시판 보기</a>
+                    </td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(10, ${page.content().isEmpty()}, '/adm/board/form')}"></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:replace="~{adm/fragments/adm-ui :: pager('/adm/board')}"></div>
+    </section>
+</div>
+</body>
+</html>

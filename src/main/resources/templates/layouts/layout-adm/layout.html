@@ -84,6 +84,8 @@
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/url-access')} ? 'ladm-active'">URL 접근 규칙</a>
 
         <p class="ladm-lnb-group text-label-xs">자료</p>
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/board}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/board')} ? 'ladm-active'">게시판 관리</a>
         <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/file}"
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/file')} ? 'ladm-active'">파일 관리</a>
 

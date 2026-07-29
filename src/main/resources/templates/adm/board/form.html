@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!-- 게시판 등록·수정 — 게시판 하나가 곧 하나의 정책 묶음이다.
+     여기서 정한 값이 글과 첨부로 그대로 내려가므로 각 항목에 근거를 붙여 둔다.
+     분류는 게시판 없이 존재할 수 없어 별도 화면 대신 이 폼 아래에 붙였다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>게시판 설정</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('게시판 설정',
+            '게시판의 유형과 권한을 정합니다. 여기서 정한 값이 글과 첨부에 그대로 적용됩니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <form method="post" th:action="@{/adm/board/save}" th:object="${board}" class="ladm-panel">
+        <input type="hidden" th:field="*{bbsMasterId}"/>
+
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">기본</h2>
+        </div>
+        <div class="ladm-panel-body ladm-form">
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="siteId">사이트</label>
+                <div class="ladm-form-field">
+                    <select id="siteId" th:field="*{siteId}" class="krds-select" required>
+                        <option value="">선택</option>
+                        <option th:each="s : ${sites}" th:value="${s.siteId}"
+                                th:text="${s.siteName} + ' (' + ${s.siteCode} + ')'">사이트</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="bbsCode">게시판 코드</label>
+                <div class="ladm-form-field">
+                    <input id="bbsCode" th:field="*{bbsCode}" class="krds-input"
+                           maxlength="50" required placeholder="notice"/>
+                    <p class="ladm-hint text-body-xs">
+                        <b>URL 에 그대로 나갑니다</b> — <code>/bbs/{사이트코드}/{게시판코드}</code>.
+                        소문자로 시작하는 2~50자(소문자·숫자·<code>_</code>·<code>-</code>).
+                        사이트 안에서 유일해야 합니다.</p>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="bbsName">게시판 이름</label>
+                <div class="ladm-form-field">
+                    <input id="bbsName" th:field="*{bbsName}" class="krds-input"
+                           maxlength="100" required placeholder="공지사항"/>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="bbsType">유형</label>
+                <div class="ladm-form-field">
+                    <select id="bbsType" th:field="*{bbsType}" class="krds-select">
+                        <option th:each="t : ${types}" th:value="${t}"
+                                th:text="${T(com.gonet.primary.board.dto.BbsType).label(t)}">공지</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        유형이 <b>사용자 화면</b>을 정합니다(<code>front/board/{유형}/…</code>).
+                        나중에 바꾸면 같은 글이 다른 형태로 보입니다.</p>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="description">메모</label>
+                <div class="ladm-form-field">
+                    <input id="description" th:field="*{description}" class="krds-input"
+                           maxlength="500"/>
+                    <p class="ladm-hint text-body-xs">운영자용 메모입니다. 화면에 나가지 않습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ladm-panel-head" style="border-top:1px solid var(--c-line)">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">권한</h2>
+        </div>
+        <div class="ladm-panel-body ladm-form">
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="readAuth">읽기</label>
+                <div class="ladm-form-field">
+                    <select id="readAuth" th:field="*{readAuth}" class="krds-select">
+                        <option th:each="a : ${readAuths}" th:value="${a}" th:text="${a}">ALL</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        <code>ALL</code> = 비로그인 포함 누구나. 공지·보도자료는 보통 ALL 입니다.</p>
+                </div>
+            </div>
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="writeAuth">쓰기</label>
+                <div class="ladm-form-field">
+                    <select id="writeAuth" th:field="*{writeAuth}" class="krds-select">
+                        <option th:each="a : ${writeAuths}" th:value="${a}" th:text="${a}">ADMIN</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        비로그인 작성은 지원하지 않습니다 — 스팸과 추적 불가 문제 때문입니다.</p>
+                </div>
+            </div>
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="downloadAuth">첨부 다운로드</label>
+                <div class="ladm-form-field">
+                    <select id="downloadAuth" th:field="*{downloadAuth}" class="krds-select">
+                        <option th:each="a : ${downloadAuths}" th:value="${a}" th:text="${a}">ANONYMOUS</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        글에 붙는 첨부의 기본 공개 범위입니다.
+                        <b>공지글은 이 값과 무관하게 항상 공개</b>됩니다(공지는 누구나 받아야 하므로).
+                        <code>OWNER_PRIVACY</code> 는 민원글처럼 본인만 열어야 할 때 씁니다 —
+                        최고 관리자도 자동으로 통과하지 않습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ladm-panel-head" style="border-top:1px solid var(--c-line)">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">기능</h2>
+        </div>
+        <div class="ladm-panel-body ladm-form">
+            <div class="ladm-form-row">
+                <span class="ladm-form-label">사용 여부</span>
+                <div class="ladm-form-field">
+                    <label class="ladm-check text-body-sm">
+                        <input type="checkbox" th:field="*{useYn}" value="Y"/> 사용</label>
+                    <label class="ladm-check text-body-sm" style="margin-left:16px">
+                        <input type="checkbox" th:field="*{commentYn}" value="Y"/> 댓글</label>
+                    <label class="ladm-check text-body-sm" style="margin-left:16px">
+                        <input type="checkbox" th:field="*{fileYn}" value="Y"/> 첨부</label>
+                    <label class="ladm-check text-body-sm" style="margin-left:16px">
+                        <input type="checkbox" th:field="*{noticeTopYn}" value="Y"/> 공지 상단 고정</label>
+                </div>
+            </div>
+            <div class="ladm-form-row">
+                <span class="ladm-form-label">본문·작성</span>
+                <div class="ladm-form-field">
+                    <label class="ladm-check text-body-sm">
+                        <input type="checkbox" th:field="*{htmlYn}" value="Y"/> HTML 본문</label>
+                    <label class="ladm-check text-body-sm" style="margin-left:16px">
+                        <input type="checkbox" th:field="*{captchaYn}" value="Y"/> 작성 시 CAPTCHA</label>
+                    <p class="ladm-hint text-body-xs">
+                        <b>HTML 본문</b>을 켜면 위지윅 편집기를 쓰고, 저장 시 서버가 정화한 결과만
+                        남습니다. 끄면 본문이 평문으로 저장·표시됩니다(태그가 글자로 보입니다).</p>
+                </div>
+            </div>
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="fileCountMax">첨부 제한</label>
+                <div class="ladm-form-field">
+                    <input id="fileCountMax" th:field="*{fileCountMax}" type="number"
+                           class="krds-input" style="max-width:110px" min="0"/> 개
+                    <input id="fileSizeMaxMb" th:field="*{fileSizeMaxMb}" type="number"
+                           class="krds-input" style="max-width:110px;margin-left:12px" min="1"/> MB
+                    <p class="ladm-hint text-body-xs">
+                        업로드 자체의 상한(형식·크기)은 시스템 설정이 따로 강제합니다.
+                        여기 값은 이 게시판의 추가 제한입니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 통합 게시판 — 수정 화면에서만 (후보를 알려면 게시판이 먼저 있어야 한다) -->
+        <th:block th:if="${groupCandidates != null}">
+            <div class="ladm-panel-head" style="border-top:1px solid var(--c-line)">
+                <h2 class="text-heading-sm text-fg-strong" style="margin:0">통합 게시판</h2>
+            </div>
+            <div class="ladm-panel-body ladm-form">
+                <div class="ladm-form-row">
+                    <label class="ladm-form-label" for="groupedBoardIds">묶을 게시판</label>
+                    <div class="ladm-form-field">
+                        <input id="groupedBoardIds" th:field="*{groupedBoardIds}" class="krds-input"
+                               placeholder="비워 두면 일반 게시판"/>
+                        <p class="ladm-hint text-body-xs">
+                            여러 게시판의 글을 한 화면에 모아 보여주는 <b>읽기 전용</b> 게시판이 됩니다.
+                            게시판 ID 를 쉼표로 잇습니다(최대 24개). 통합 게시판을 다시 통합 대상으로
+                            넣을 수는 없습니다 — 목록 질의가 재귀가 되기 때문입니다.</p>
+                        <details style="margin-top:8px">
+                            <summary class="text-body-sm">이 사이트의 게시판 ID 보기</summary>
+                            <ul class="text-body-xs text-fg-subtle" style="margin:8px 0 0;padding-left:18px">
+                                <li th:each="c : ${groupCandidates}">
+                                    <code th:text="${c.bbsMasterId}">BBM_…</code>
+                                    — <span th:text="${c.bbsCode}">notice</span>
+                                    <span th:text="${c.bbsName}">공지</span>
+                                </li>
+                            </ul>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </th:block>
+
+        <div class="ladm-form-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{/adm/board}" class="krds-btn krds-btn-secondary">목록</a>
+            <span class="grow"></span>
+            <button type="submit" th:if="*{bbsMasterId != null and bbsMasterId != ''}" formnovalidate
+                    th:formaction="@{/adm/board/delete}" class="krds-btn krds-btn-point"
+                    data-confirm="이 게시판을 삭제할까요? 글이 있으면 삭제되지 않습니다.">삭제</button>
+        </div>
+    </form>
+
+    <!-- 분류 — 게시판이 저장된 뒤에만 -->
+    <section class="ladm-panel" th:if="${categories != null}">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">분류</h2>
+            <span class="grow"></span>
+            <span class="text-body-xs text-fg-subtle">글 하나에 분류 하나(선택)</span>
+        </div>
+
+        <!--
+          분류는 표가 아니라 행 목록으로 만든다. <tr> 안에 <form> 을 넣으면 브라우저가
+          폼을 테이블 밖으로 끌어내 필드가 폼에서 떨어져 나간다(HTML 파싱 규칙).
+          행마다 저장·삭제가 필요하므로 각 행을 독립 폼으로 둔다.
+        -->
+        <div class="ladm-panel-body" th:if="${!categories.isEmpty()}" style="padding-top:8px">
+            <form th:each="c : ${categories}" method="post"
+                  th:action="@{/adm/board/category/save}" class="ladm-catrow">
+                <input type="hidden" name="categoryId" th:value="${c.categoryId}"/>
+                <input type="hidden" name="bbsMasterId" th:value="${board.bbsMasterId}"/>
+                <input name="categoryCode" class="krds-input krds-input-sm"
+                       th:value="${c.categoryCode}" aria-label="분류 코드"/>
+                <input name="categoryName" class="krds-input krds-input-sm"
+                       th:value="${c.categoryName}" aria-label="분류 이름"/>
+                <input name="sortOrder" type="number" class="krds-input krds-input-sm"
+                       th:value="${c.sortOrder}" aria-label="정렬 순서"/>
+                <label class="ladm-check text-body-sm">
+                    <input type="checkbox" name="useYn" value="Y"
+                           th:checked="${c.useYn == 'Y'}"/> 사용</label>
+                <span class="text-body-xs text-fg-subtle">
+                    글 <b th:text="${c.articleCount}">0</b></span>
+                <span class="grow"></span>
+                <button type="submit" class="krds-btn krds-btn-tertiary krds-btn-sm">저장</button>
+                <button type="submit" formnovalidate
+                        th:formaction="@{/adm/board/category/delete}"
+                        class="krds-btn krds-btn-text krds-btn-sm"
+                        data-confirm="이 분류를 삭제할까요? 쓰는 글이 있으면 삭제되지 않습니다.">삭제</button>
+            </form>
+        </div>
+
+        <p class="ladm-panel-body text-body-sm text-fg-subtle"
+           th:if="${categories.isEmpty()}" style="margin:0">
+            아직 분류가 없습니다. 아래에서 추가하세요 — 분류는 선택 사항입니다.</p>
+
+        <!-- 새 분류 -->
+        <form method="post" th:action="@{/adm/board/category/save}" class="ladm-panel-body ladm-form">
+            <input type="hidden" name="bbsMasterId" th:value="${board.bbsMasterId}"/>
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="newCategoryCode">분류 추가</label>
+                <div class="ladm-form-field">
+                    <input id="newCategoryCode" name="categoryCode" class="krds-input krds-input-sm"
+                           style="max-width:160px" placeholder="코드" required/>
+                    <input name="categoryName" class="krds-input krds-input-sm"
+                           style="max-width:220px;margin-left:8px" placeholder="이름" required/>
+                    <input name="sortOrder" type="number" class="krds-input krds-input-sm"
+                           style="max-width:90px;margin-left:8px" placeholder="정렬" value="0"/>
+                    <input type="hidden" name="useYn" value="Y"/>
+                    <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm"
+                            style="margin-left:8px">추가</button>
+                </div>
+            </div>
+        </form>
+    </section>
+</div>
+</body>
+</html>

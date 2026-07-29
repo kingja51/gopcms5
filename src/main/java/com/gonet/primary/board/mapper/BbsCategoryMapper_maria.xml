@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.board.mapper.BbsCategoryMapper">
+
+    <!-- 쓰는 글 수를 함께 센다 — 목록에서 지울 수 있는 분류인지 바로 보이게 -->
+    <select id="findByBoard" resultType="com.gonet.primary.board.dto.BbsCategoryAdmDto">
+        SELECT c.category_id, c.bbs_master_id, c.category_code, c.category_name,
+               c.sort_order, c.use_yn,
+               (SELECT COUNT(*) FROM tb_bbs_article a
+                 WHERE a.category_id = c.category_id AND a.delete_yn = 'N') AS article_count
+        FROM tb_bbs_category c
+        WHERE c.bbs_master_id = #{bbsMasterId} AND c.delete_yn = 'N'
+        ORDER BY c.sort_order, c.category_code
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.board.dto.BbsCategoryAdmDto">
+        SELECT category_id, bbs_master_id, category_code, category_name, sort_order, use_yn
+        FROM tb_bbs_category
+        WHERE category_id = #{categoryId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByCode" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_category
+        WHERE bbs_master_id = #{bbsMasterId} AND category_code = #{categoryCode}
+          AND delete_yn = 'N'
+        <if test="excludeId != null">AND category_id &lt;&gt; #{excludeId}</if>
+    </select>
+
+    <select id="countArticles" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_article
+        WHERE category_id = #{categoryId} AND delete_yn = 'N'
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.board.dto.BbsCategoryAdmDto">
+        INSERT INTO tb_bbs_category
+            (category_id, bbs_master_id, category_code, category_name, sort_order, use_yn,
+             created_by, created_ip, updated_by, updated_ip)
+        VALUES
+            (#{categoryId}, #{bbsMasterId}, #{categoryCode}, #{categoryName}, #{sortOrder}, #{useYn},
+             #{createdBy}, #{createdIp}, #{updatedBy}, #{updatedIp})
+    </insert>
+
+    <update id="update" parameterType="com.gonet.primary.board.dto.BbsCategoryAdmDto">
+        UPDATE tb_bbs_category
+        SET
+            <if test="categoryCode != null and categoryCode != ''">category_code = #{categoryCode},</if>
+            <if test="categoryName != null and categoryName != ''">category_name = #{categoryName},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE category_id = #{categoryId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_bbs_category
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE category_id = #{categoryId}
+    </update>
+
+</mapper>

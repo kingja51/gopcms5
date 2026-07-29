@@ -254,6 +254,8 @@
   .krds-input{@apply w-full rounded-medium border border-line bg-surface text-fg text-body-md placeholder:text-fg-disabled disabled:bg-surface-subtle disabled:text-fg-disabled;padding:9px 12px;min-height:40px;}
   .krds-input:focus{border-color:var(--brand-50);outline:2px solid var(--brand-50);outline-offset:0;}
   .krds-input-error,.krds-input-error:focus{border-color:#de3412;outline-color:#de3412;}
+  /* 조밀 변형 — 검색바·인라인 편집용. 버튼의 .krds-btn-sm 과 같은 32px 라인 */
+  .krds-input-sm,.krds-select-sm{@apply text-body-sm;padding:5px 10px;min-height:32px;}
 
   .krds-badge{@apply inline-flex items-center rounded-small text-label-sm font-bold;gap:4px;padding:2px 6px;}
   .krds-tag{@apply inline-flex items-center rounded-small border text-label-sm;gap:4px;padding:3px 8px;}

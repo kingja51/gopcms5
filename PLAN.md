@@ -472,14 +472,24 @@ dry-run 을 끄자 정확히 2건만 삭제(살아 있는 1건은 보존)되고 
 `/ai/about`·`/ai/index` 는 200 으로 컨텐츠 경로 영향 없음. 예약어 5종(bbs·prg·file·adm·index)
 사이트코드 등록 거부(사이트 3건 유지). 라우팅 규칙 단위 테스트 11건 신규.
 
-### P9-1 마스터 + 카테고리
-- [ ] `BoardAdmController` (`/adm/board/**`) — 마스터 CRUD, 사이트 내 `bbs_code` UNIQUE,
-      사용중지/재사용, 참조 있는 행 삭제 차단
-- [ ] **8타입** NOTICE·BODO·FREE·FAQ·QNA·GALLERY·FILE·**YOUTUBE** (V9 CHECK 기준.
-      원전 본문은 7타입이라 적었지만 실제 화면은 8개였다 — 8로 확정)
-- [ ] 카테고리 CRUD — 게시판 내 `category_code` UNIQUE, 게시글이 매핑된 카테고리 삭제 차단
-- [ ] `download_auth` 변경 시 소속 글의 file_group 일괄 cascade — **공지글 제외**
-      (`WHERE notice_yn='N'`) 로 ANONYMOUS 보존
+### P9-1 마스터 + 카테고리 (완료 2026-07-29)
+- [x] `BoardAdmController` (`/adm/board/**`) — 마스터 CRUD, 사이트 내 `bbs_code` UNIQUE,
+      사용중지/재사용, **글이 남은 게시판 삭제 차단**(사용 중지로 유도 — soft delete 로
+      감췄는데 그 글이 어디에도 안 보이는 상태가 더 나쁘다)
+- [x] **8타입** NOTICE·BODO·FREE·FAQ·QNA·GALLERY·FILE·**YOUTUBE** (V9 CHECK 기준)
+- [x] 카테고리 CRUD — **마스터 폼 안에서 관리**(분류는 게시판 없이 존재할 수 없고 수도 적다) ·
+      게시판 내 `category_code` UNIQUE · 매핑된 글이 있으면 삭제 차단
+- [x] 첨부 상한은 화면에서 **MB 로 받고 저장 때 byte 로 환산** — 조회 시 되돌리지 않으면
+      수정 화면이 늘 빈 칸으로 열려 저장할 때마다 기본값으로 덮인다
+- [x] 통합 게시판 CSV 정규화 — 중복 제거·**중첩 금지**(통합이 통합을 품으면 목록 질의가
+      재귀가 된다)·상한 24개(VARCHAR(1000) ÷ 41자)
+- [x] `download_auth` 변경 시 소속 글의 file_group 일괄 cascade — **공지글 제외**
+      (`notice_yn='N'`) 로 ANONYMOUS 보존, 삭제글도 제외(복구 시 그 시점 정책을 다시 받게)
+
+**완료 확인(2026-07-29, 8081 실측)**: 게시판 등록(한글명 왕복 정상·MB→byte 환산
+10485760) · 분류 등록 · 거부 2종(중복 코드·대문자 코드) · **cascade 실측** — 마스터를
+ANONYMOUS→ROLE_MEMBER 로 바꾸자 일반글 첨부만 ROLE_MEMBER 로 바뀌고 **공지글·삭제글
+첨부는 ANONYMOUS 유지**(로그 `groups=1 (공지 제외)`). 검증 데이터 전량 제거.
 
 ### P9-2 게시글 + 첨부
 - [ ] `BoardArticleService` — 작성/수정/삭제, `write_auth` 검증, 공지 지정은 STAFF 이상

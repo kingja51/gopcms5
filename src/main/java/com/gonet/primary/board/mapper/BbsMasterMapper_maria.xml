@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.board.mapper.BbsMasterMapper">
+
+    <sql id="cols">
+        m.bbs_master_id, m.site_id, m.site_code, m.menu_id, m.bbs_code, m.bbs_name, m.bbs_type,
+        m.comment_yn, m.file_yn, m.file_count_max, m.file_size_max, m.anonymous_yn,
+        m.notice_top_yn, m.html_yn, m.captcha_yn, m.read_auth, m.write_auth, m.download_auth,
+        m.grouped_board_ids, m.description, m.use_yn
+    </sql>
+
+    <sql id="admWhere">
+        WHERE m.delete_yn = 'N'
+        <if test="keyword != null">
+            AND (m.bbs_code LIKE CONCAT('%', #{keyword}, '%')
+              OR m.bbs_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="siteId != null and siteId != ''">AND m.site_id = #{siteId}</if>
+        <if test="bbsType != null and bbsType != ''">AND m.bbs_type = #{bbsType}</if>
+    </sql>
+
+    <!--
+      글·분류 수를 서브쿼리로 함께 센다. 목록에서 "지울 수 있는 게시판인지" 를 바로
+      보여주려는 것이다 — 눌러 본 뒤에 거부당하는 것보다 미리 아는 편이 낫다.
+    -->
+    <select id="findPage" resultType="com.gonet.primary.board.dto.BbsMasterAdmDto">
+        SELECT <include refid="cols"/>,
+               s.site_name,
+               (SELECT COUNT(*) FROM tb_bbs_article a
+                 WHERE a.bbs_master_id = m.bbs_master_id AND a.delete_yn = 'N') AS article_count,
+               (SELECT COUNT(*) FROM tb_bbs_category c
+                 WHERE c.bbs_master_id = m.bbs_master_id AND c.delete_yn = 'N') AS category_count
+        FROM tb_bbs_master m
+        LEFT JOIN tb_site s ON s.site_id = m.site_id
+        <include refid="admWhere"/>
+        ORDER BY s.sort_order, m.bbs_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_master m
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.board.dto.BbsMasterAdmDto">
+        SELECT <include refid="cols"/>, s.site_name, mn.menu_name
+        FROM tb_bbs_master m
+        LEFT JOIN tb_site s ON s.site_id = m.site_id
+        LEFT JOIN tb_menu mn ON mn.menu_id = m.menu_id
+        WHERE m.bbs_master_id = #{bbsMasterId} AND m.delete_yn = 'N'
+    </select>
+
+    <!-- 사용자 화면 진입점 — 사용 중지된 게시판은 열리지 않아야 한다 -->
+    <select id="findByCode" resultType="com.gonet.primary.board.dto.BbsMasterAdmDto">
+        SELECT <include refid="cols"/>
+        FROM tb_bbs_master m
+        WHERE m.site_id = #{siteId} AND m.bbs_code = #{bbsCode}
+          AND m.use_yn = 'Y' AND m.delete_yn = 'N'
+    </select>
+
+    <select id="countByCode" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_master
+        WHERE site_id = #{siteId} AND bbs_code = #{bbsCode} AND delete_yn = 'N'
+        <if test="excludeId != null">AND bbs_master_id &lt;&gt; #{excludeId}</if>
+    </select>
+
+    <select id="countArticles" resultType="int">
+        SELECT COUNT(*) FROM tb_bbs_article
+        WHERE bbs_master_id = #{bbsMasterId} AND delete_yn = 'N'
+    </select>
+
+    <!--
+      통합 게시판 후보 — 이미 통합인 게시판은 제외한다(중첩 금지).
+      단 수정 중인 자기 자신은 포함한다: 자기 글도 함께 보여주는 구성을 허용하기 때문.
+    -->
+    <select id="findGroupCandidates" resultType="com.gonet.primary.board.dto.BbsMasterAdmDto">
+        SELECT bbs_master_id, bbs_code, bbs_name, bbs_type
+        FROM tb_bbs_master
+        WHERE delete_yn = 'N' AND use_yn = 'Y'
+        <if test="siteId != null and siteId != ''">AND site_id = #{siteId}</if>
+          AND (grouped_board_ids IS NULL OR grouped_board_ids = ''
+        <if test="selfId != null">OR bbs_master_id = #{selfId}</if>
+              )
+        ORDER BY bbs_code
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.board.dto.BbsMasterAdmDto">
+        INSERT INTO tb_bbs_master
+            (bbs_master_id, site_id, site_code, menu_id, bbs_code, bbs_name, bbs_type,
+             comment_yn, file_yn, file_count_max, file_size_max, anonymous_yn, notice_top_yn,
+             html_yn, captcha_yn, read_auth, write_auth, download_auth,
+             grouped_board_ids, description, use_yn,
+             created_by, created_ip, updated_by, updated_ip)
+        VALUES
+            (#{bbsMasterId}, #{siteId}, #{siteCode}, #{menuId}, #{bbsCode}, #{bbsName}, #{bbsType},
+             #{commentYn}, #{fileYn}, #{fileCountMax}, #{fileSizeMax}, #{anonymousYn}, #{noticeTopYn},
+             #{htmlYn}, #{captchaYn}, #{readAuth}, #{writeAuth}, #{downloadAuth},
+             #{groupedBoardIds}, #{description}, #{useYn},
+             #{createdBy}, #{createdIp}, #{updatedBy}, #{updatedIp})
+    </insert>
+
+    <!--
+      menu_id·grouped_board_ids·description 은 무조건 세팅한다 — 연결 해제·통합 해제·
+      메모 비우기가 모두 "비우는 것이 기능" 이다(conventions §4.5).
+    -->
+    <update id="update" parameterType="com.gonet.primary.board.dto.BbsMasterAdmDto">
+        UPDATE tb_bbs_master
+        SET
+            <if test="siteId != null and siteId != ''">site_id = #{siteId},</if>
+            <if test="siteCode != null and siteCode != ''">site_code = #{siteCode},</if>
+            <if test="bbsCode != null and bbsCode != ''">bbs_code = #{bbsCode},</if>
+            <if test="bbsName != null and bbsName != ''">bbs_name = #{bbsName},</if>
+            <if test="bbsType != null and bbsType != ''">bbs_type = #{bbsType},</if>
+            <if test="commentYn != null and commentYn != ''">comment_yn = #{commentYn},</if>
+            <if test="fileYn != null and fileYn != ''">file_yn = #{fileYn},</if>
+            <if test="fileCountMax != null">file_count_max = #{fileCountMax},</if>
+            <if test="fileSizeMax != null">file_size_max = #{fileSizeMax},</if>
+            <if test="anonymousYn != null and anonymousYn != ''">anonymous_yn = #{anonymousYn},</if>
+            <if test="noticeTopYn != null and noticeTopYn != ''">notice_top_yn = #{noticeTopYn},</if>
+            <if test="htmlYn != null and htmlYn != ''">html_yn = #{htmlYn},</if>
+            <if test="captchaYn != null and captchaYn != ''">captcha_yn = #{captchaYn},</if>
+            <if test="readAuth != null and readAuth != ''">read_auth = #{readAuth},</if>
+            <if test="writeAuth != null and writeAuth != ''">write_auth = #{writeAuth},</if>
+            <if test="downloadAuth != null and downloadAuth != ''">download_auth = #{downloadAuth},</if>
+            <if test="useYn != null and useYn != ''">use_yn = #{useYn},</if>
+            menu_id = #{menuId},
+            grouped_board_ids = #{groupedBoardIds},
+            description = #{description},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE bbs_master_id = #{bbsMasterId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_bbs_master
+        SET delete_yn = 'Y', use_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE bbs_master_id = #{bbsMasterId}
+    </update>
+
+    <!--
+      다운로드 권한 cascade — 마스터 정책을 소속 글의 파일그룹으로 내린다.
+      · notice_yn='Y' 제외: 공지 첨부는 ANONYMOUS 고정이라 함께 조이면 안 된다
+      · 삭제된 글도 제외: 되살릴 때 그 시점 정책을 다시 받는 편이 안전하다
+      · 이미 같은 값인 행은 건드리지 않는다(updated_at 이 무의미하게 갱신되는 것 방지)
+    -->
+    <update id="cascadeDownloadAuth">
+        UPDATE tb_file_group g
+          JOIN tb_bbs_article a ON a.file_group_id = g.file_group_id
+        SET g.download_auth = #{downloadAuth},
+            g.updated_by = #{updatedBy}, g.updated_ip = #{updatedIp},
+            g.updated_at = CURRENT_TIMESTAMP
+        WHERE a.bbs_master_id = #{bbsMasterId}
+          AND a.notice_yn = 'N'
+          AND a.delete_yn = 'N'
+          AND g.delete_yn = 'N'
+          AND g.download_auth &lt;&gt; #{downloadAuth}
+    </update>
+
+</mapper>
