@@ -40,6 +40,9 @@ public class UrlAccessRule {
     private int priority;
     private String description;
 
+    /** 관리 화면 편집 대상 — 인가 판정은 활성 규칙만 읽으므로 여기선 표시·저장용이다. */
+    private String useYn;
+
     private Set<String> requiredRoleSet;
     private Set<String> requiredAuthSet;
     private Set<String> allowedUserTypeSet;

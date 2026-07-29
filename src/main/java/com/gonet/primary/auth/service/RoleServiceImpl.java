@@ -5,6 +5,9 @@ import com.gonet.common.util.Csv;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
 import com.gonet.config.datasource.MyBatisConfig;
+import com.gonet.common.web.PageRequest;
+import com.gonet.common.web.PageResult;
+import com.gonet.primary.auth.dto.RoleAdmDto;
 import com.gonet.primary.auth.dto.RoleEdge;
 import com.gonet.primary.auth.dto.RoleNode;
 import com.gonet.primary.auth.dto.RoleRebuildResult;
@@ -15,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +47,9 @@ public class RoleServiceImpl extends AbstractCmsService implements RoleService {
     /** 배치 INSERT 분할 크기 — 단일 문장 길이 폭주 방지. */
     private static final int CHUNK = 500;
 
+    /** Spring Security 권한 문자열 규약 — hasRole 이 ROLE_ 접두어를 전제한다. */
+    private static final Pattern ROLE_CODE_PATTERN = Pattern.compile("^ROLE_[A-Z0-9_]{1,44}$");
+
     private final RoleMapper roleMapper;
 
     /** 쓰기 — writable override (트랜잭션 함정 규약). 재전개는 delete+insert 원자 처리. */
@@ -67,6 +74,67 @@ public class RoleServiceImpl extends AbstractCmsService implements RoleService {
         log.info("역할 계층 재전개 완료 — 역할 {} · closure {} · 관리자 갱신 {} · 회원 갱신 {}",
                 result.roles(), result.edges(), result.adminsFixed(), result.membersFixed());
         return result;
+    }
+
+    /* ── 관리 CRUD (P7-3) ───────────────────────────────────────────────── */
+
+    @Override
+    public PageResult<RoleAdmDto> getAdmPage(PageRequest cond) {
+        return new PageResult<>(roleMapper.findPage(cond), roleMapper.countPage(cond),
+                cond.getPage(), cond.getSize());
+    }
+
+    @Override
+    public RoleAdmDto getAdm(String roleId) {
+        return roleMapper.findAdmById(roleId);
+    }
+
+    @Override
+    public List<RoleAdmDto> getAllForSelect() {
+        return roleMapper.findAllForSelect();
+    }
+
+    /** 쓰기 — writable override. 저장 후 재전개까지 한 트랜잭션에서 끝낸다. */
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public String saveAdm(RoleAdmDto role) {
+        String code = role.getRoleCode();
+        if (code == null || !ROLE_CODE_PATTERN.matcher(code).matches()) {
+            throw new IllegalArgumentException(
+                    "역할 코드는 ROLE_ 로 시작하는 영문 대문자·숫자·밑줄이어야 합니다 (예: ROLE_EDITOR).");
+        }
+        if (role.getRoleName() == null || role.getRoleName().isBlank()) {
+            throw new IllegalArgumentException("역할 이름은 필수입니다.");
+        }
+        if (roleMapper.countByCode(code, role.getRoleId()) > 0) {
+            throw new IllegalArgumentException("이미 사용 중인 역할 코드입니다: " + code);
+        }
+        if (role.getRoleId() != null && role.getRoleId().equals(role.getParentRoleId())) {
+            throw new IllegalArgumentException("자기 자신을 상위 역할로 지정할 수 없습니다.");
+        }
+
+        if (role.getRoleId() == null || role.getRoleId().isBlank()) {
+            role.setRoleId(Uid.next(UidPrefix.ROL));
+            roleMapper.insert(role);
+        } else {
+            roleMapper.update(role);
+        }
+        // 계층이 바뀌었을 수 있다 — closure 와 계정 CSV 를 지금 맞춘다.
+        // RoleClosure 가 순환을 예외로 드러내므로 잘못된 계층은 여기서 롤백된다.
+        rebuildHierarchy();
+        return role.getRoleId();
+    }
+
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public void deleteAdm(String roleId) {
+        int references = roleMapper.countReferences(roleId);
+        if (references > 0) {
+            throw new IllegalArgumentException(
+                    "계정·하위 역할·URL 규칙 " + references + "건이 이 역할을 참조 중이라 삭제할 수 없습니다.");
+        }
+        roleMapper.softDelete(roleId);
+        rebuildHierarchy();
     }
 
     /**

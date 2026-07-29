@@ -56,6 +56,89 @@
         ORDER BY member_id ASC
     </select>
 
+    <!-- ══ 관리 CRUD (P7-3) ═══════════════════════════════════════════════ -->
+    <sql id="admWhere">
+        WHERE r.delete_yn = 'N'
+        <if test="keyword != null">
+            AND (r.role_code LIKE CONCAT('%', #{keyword}, '%')
+              OR r.role_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="findPage" resultType="com.gonet.primary.auth.dto.RoleAdmDto">
+        SELECT r.role_id, r.site_id, r.site_code, r.parent_role_id, r.role_code,
+               r.role_name, r.description, r.sort_order, r.use_yn,
+               p.role_name AS parent_role_name,
+               (SELECT COUNT(*) FROM tb_role_hierarchy h
+                 WHERE h.ancestor_role_id = r.role_id AND h.depth &gt; 0) AS descendant_count,
+               (SELECT COUNT(*) FROM tb_admin_role ar
+                 WHERE ar.role_id = r.role_id AND ar.delete_yn = 'N') AS admin_count
+        FROM tb_role r
+        LEFT JOIN tb_role p ON p.role_id = r.parent_role_id
+        <include refid="admWhere"/>
+        ORDER BY r.sort_order, r.role_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_role r
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findAdmById" resultType="com.gonet.primary.auth.dto.RoleAdmDto">
+        SELECT role_id, site_id, site_code, parent_role_id, role_code, role_name,
+               description, sort_order, use_yn
+        FROM tb_role
+        WHERE role_id = #{roleId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByCode" resultType="int">
+        SELECT COUNT(*) FROM tb_role
+        WHERE role_code = #{roleCode} AND delete_yn = 'N'
+        <if test="excludeId != null">AND role_id &lt;&gt; #{excludeId}</if>
+    </select>
+
+    <!-- 관리자 매핑 + 하위 역할 + URL 규칙에서의 참조를 모두 센다 -->
+    <select id="countReferences" resultType="int">
+        SELECT (SELECT COUNT(*) FROM tb_admin_role ar
+                 WHERE ar.role_id = #{roleId} AND ar.delete_yn = 'N')
+             + (SELECT COUNT(*) FROM tb_role c
+                 WHERE c.parent_role_id = #{roleId} AND c.delete_yn = 'N')
+             + (SELECT COUNT(*) FROM tb_role_url_access u
+                 WHERE u.delete_yn = 'N'
+                   AND FIND_IN_SET(#{roleId}, REPLACE(IFNULL(u.required_roles, ''), ' ', '')) &gt; 0)
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.auth.dto.RoleAdmDto">
+        INSERT INTO tb_role
+            (role_id, site_id, site_code, parent_role_id, role_code, role_name,
+             description, sort_order, use_yn)
+        VALUES
+            (#{roleId}, #{siteId}, #{siteCode}, #{parentRoleId}, #{roleCode}, #{roleName},
+             #{description}, #{sortOrder}, #{useYn})
+    </insert>
+
+    <update id="update" parameterType="com.gonet.primary.auth.dto.RoleAdmDto">
+        UPDATE tb_role
+        SET site_id = #{siteId}, site_code = #{siteCode},
+            parent_role_id = #{parentRoleId}, role_code = #{roleCode},
+            role_name = #{roleName}, description = #{description},
+            sort_order = #{sortOrder}, use_yn = #{useYn}
+        WHERE role_id = #{roleId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_role SET delete_yn = 'Y', use_yn = 'N'
+        WHERE role_id = #{roleId}
+    </update>
+
+    <select id="findAllForSelect" resultType="com.gonet.primary.auth.dto.RoleAdmDto">
+        SELECT role_id, role_code, role_name, parent_role_id, sort_order
+        FROM tb_role
+        WHERE use_yn = 'Y' AND delete_yn = 'N'
+        ORDER BY sort_order, role_code
+    </select>
+
     <update id="updateMemberRoleIds">
         UPDATE tb_member
         SET role_ids = #{roleIds}

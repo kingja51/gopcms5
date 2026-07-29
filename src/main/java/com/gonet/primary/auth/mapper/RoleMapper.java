@@ -1,5 +1,7 @@
 package com.gonet.primary.auth.mapper;
 
+import com.gonet.common.web.PageRequest;
+import com.gonet.primary.auth.dto.RoleAdmDto;
 import com.gonet.primary.auth.dto.RoleEdge;
 import com.gonet.primary.auth.dto.RoleNode;
 import com.gonet.primary.auth.dto.UserRoleRow;
@@ -33,4 +35,26 @@ public interface RoleMapper {
     List<UserRoleRow> findMemberRoleCsv();
 
     int updateMemberRoleIds(@Param("userId") String userId, @Param("roleIds") String roleIds);
+
+    /* ── 관리 CRUD (P7-3) ───────────────────────────────────────────────── */
+
+    List<RoleAdmDto> findPage(PageRequest cond);
+
+    int countPage(PageRequest cond);
+
+    RoleAdmDto findAdmById(@Param("roleId") String roleId);
+
+    int countByCode(@Param("roleCode") String roleCode, @Param("excludeId") String excludeId);
+
+    /** 이 역할을 참조하는 계정·규칙 수 — 0 이어야 삭제 가능. */
+    int countReferences(@Param("roleId") String roleId);
+
+    int insert(RoleAdmDto role);
+
+    int update(RoleAdmDto role);
+
+    int softDelete(@Param("roleId") String roleId);
+
+    /** 선택 목록용 — 활성 역할 (id, code, name) */
+    List<RoleAdmDto> findAllForSelect();
 }

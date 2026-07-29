@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!-- URL 접근 규칙 목록 — 표에 보이는 순서가 곧 실제 평가 순서다(첫 매칭이 결정). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>URL 접근 규칙</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('URL 접근 규칙',
+            '인가의 유일한 원천입니다. 위에서부터 훑어 <b>첫 매칭 규칙이 결정</b>하고, 어디에도 걸리지 않으면 차단합니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <div class="krds-alert krds-alert-warning" role="alert" style="margin-bottom:16px">
+        <span aria-hidden="true">!</span>
+        <p>새 화면(URL)을 만들면 규칙도 함께 등록해야 열립니다. 최후 규칙(<code>/**</code>)을
+            지우면 로그인 화면까지 닫히니 주의하세요.</p>
+    </div>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form th:action="@{/adm/url-access}" method="get" class="ladm-search" role="search">
+                <label class="sr-only" for="keyword">검색어</label>
+                <input id="keyword" name="keyword" class="krds-input" th:value="${cond?.keyword}"
+                       placeholder="패턴·유형·설명 검색"/>
+                <button type="submit" class="krds-btn krds-btn-secondary">검색</button>
+            </form>
+            <span class="grow"></span>
+            <form th:action="@{/adm/url-access/evict}" method="post" style="margin:0">
+                <button type="submit" class="krds-btn krds-btn-tertiary">캐시 비우기</button>
+            </form>
+            <a th:href="@{/adm/url-access/form}" class="krds-btn krds-btn-primary">등록</a>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">URL 접근 규칙 — 평가 순서대로</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="num">순위</th>
+                    <th scope="col">URL 패턴</th>
+                    <th scope="col">메서드</th>
+                    <th scope="col">접근 유형</th>
+                    <th scope="col">사용자 유형</th>
+                    <th scope="col">사이트</th>
+                    <th scope="col">설명</th>
+                    <th scope="col" class="center">사용</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${page.content()}">
+                    <td class="num" th:text="${r.priority}">100</td>
+                    <td><a th:href="@{/adm/url-access/form(urlAccessId=${r.urlAccessId})}"
+                           class="krds-link"><code th:text="${r.urlPattern}">/adm/**</code></a></td>
+                    <td class="text-fg-subtle" th:text="${r.httpMethod}">ALL</td>
+                    <td>
+                        <span class="krds-badge"
+                              th:classappend="${r.accessType == 'DENY'} ? 'ladm-badge-off' : 'ladm-badge-on'"
+                              th:text="${r.accessType}">ROLE</span>
+                    </td>
+                    <td class="text-fg-subtle" th:text="${r.allowedUserTypes} ?: '무관'">-</td>
+                    <td class="text-fg-subtle" th:text="${r.siteCode} ?: '전역'">전역</td>
+                    <td class="text-fg-subtle" th:text="${r.description} ?: '-'">-</td>
+                    <td class="center">
+                        <span th:replace="~{adm/fragments/adm-ui :: useBadge(${r.useYn})}"></span>
+                    </td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(8, ${page.content().isEmpty()}, '/adm/url-access/form')}"></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <nav th:replace="~{adm/fragments/adm-ui :: pager('/adm/url-access')}"></nav>
+</div>
+</body>
+</html>

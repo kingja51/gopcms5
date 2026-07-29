@@ -23,6 +23,83 @@
                  url_access_id ASC
     </select>
 
+    <!-- ══ 관리 CRUD (P7-3) ═══════════════════════════════════════════════
+         목록은 use_yn 무관(중지 규칙도 관리 대상)이고, 정렬은 인가 평가 순서와 같게 둔다 —
+         화면에서 보는 순서가 곧 판정 순서여야 오해가 없다. -->
+    <sql id="admWhere">
+        WHERE r.delete_yn = 'N'
+        <if test="keyword != null">
+            AND (r.url_pattern  LIKE CONCAT('%', #{keyword}, '%')
+              OR r.description  LIKE CONCAT('%', #{keyword}, '%')
+              OR r.access_type  LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="findPage" resultType="com.gonet.primary.auth.dto.UrlAccessRule">
+        SELECT r.url_access_id, r.site_id, r.site_code, r.url_pattern, r.http_method,
+               r.access_type, r.required_roles, r.required_auths, r.allowed_user_types,
+               r.allowed_ips, r.require_csrf_yn, r.require_2fa_yn, r.priority,
+               r.description, r.use_yn
+        FROM tb_role_url_access r
+        <include refid="admWhere"/>
+        ORDER BY r.priority ASC, (r.site_id IS NULL) ASC,
+                 CHAR_LENGTH(r.url_pattern) DESC, r.url_access_id ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM tb_role_url_access r
+        <include refid="admWhere"/>
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.auth.dto.UrlAccessRule">
+        SELECT url_access_id, site_id, site_code, url_pattern, http_method, access_type,
+               required_roles, required_auths, allowed_user_types, allowed_ips,
+               require_csrf_yn, require_2fa_yn, priority, description, use_yn
+        FROM tb_role_url_access
+        WHERE url_access_id = #{urlAccessId} AND delete_yn = 'N'
+    </select>
+
+    <select id="countByPattern" resultType="int">
+        SELECT COUNT(*) FROM tb_role_url_access
+        WHERE url_pattern = #{urlPattern}
+          AND http_method = #{httpMethod}
+          AND delete_yn = 'N'
+        <choose>
+            <when test="siteId != null">AND site_id = #{siteId}</when>
+            <otherwise>AND site_id IS NULL</otherwise>
+        </choose>
+        <if test="excludeId != null">AND url_access_id &lt;&gt; #{excludeId}</if>
+    </select>
+
+    <insert id="insert" parameterType="com.gonet.primary.auth.dto.UrlAccessRule">
+        INSERT INTO tb_role_url_access
+            (url_access_id, site_id, site_code, url_pattern, http_method, access_type,
+             required_roles, required_auths, allowed_user_types, allowed_ips,
+             require_csrf_yn, require_2fa_yn, priority, description, use_yn)
+        VALUES
+            (#{urlAccessId}, #{siteId}, #{siteCode}, #{urlPattern}, #{httpMethod}, #{accessType},
+             #{requiredRoles}, #{requiredAuths}, #{allowedUserTypes}, #{allowedIps},
+             #{requireCsrfYn}, #{require2faYn}, #{priority}, #{description}, #{useYn})
+    </insert>
+
+    <update id="update" parameterType="com.gonet.primary.auth.dto.UrlAccessRule">
+        UPDATE tb_role_url_access
+        SET site_id = #{siteId}, site_code = #{siteCode},
+            url_pattern = #{urlPattern}, http_method = #{httpMethod},
+            access_type = #{accessType}, required_roles = #{requiredRoles},
+            required_auths = #{requiredAuths}, allowed_user_types = #{allowedUserTypes},
+            allowed_ips = #{allowedIps}, require_csrf_yn = #{requireCsrfYn},
+            require_2fa_yn = #{require2faYn}, priority = #{priority},
+            description = #{description}, use_yn = #{useYn}
+        WHERE url_access_id = #{urlAccessId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_role_url_access SET delete_yn = 'Y', use_yn = 'N'
+        WHERE url_access_id = #{urlAccessId}
+    </update>
+
     <select id="findAuthIdsByRoleIds" resultType="string">
         SELECT DISTINCT ra.auth_id
         FROM tb_role_auth ra

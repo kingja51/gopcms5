@@ -264,7 +264,9 @@ BoardApiController ┘      └ BoardServiceImpl extends AbstractCmsService(→E
 1. 컨트롤러 매핑을 추가한다 (`{도메인}{Usr|Adm|Api}Controller` — §4).
 2. 같은 커밋의 마이그레이션에 규칙 INSERT 를 넣는다. 콘솔 수기 INSERT 금지(CLAUDE.md).
    기존 규칙보다 **구체적인 패턴은 더 작은 priority** 를 줘야 상위 `/**` 에 먹히지 않는다.
-3. 규칙 편집을 무재기동 반영하려면 `UrlAccessService.evictCache()` (캐시 TTL 5분).
+   운영 중 조정은 **관리 화면(`/adm/url-access`)** 에서 한다 — 저장 시 캐시가 비워져
+   다음 요청부터 반영된다(마이그레이션은 배포 기준선, 화면은 운영 조정).
+3. DB 를 직접 고쳤다면 `/adm/url-access` 의 "캐시 비우기"(= `UrlAccessService.evictCache()`).
 4. 검증: 익명·회원·관리자 3주체로 각각 호출해 기대 코드(200 / 302 로그인 / 403)를 확인한다.
    `http/01-front-smoke.http` 의 "인가 계약" 절에 케이스를 추가한다.
 

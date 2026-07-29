@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<!-- URL 접근 규칙 등록·수정 — 잘못 저장하면 화면이 통째로 닫히거나 열린다.
+     타입별 필수값은 서버가 막지만, 여기서도 무엇이 필요한지 문구로 안내한다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>URL 접근 규칙 등록·수정</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('URL 접근 규칙 등록·수정',
+            '순위가 낮을수록 먼저 평가되고, 먼저 걸린 규칙에서 판정이 끝납니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <section class="ladm-panel" style="max-width:860px">
+        <div class="ladm-panel-body">
+            <form th:action="@{/adm/url-access/save}" method="post" class="ladm-form">
+                <input type="hidden" name="urlAccessId" th:value="${rule.urlAccessId}"/>
+
+                <fieldset class="ladm-fieldset">
+                    <legend class="text-heading-2xs">대상</legend>
+                    <div class="ladm-form-row">
+                        <div class="ladm-field">
+                            <label for="urlPattern" class="text-label-md">URL 패턴<span
+                                    class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
+                            <input id="urlPattern" name="urlPattern" class="krds-input" required
+                                   th:value="${rule.urlPattern}" placeholder="/adm/**"/>
+                            <p class="ladm-hint text-body-xs">
+                                Ant 표기 — <code>*</code> 는 한 세그먼트, <code>**</code> 는 하위 전체.
+                                예: <code>/*/member/**</code></p>
+                        </div>
+                        <div class="ladm-field">
+                            <label for="httpMethod" class="text-label-md">HTTP 메서드</label>
+                            <select id="httpMethod" name="httpMethod" class="krds-select">
+                                <option th:each="m : ${httpMethods}" th:value="${m}"
+                                        th:selected="${m == rule.httpMethod}" th:text="${m}">ALL</option>
+                            </select>
+                            <p class="ladm-hint text-body-xs">ALL = 메서드 무관. 조회는 공개·쓰기는 인증처럼 나눌 때 씁니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="ladm-form-row">
+                        <div class="ladm-field">
+                            <label for="siteId" class="text-label-md">적용 사이트</label>
+                            <select id="siteId" name="siteId" class="krds-select">
+                                <option value="">전역 — 모든 사이트</option>
+                                <option th:each="s : ${sites}" th:value="${s.siteId}"
+                                        th:selected="${s.siteId == rule.siteId}"
+                                        th:text="${s.siteCode + ' — ' + s.siteName}">site</option>
+                            </select>
+                            <p class="ladm-hint text-body-xs">사이트 규칙은 같은 순위의 전역 규칙보다 먼저 적용됩니다.</p>
+                        </div>
+                        <div class="ladm-field">
+                            <label for="priority" class="text-label-md">평가 순위</label>
+                            <input id="priority" name="priority" type="number" class="krds-input"
+                                   th:value="${rule.priority}"/>
+                            <p class="ladm-hint text-body-xs">작을수록 먼저. 구체적인 패턴에 더 작은 값을 주세요.</p>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="ladm-fieldset">
+                    <legend class="text-heading-2xs">판정</legend>
+                    <div class="ladm-form-row">
+                        <div class="ladm-field">
+                            <label for="accessType" class="text-label-md">접근 유형<span
+                                    class="ladm-req" aria-hidden="true">*</span><span class="sr-only">필수</span></label>
+                            <select id="accessType" name="accessType" class="krds-select" required>
+                                <option th:each="t : ${accessTypes}" th:value="${t}"
+                                        th:selected="${t == rule.accessType}" th:text="${t}">ROLE</option>
+                            </select>
+                            <p class="ladm-hint text-body-xs">
+                                PERMIT_ALL 공개 · AUTHENTICATED 로그인 필요 · ROLE 특정 역할 ·
+                                IP_ONLY 허용 IP · DENY 차단</p>
+                        </div>
+                        <div class="ladm-field">
+                            <label for="allowedUserTypes" class="text-label-md">허용 사용자 유형</label>
+                            <input id="allowedUserTypes" name="allowedUserTypes" class="krds-input"
+                                   th:value="${rule.allowedUserTypes}" placeholder="ADMIN 또는 MEMBER"/>
+                            <p class="ladm-hint text-body-xs">비우면 유형 무관. 쉼표로 여러 개(예: ADMIN,EMPLOYEE).</p>
+                        </div>
+                    </div>
+
+                    <div class="ladm-field">
+                        <label class="text-label-md" for="requiredRoles">허용 역할 <span
+                                class="text-fg-subtle">(접근 유형 = ROLE 일 때)</span></label>
+                        <select id="requiredRoles" name="requiredRoles" class="krds-select">
+                            <option value="">선택 안 함</option>
+                            <option th:each="r : ${roles}" th:value="${r.roleId}"
+                                    th:selected="${r.roleId == rule.requiredRoles}"
+                                    th:text="${r.roleCode + ' — ' + r.roleName}">ROLE_ADMIN</option>
+                        </select>
+                        <p class="ladm-hint text-body-xs">
+                            상위 역할을 가진 계정은 자동으로 통과합니다(계층 전개 결과와 교집합으로 판정).</p>
+                    </div>
+
+                    <div class="ladm-form-row">
+                        <div class="ladm-field">
+                            <label for="allowedIps" class="text-label-md">허용 IP <span
+                                    class="text-fg-subtle">(IP_ONLY 일 때)</span></label>
+                            <input id="allowedIps" name="allowedIps" class="krds-input"
+                                   th:value="${rule.allowedIps}" placeholder="127.0.0.1,10.0.0.0/8"/>
+                        </div>
+                        <div class="ladm-field">
+                            <label for="requiredAuths" class="text-label-md">필요 권한 ID <span
+                                    class="text-fg-subtle">(AUTH 일 때)</span></label>
+                            <input id="requiredAuths" name="requiredAuths" class="krds-input"
+                                   th:value="${rule.requiredAuths}" placeholder="AUT_… ,AUT_…"/>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="ladm-fieldset">
+                    <legend class="text-heading-2xs">기타</legend>
+                    <div class="ladm-field">
+                        <label for="description" class="text-label-md">설명</label>
+                        <input id="description" name="description" class="krds-input"
+                               th:value="${rule.description}" placeholder="이 규칙이 무엇을 지키는지"/>
+                    </div>
+                    <div class="ladm-form-row">
+                        <div class="ladm-field">
+                            <label for="require2faYn" class="text-label-md">2단계 인증 요구</label>
+                            <select id="require2faYn" name="require2faYn" class="krds-select">
+                                <option value="N" th:selected="${rule.require2faYn == 'N'}">아니오</option>
+                                <option value="Y" th:selected="${rule.require2faYn == 'Y'}">예 (예약 — 미구현)</option>
+                            </select>
+                        </div>
+                        <div class="ladm-field">
+                            <label for="useYn" class="text-label-md">상태</label>
+                            <select id="useYn" name="useYn" class="krds-select">
+                                <option value="Y" th:selected="${rule.useYn == 'Y'}">사용</option>
+                                <option value="N" th:selected="${rule.useYn == 'N'}">중지</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" name="requireCsrfYn" th:value="${rule.requireCsrfYn} ?: 'Y'"/>
+                    <input type="hidden" name="siteCode" th:value="${rule.siteCode}"/>
+                </fieldset>
+
+                <div class="ladm-actions">
+                    <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+                    <a th:href="@{/adm/url-access}" class="krds-btn krds-btn-secondary">목록</a>
+                    <span class="grow"></span>
+                    <button type="submit" th:if="${rule.urlAccessId}"
+                            th:formaction="@{/adm/url-access/delete}" formnovalidate
+                            class="krds-btn krds-btn-point"
+                            data-confirm="이 규칙을 삭제할까요? 이 경로가 어느 규칙에도 걸리지 않으면 차단됩니다.">삭제</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+</body>
+</html>

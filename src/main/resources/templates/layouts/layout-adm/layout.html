@@ -68,7 +68,10 @@
 
         <p class="ladm-lnb-group text-label-xs">회원·권한</p>
         <span class="ladm-lnb-link text-body-sm ladm-disabled">회원 관리 <em class="text-label-xs">예정</em></span>
-        <span class="ladm-lnb-link text-body-sm ladm-disabled">역할·권한 <em class="text-label-xs">예정</em></span>
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/role}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/role')} ? 'ladm-active'">역할 관리</a>
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/url-access}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/url-access')} ? 'ladm-active'">URL 접근 규칙</a>
 
         <p class="ladm-lnb-group text-label-xs">운영</p>
         <span class="ladm-lnb-link text-body-sm ladm-disabled">접속 로그 <em class="text-label-xs">예정</em></span>
