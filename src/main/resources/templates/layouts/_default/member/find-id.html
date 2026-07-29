@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- 아이디 찾기 — 결과가 있든 없든 같은 화면으로 돌아온다(계정 존재 노출 방지). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="'아이디 찾기 — ' + ${site != null ? site.siteName : ''}">아이디 찾기</title>
+    <link rel="stylesheet" href="/css/board.css"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <header class="bbs-head">
+        <h1 class="text-heading-lg">아이디 찾기</h1>
+        <p class="text-body-md text-fg-subtle">
+            가입할 때 등록한 이름과 이메일을 입력해 주세요.</p>
+    </header>
+
+    <!-- 찾았을 때만 결과를 보여준다. 못 찾은 경우는 안내 문구가 같아야 하므로
+         "일치하는 계정이 없습니다" 를 따로 쓰지 않는다 -->
+    <div th:if="${searched}" class="krds-alert" role="status"
+         th:classappend="${maskedLoginId != null} ? 'krds-alert-success' : 'krds-alert-info'"
+         style="max-width:640px;margin:0 auto 24px">
+        <span aria-hidden="true" th:text="${maskedLoginId != null} ? '✓' : 'i'">i</span>
+        <p th:if="${maskedLoginId != null}">
+            회원님의 아이디는 <b th:text="${maskedLoginId}">abc***</b> 입니다.
+        </p>
+        <p th:unless="${maskedLoginId != null}">
+            입력하신 정보와 일치하는 계정이 있다면 아이디를 보여 드립니다.
+            정보를 다시 확인해 주세요.
+        </p>
+    </div>
+
+    <form method="post" class="bbs-form"
+          th:action="@{'/' + ${site.siteCode} + '/member/find-id'}">
+        <div class="bbs-form-row">
+            <label class="bbs-form-label" for="memberName">이름</label>
+            <input id="memberName" name="memberName" class="krds-input" required maxlength="50"/>
+        </div>
+        <div class="bbs-form-row">
+            <label class="bbs-form-label" for="email">이메일</label>
+            <input id="email" name="email" type="email" class="krds-input" required maxlength="255"/>
+        </div>
+        <div class="bbs-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">아이디 찾기</button>
+            <a th:href="@{'/login'(siteCode=${site.siteCode})}"
+               class="krds-btn krds-btn-secondary">로그인으로</a>
+        </div>
+    </form>
+
+</main>
+</body>
+</html>

@@ -23,6 +23,9 @@ public interface MemberMapper {
      */
     int countByEmailHash(@Param("siteId") String siteId, @Param("emailHash") String emailHash);
 
+    /** 아이디 찾기 — 이메일 해시로 후보를 찾는다(이메일은 사이트 안에서 유일). */
+    MemberDto findByEmailHash(@Param("siteId") String siteId, @Param("emailHash") String emailHash);
+
     /** 본인확인 중복가입 차단 — 같은 사람이 한 사이트에 두 계정을 만들 수 없다. */
     int countByDiHash(@Param("siteId") String siteId, @Param("diHash") String diHash);
 

@@ -119,6 +119,14 @@
         WHERE site_id = #{siteId} AND email_hash = #{emailHash} AND delete_yn = 'N'
     </select>
 
+    <!-- 활성 계정만 — 탈퇴·휴면 계정의 아이디를 알려 줄 이유가 없다 -->
+    <select id="findByEmailHash" resultMap="memberMap">
+        SELECT * FROM tb_member
+        WHERE site_id = #{siteId} AND email_hash = #{emailHash}
+          AND delete_yn = 'N' AND status = 'ACTIVE'
+        LIMIT 1
+    </select>
+
     <select id="countByDiHash" resultType="int">
         SELECT COUNT(*) FROM tb_member
         WHERE site_id = #{siteId} AND di_hash = #{diHash} AND delete_yn = 'N'

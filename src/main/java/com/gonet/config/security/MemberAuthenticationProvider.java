@@ -42,6 +42,7 @@ public class MemberAuthenticationProvider implements AuthenticationProvider {
     private final ClientIpResolver clientIpResolver;
     private final LoginHistoryRecorder historyRecorder;
     private final CaptchaService captchaService;
+    private final LoginTiming loginTiming;
 
     @Override
     public Authentication authenticate(Authentication authentication)
@@ -56,6 +57,7 @@ public class MemberAuthenticationProvider implements AuthenticationProvider {
         SiteContext site = siteCode == null || siteCode.isBlank()
                 ? siteService.getDefaultSiteContext() : siteService.getSiteContext(siteCode);
         if (site == null) {
+            loginTiming.burn(rawPassword);
             historyRecorder.failure("MEMBER", null, loginId, null, siteCode,
                     LoginHistory.FAIL_NOT_FOUND, "미해석 siteCode: " + siteCode);
             throw new BadCredentialsException(GENERIC_FAILURE);
@@ -64,6 +66,8 @@ public class MemberAuthenticationProvider implements AuthenticationProvider {
 
         LoginUser user = authService.findLoginUser("MEMBER", siteId, loginId);
         if (user == null) {
+            // 있는 계정과 같은 시간을 쓴다 — 응답 속도로 계정 존재가 새어 나가지 않게
+            loginTiming.burn(rawPassword);
             historyRecorder.failure("MEMBER", null, loginId, siteId, site.getSiteCode(),
                     LoginHistory.FAIL_NOT_FOUND, "사이트 내 존재하지 않는 회원 ID");
             throw new BadCredentialsException(GENERIC_FAILURE);

@@ -53,6 +53,7 @@ public class AdminAuthenticationProvider implements AuthenticationProvider {
     private final ClientIpResolver clientIpResolver;
     private final LoginHistoryRecorder historyRecorder;
     private final CaptchaService captchaService;
+    private final LoginTiming loginTiming;
     private final TotpService totpService;
     private final Aes256Gcm aes256Gcm;
 
@@ -65,6 +66,8 @@ public class AdminAuthenticationProvider implements AuthenticationProvider {
 
         LoginUser user = authService.findLoginUser("ADMIN", null, loginId);
         if (user == null) {
+            // 있는 계정과 같은 시간을 쓴다 — 응답 속도로 계정 존재가 새어 나가지 않게
+            loginTiming.burn(rawPassword);
             historyRecorder.failure("ADMIN", null, loginId, null, null,
                     LoginHistory.FAIL_NOT_FOUND, "존재하지 않는 관리자 로그인 ID");
             throw new BadCredentialsException(GENERIC_FAILURE);
