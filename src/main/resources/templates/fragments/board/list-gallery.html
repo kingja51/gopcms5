@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- 카드 목록 — 갤러리·영상. 첫 이미지를 썸네일로 쓰고, 없으면 자리표시자를 둔다
+     (이미지가 없다고 카드 높이가 들쭉날쭉하면 격자가 무너진다).
+     영상 게시판은 link_url 이 필수라 카드에 재생 표시를 덧붙인다. -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="body" class="bbs-cards">
+    <article class="bbs-card" th:each="a : ${page.content()}">
+        <a class="bbs-card-link" th:href="@{${boardBase} + '/' + ${a.articleId}}">
+            <span class="bbs-card-thumb">
+                <!-- 썸네일은 첨부 파일그룹의 첫 이미지 — 없으면 아이콘 자리표시자 -->
+                <img th:if="${a.thumbFileId != null}"
+                     th:src="@{'/file/' + ${a.thumbFileId} + '/thumb'}"
+                     alt="" loading="lazy"/>
+                <span th:unless="${a.thumbFileId != null}" class="bbs-card-noimg"
+                      aria-hidden="true" th:text="${master.bbsType == 'YOUTUBE'} ? '▶' : '🖼'">🖼</span>
+                <span th:if="${master.bbsType == 'YOUTUBE'}" class="bbs-card-play"
+                      aria-hidden="true">▶</span>
+            </span>
+            <span class="bbs-card-body">
+                <span class="bbs-card-title text-body-md" th:text="${a.title}">제목</span>
+                <span class="bbs-card-meta text-body-xs text-fg-subtle">
+                    <span th:text="${a.writerName}">작성자</span>
+                    <span th:if="${a.createdAtView != null}"
+                          th:text="' · ' + ${#temporals.format(a.createdAtView, 'yyyy-MM-dd')}"> · 날짜</span>
+                    <span th:text="' · 조회 ' + ${a.viewCount}"> · 조회</span>
+                </span>
+            </span>
+        </a>
+    </article>
+
+    <p th:if="${page.content().isEmpty()}" class="bbs-empty">등록된 자료가 없습니다.</p>
+</div>
+
+</body>
+</html>

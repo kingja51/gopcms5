@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     게시글 상세 — 공용 1벌.
+     · 본문은 html_yn 분기: 평문은 th:text(이스케이프), HTML 은 저장 시점 정화분 th:utext
+     · 비밀글은 readable=false 로 내려오며, 본문·댓글·첨부가 모두 비어 있다
+       (컨트롤러가 아예 담지 않는다 — 화면에서 감추는 방식은 소스 보기로 뚫린다)
+     · 좋아요/신고 밴드는 P9-4 조각 재사용
+     모델: master · article · readable · canManage · comments · attachedFiles · boardBase
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="${article.title} + ' — ' + ${master.bbsName}">제목</title>
+    <!-- 게시판 전용 CSS — Layout Dialect 가 레이아웃 <head> 에 병합한다.
+         7종 레이아웃을 각각 고치지 않아도 되고, 게시판 밖 페이지는 받지 않는다 -->
+    <link rel="stylesheet" href="/css/board.css"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <div th:replace="~{fragments/board/flash :: flash}"></div>
+
+    <article class="bbs-article">
+        <header class="bbs-article-head">
+            <p class="text-body-xs text-fg-subtle bbs-article-board" th:text="${master.bbsName}">게시판</p>
+            <h1 class="text-heading-lg">
+                <span th:if="${article.notice}" class="krds-badge bbs-badge-notice">공지</span>
+                <span th:if="${article.categoryName != null}" class="krds-tag"
+                      th:text="${article.categoryName}">분류</span>
+                <span th:text="${article.title}">제목</span>
+            </h1>
+            <p class="text-body-xs text-fg-subtle bbs-article-meta">
+                <span th:text="${article.writerName}">작성자</span>
+                <span th:if="${article.createdAtView != null}"
+                      th:text="' · ' + ${#temporals.format(article.createdAtView, 'yyyy-MM-dd HH:mm')}"> · 날짜</span>
+                <span th:text="' · 조회 ' + ${article.viewCount}"> · 조회</span>
+                <span th:if="${article.pressName != null}"
+                      th:text="' · ' + ${article.pressName}"> · 언론사</span>
+            </p>
+        </header>
+
+        <!-- 볼 수 없는 비밀글 — 본문 자리에 안내만 -->
+        <div th:unless="${readable}" class="krds-alert krds-alert-info bbs-secret" role="status">
+            <span aria-hidden="true">🔒</span>
+            <p>비밀글입니다. 작성자와 관리자만 볼 수 있습니다.</p>
+        </div>
+
+        <th:block th:if="${readable}">
+            <!-- 영상·보도자료의 원문 링크는 본문 위에 — 이 글의 목적이 그 링크다 -->
+            <p th:if="${article.linkUrl != null}" class="bbs-article-link">
+                <a th:href="${article.linkUrl}" target="_blank" rel="noopener noreferrer"
+                   class="krds-btn krds-btn-secondary krds-btn-sm">원문 보기 ↗</a>
+            </p>
+
+            <div class="bbs-article-body text-body-md"
+                 th:if="${master.htmlYn == 'Y'}" th:utext="${article.content}">본문</div>
+            <div class="bbs-article-body text-body-md bbs-plain"
+                 th:unless="${master.htmlYn == 'Y'}" th:text="${article.content}">본문</div>
+
+            <!-- 첨부 — 내려받기 권한은 서버가 판정한다(목록에 보인다고 열리는 것은 아니다) -->
+            <section class="bbs-files" th:if="${attachedFiles != null and !attachedFiles.isEmpty()}">
+                <h2 class="text-label-md">첨부파일</h2>
+                <ul>
+                    <li th:each="f : ${attachedFiles}">
+                        <a th:href="@{'/file/' + ${f.fileId}}" th:text="${f.originalName}">파일명</a>
+                        <span class="text-body-xs text-fg-subtle"
+                              th:text="'(' + ${#numbers.formatDecimal(f.sizeBytes / 1024.0, 1, 'COMMA', 0, 'POINT')} + ' KB)'">(0 KB)</span>
+                    </li>
+                </ul>
+            </section>
+
+            <div th:replace="~{fragments/reaction-band :: band('ARTICLE', ${article.articleId},
+                    ${article.likeCount}, ${site != null ? site.siteCode : null})}"></div>
+        </th:block>
+    </article>
+
+    <div class="bbs-actions">
+        <a th:href="@{${boardBase}}" class="krds-btn krds-btn-secondary krds-btn-sm">목록</a>
+        <th:block th:if="${canManage}">
+            <a th:href="@{${boardBase} + '/write'(articleId=${article.articleId})}"
+               class="krds-btn krds-btn-tertiary krds-btn-sm">수정</a>
+            <form method="post" th:action="@{${boardBase} + '/delete'}" style="display:inline">
+                <input type="hidden" name="articleId" th:value="${article.articleId}"/>
+                <button type="submit" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                        data-confirm="이 글을 삭제할까요?">삭제</button>
+            </form>
+        </th:block>
+    </div>
+
+    <!-- 댓글 — 게시판이 허용할 때만 -->
+    <section class="bbs-comments" th:if="${readable and master.commentYn == 'Y'}">
+        <h2 class="text-heading-sm">
+            댓글 <b th:text="${comments != null ? comments.size() : 0}">0</b>
+        </h2>
+
+        <ul class="bbs-comment-list">
+            <li th:each="c : ${comments}" class="bbs-comment"
+                th:classappend="${c.depth != null and c.depth > 1} ? 'bbs-comment-reply'">
+                <p class="bbs-comment-meta text-body-xs text-fg-subtle">
+                    <b class="text-body-sm" th:text="${c.writerName}">작성자</b>
+                    <span th:if="${c.createdAtView != null}"
+                          th:text="' · ' + ${#temporals.format(c.createdAtView, 'yyyy-MM-dd HH:mm')}"> · 날짜</span>
+                    <span th:if="${c.secret}" aria-label="비밀댓글">🔒</span>
+                </p>
+                <p class="bbs-comment-body text-body-sm" th:text="${c.content}">내용</p>
+            </li>
+        </ul>
+        <p th:if="${comments == null or comments.isEmpty()}"
+           class="text-body-sm text-fg-subtle">첫 댓글을 남겨 보세요.</p>
+
+        <form method="post" class="bbs-comment-form"
+              th:action="@{${boardBase} + '/' + ${article.articleId} + '/comment'}">
+            <label class="sr-only" for="commentContent">댓글 내용</label>
+            <textarea id="commentContent" name="content" class="krds-input" rows="3"
+                      required maxlength="1000" placeholder="댓글을 입력하세요"></textarea>
+            <div class="bbs-comment-form-actions">
+                <label class="bbs-check">
+                    <input type="checkbox" name="secretYn" value="Y"/> 비밀댓글</label>
+                <button type="submit" class="krds-btn krds-btn-primary krds-btn-sm">등록</button>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<th:block layout:fragment="scripts">
+    <script src="/js/board-reaction.js" defer></script>
+</th:block>
+</body>
+</html>

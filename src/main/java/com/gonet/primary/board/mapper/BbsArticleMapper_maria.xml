@@ -47,7 +47,11 @@
                c.category_name,
                a.created_at AS created_at_view,
                (SELECT COUNT(*) FROM tb_file f
-                 WHERE f.file_group_id = a.file_group_id AND f.delete_yn = 'N') AS file_count
+                 WHERE f.file_group_id = a.file_group_id AND f.delete_yn = 'N') AS file_count,
+               (SELECT f2.file_id FROM tb_file f2
+                 WHERE f2.file_group_id = a.file_group_id AND f2.delete_yn = 'N'
+                   AND f2.is_image_yn = 'Y'
+                 ORDER BY f2.sort_order, f2.file_id LIMIT 1) AS thumb_file_id
         FROM tb_bbs_article a
         LEFT JOIN tb_bbs_category c ON c.category_id = a.category_id
         <include refid="admWhere"/>

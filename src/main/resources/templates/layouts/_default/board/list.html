@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     게시판 목록 — 공용 1벌. 7종 레이아웃 어디에 얹혀도 동작한다
+     (layout:decorate 를 ${siteLayout} 로 받는다).
+
+     타입별 차이는 뷰를 8벌로 가르지 않고 여기서 조각을 고른다 — Resolver 의 3단 폴백과
+     타입 분기가 곱해지면 조합이 폭발하기 때문(BoardUsrController 주석 참조).
+     모델: master · page(PageResult) · categories · boardBase · canWrite · cond
+     ============================================================================ -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="${master.bbsName} + ' — ' + ${site != null ? site.siteName : ''}">게시판</title>
+    <!-- 게시판 전용 CSS — Layout Dialect 가 레이아웃 <head> 에 병합한다.
+         7종 레이아웃을 각각 고치지 않아도 되고, 게시판 밖 페이지는 받지 않는다 -->
+    <link rel="stylesheet" href="/css/board.css"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <header class="bbs-head">
+        <h1 class="text-heading-lg" th:text="${master.bbsName}">게시판</h1>
+        <p class="text-body-md text-fg-subtle" th:if="${master.description != null}"
+           th:text="${master.description}">설명</p>
+    </header>
+
+    <div th:replace="~{fragments/board/flash :: flash}"></div>
+
+    <!-- 검색 — 제목·내용·작성자. 색인 없이 LIKE 로 찾는다(P9-7 확정) -->
+    <form method="get" class="bbs-search" th:action="@{${boardBase}}">
+        <label class="sr-only" for="searchType">검색 대상</label>
+        <select id="searchType" name="searchType" class="krds-select krds-select-sm">
+            <option value="" th:selected="${cond.searchType == null}">제목+내용</option>
+            <option value="TITLE" th:selected="${cond.searchType == 'TITLE'}">제목</option>
+            <option value="CONTENT" th:selected="${cond.searchType == 'CONTENT'}">내용</option>
+            <option value="WRITER" th:selected="${cond.searchType == 'WRITER'}">작성자</option>
+        </select>
+        <label class="sr-only" for="categoryId" th:if="${!categories.isEmpty()}">분류</label>
+        <select id="categoryId" name="categoryId" class="krds-select krds-select-sm"
+                th:if="${!categories.isEmpty()}">
+            <option value="">분류 전체</option>
+            <option th:each="c : ${categories}" th:value="${c.categoryId}"
+                    th:text="${c.categoryName}"
+                    th:selected="${c.categoryId == cond.categoryId}">분류</option>
+        </select>
+        <label class="sr-only" for="keyword">검색어</label>
+        <input id="keyword" name="keyword" class="krds-input krds-input-sm"
+               th:value="${cond.keyword}" placeholder="검색어를 입력하세요"/>
+        <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">검색</button>
+    </form>
+
+    <!-- 타입별 목록 모양 — 표가 기본, 몇몇 타입만 다르게 -->
+    <th:block th:switch="${master.bbsType}">
+        <th:block th:case="'FAQ'"
+                  th:replace="~{fragments/board/list-faq :: body}"/>
+        <th:block th:case="'GALLERY'"
+                  th:replace="~{fragments/board/list-gallery :: body}"/>
+        <th:block th:case="'YOUTUBE'"
+                  th:replace="~{fragments/board/list-gallery :: body}"/>
+        <th:block th:case="*"
+                  th:replace="~{fragments/board/list-table :: body}"/>
+    </th:block>
+
+    <div class="bbs-actions">
+        <div th:replace="~{fragments/board/pager :: pager}"></div>
+        <a th:if="${canWrite}" th:href="@{${boardBase} + '/write'}"
+           class="krds-btn krds-btn-primary krds-btn-sm">글쓰기</a>
+    </div>
+
+</main>
+</body>
+</html>

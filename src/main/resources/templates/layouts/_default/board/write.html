@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!-- 글쓰기·수정 — 공용 1벌.
+     본문 편집기는 P9-2b(위지윅)에서 이 textarea 자리를 프래그먼트로 교체한다.
+     공지 지정은 담당자만 가능해 여기서는 노출하지 않는다(서버도 거절한다). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{${siteLayout}}">
+<head>
+    <title th:text="'글쓰기 — ' + ${master.bbsName}">글쓰기</title>
+    <!-- 게시판 전용 CSS — Layout Dialect 가 레이아웃 <head> 에 병합한다.
+         7종 레이아웃을 각각 고치지 않아도 되고, 게시판 밖 페이지는 받지 않는다 -->
+    <link rel="stylesheet" href="/css/board.css"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <header class="bbs-head">
+        <h1 class="text-heading-lg" th:text="${master.bbsName}">게시판</h1>
+    </header>
+
+    <div th:replace="~{fragments/board/flash :: flash}"></div>
+
+    <form method="post" th:object="${article}" class="bbs-form"
+          th:action="@{${boardBase} + '/save'}">
+        <input type="hidden" th:field="*{articleId}"/>
+        <input type="hidden" th:field="*{fileGroupId}"/>
+
+        <div class="bbs-form-row" th:if="${!categories.isEmpty()}">
+            <label class="bbs-form-label" for="categoryId">분류</label>
+            <select id="categoryId" th:field="*{categoryId}" class="krds-select">
+                <option value="">선택 안 함</option>
+                <option th:each="c : ${categories}" th:value="${c.categoryId}"
+                        th:text="${c.categoryName}">분류</option>
+            </select>
+        </div>
+
+        <div class="bbs-form-row">
+            <label class="bbs-form-label" for="title">제목</label>
+            <input id="title" th:field="*{title}" class="krds-input" required maxlength="300"/>
+        </div>
+
+        <div class="bbs-form-row" th:if="${master.bbsType == 'YOUTUBE' or master.bbsType == 'BODO'}">
+            <label class="bbs-form-label" for="linkUrl">원문 링크</label>
+            <input id="linkUrl" th:field="*{linkUrl}" class="krds-input" maxlength="500"
+                   th:required="${master.bbsType == 'YOUTUBE'}"
+                   placeholder="https://"/>
+        </div>
+
+        <div class="bbs-form-row">
+            <label class="bbs-form-label" for="content">내용</label>
+            <textarea id="content" th:field="*{content}" class="krds-input"
+                      rows="12" required></textarea>
+        </div>
+
+        <div class="bbs-form-row" th:if="${master.fileYn == 'Y'}">
+            <span class="bbs-form-label">첨부파일</span>
+            <div>
+                <th:block th:replace="~{fragments/file-picker :: picker(
+                        name='attachments',
+                        entityType='BBS',
+                        entityId=*{articleId},
+                        siteId=${master.siteId},
+                        category='ANY',
+                        downloadAuth=${master.downloadAuth},
+                        maxFiles=${master.fileCountMax},
+                        files=${attachedFiles})}"/>
+                <p class="text-body-xs text-fg-subtle">
+                    최대 <b th:text="${master.fileCountMax}">5</b>개까지 올릴 수 있습니다.</p>
+            </div>
+        </div>
+
+        <div class="bbs-form-row">
+            <span class="bbs-form-label">공개 설정</span>
+            <label class="bbs-check">
+                <input type="checkbox" th:field="*{secretYn}" value="Y"/>
+                비밀글 (작성자와 관리자만 볼 수 있습니다)</label>
+        </div>
+
+        <div class="bbs-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">등록</button>
+            <a th:href="@{${boardBase}}" class="krds-btn krds-btn-secondary">취소</a>
+        </div>
+    </form>
+
+</main>
+
+<th:block layout:fragment="scripts">
+    <script src="/js/file-picker.js" defer></script>
+</th:block>
+</body>
+</html>

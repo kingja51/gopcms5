@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!-- 페이저 — 관리자(adm-ui)와 별개로 사용자 화면용. 검색 조건을 유지한 채 이동한다
+     (조건이 빠지면 2페이지에서 검색 결과가 아니라 전체 목록이 나온다). -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<nav th:fragment="pager" class="bbs-pager" aria-label="페이지 이동"
+     th:if="${page != null and page.totalPages() > 1}">
+    <a class="bbs-page" th:if="${page.page() > 1}"
+       th:href="@{${boardBase}(page=${page.page() - 1}, keyword=${cond.keyword},
+                 searchType=${cond.searchType}, categoryId=${cond.categoryId})}"
+       rel="prev">이전</a>
+
+    <a class="bbs-page" th:each="p : ${#numbers.sequence(1, page.totalPages())}"
+       th:if="${p >= page.page() - 4 and p <= page.page() + 4}"
+       th:href="@{${boardBase}(page=${p}, keyword=${cond.keyword},
+                 searchType=${cond.searchType}, categoryId=${cond.categoryId})}"
+       th:classappend="${p == page.page()} ? 'bbs-page-on'"
+       th:attr="aria-current=${p == page.page()} ? 'page' : null"
+       th:text="${p}">1</a>
+
+    <a class="bbs-page" th:if="${page.page() < page.totalPages()}"
+       th:href="@{${boardBase}(page=${page.page() + 1}, keyword=${cond.keyword},
+                 searchType=${cond.searchType}, categoryId=${cond.categoryId})}"
+       rel="next">다음</a>
+</nav>
+
+</body>
+</html>

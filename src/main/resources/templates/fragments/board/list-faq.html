@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!-- FAQ 목록 — 목록과 상세를 나누지 않는다. 질문을 누르면 그 자리에서 답이 펼쳐지는 편이
+     페이지를 오가는 것보다 빠르다.
+     네이티브 <details> 를 쓴다 — 키보드 조작·스크린리더 지원을 브라우저가 준다(JS 불필요). -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="body" class="bbs-faq">
+    <details class="bbs-faq-item" th:each="a : ${page.content()}">
+        <summary class="bbs-faq-q">
+            <span class="bbs-faq-mark" aria-hidden="true">Q</span>
+            <span th:if="${a.categoryName != null}" class="krds-tag bbs-faq-cat"
+                  th:text="${a.categoryName}">분류</span>
+            <span class="bbs-faq-title" th:text="${a.title}">질문</span>
+        </summary>
+        <div class="bbs-faq-a">
+            <span class="bbs-faq-mark bbs-faq-mark-a" aria-hidden="true">A</span>
+            <!-- 평문 게시판이면 이스케이프, HTML 게시판이면 저장 시점 정화분을 그대로 -->
+            <div class="text-body-md" th:if="${master.htmlYn == 'Y'}" th:utext="${a.content}">답변</div>
+            <div class="text-body-md bbs-plain" th:unless="${master.htmlYn == 'Y'}"
+                 th:text="${a.content}">답변</div>
+            <p class="text-body-xs text-fg-subtle bbs-faq-more">
+                <a th:href="@{${boardBase} + '/' + ${a.articleId}}">자세히 보기</a>
+            </p>
+        </div>
+    </details>
+
+    <p th:if="${page.content().isEmpty()}" class="bbs-empty">등록된 질문이 없습니다.</p>
+</div>
+
+</body>
+</html>

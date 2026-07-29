@@ -1,0 +1,193 @@
+/* ============================================================================
+   게시판 사용자 화면 — 7종 레이아웃 어디에 얹혀도 동작해야 한다.
+
+   · 색은 KRDS 시맨틱 토큰만(raw hex·Tailwind 기본색 금지 — SG-krds §5)
+   · radius ≤ 12px · 간격 8px 그리드
+   · 레이아웃 구조(헤더·GNB·LNB)는 건드리지 않는다. 본문 영역 안에서만 산다
+   ============================================================================ */
+
+/* ── 머리·검색 ───────────────────────────────────────────────────────────── */
+.bbs-head { margin-bottom: 24px; }
+.bbs-head h1 { margin: 0; }
+.bbs-head p { margin: 8px 0 0; }
+
+.bbs-search {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+.bbs-search .krds-input { max-width: 260px; }
+
+/* ── 표 목록 ─────────────────────────────────────────────────────────────── */
+.bbs-tablewrap { overflow-x: auto; }
+.bbs-table { width: 100%; min-width: 640px; }
+.bbs-table thead th {
+    border-top: 2px solid var(--c-line-strong, var(--c-line));
+    white-space: nowrap;
+}
+.bbs-col-no, .bbs-col-view { width: 80px; text-align: center; }
+.bbs-col-cat { width: 110px; }
+.bbs-col-writer { width: 120px; text-align: center; }
+.bbs-col-date { width: 110px; text-align: center; }
+.bbs-col-title a { color: inherit; text-decoration: none; }
+.bbs-col-title a:hover { text-decoration: underline; }
+
+/* 공지 행은 목록 위쪽에 고정된다 — 배경으로 한 번 더 구분 */
+.bbs-notice-row { background-color: var(--c-surface-subtle); }
+.bbs-notice-row .bbs-col-title a { font-weight: 700; }
+.bbs-badge-notice { background-color: var(--brand-5); color: var(--brand-60); }
+
+.bbs-lock, .bbs-clip { margin-left: 4px; }
+.bbs-cmt { margin-left: 4px; color: var(--brand-50); font-weight: 700; }
+.bbs-empty { padding: 48px 16px; text-align: center; color: var(--c-fg-subtle); }
+
+/* ── FAQ (아코디언) ──────────────────────────────────────────────────────── */
+.bbs-faq { border-top: 2px solid var(--c-line-strong, var(--c-line)); }
+.bbs-faq-item { border-bottom: 1px solid var(--c-line); }
+.bbs-faq-q {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 16px 12px; cursor: pointer; list-style: none;
+}
+.bbs-faq-q::-webkit-details-marker { display: none; }
+.bbs-faq-q:hover { background-color: var(--c-surface-subtle); }
+.bbs-faq-item[open] .bbs-faq-q { font-weight: 700; }
+.bbs-faq-mark {
+    flex: none; width: 24px; height: 24px; border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background-color: var(--brand-50); color: var(--c-fg-on); font-weight: 700;
+}
+.bbs-faq-mark-a { background-color: var(--c-surface-subtler, var(--c-surface-subtle));
+                  color: var(--c-fg-subtle); }
+.bbs-faq-cat { flex: none; }
+.bbs-faq-title { flex: 1; }
+.bbs-faq-a {
+    display: flex; gap: 8px; align-items: flex-start;
+    padding: 16px 12px 20px; background-color: var(--c-surface-subtle);
+}
+.bbs-faq-more { margin: 12px 0 0; }
+
+/* ── 카드 목록 (갤러리·영상) ─────────────────────────────────────────────── */
+.bbs-cards {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.bbs-card {
+    border: 1px solid var(--c-line); border-radius: 12px;
+    overflow: hidden; background-color: var(--c-surface);
+}
+.bbs-card:hover { border-color: var(--brand-50); }
+.bbs-card-link { display: block; text-decoration: none; color: inherit; }
+.bbs-card-thumb {
+    position: relative; display: block;
+    aspect-ratio: 16 / 10; background-color: var(--c-surface-subtle);
+    display: flex; align-items: center; justify-content: center;
+}
+.bbs-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.bbs-card-noimg { font-size: 32px; color: var(--c-fg-disabled); }
+/* 영상은 재생 표시를 겹쳐 둔다 — 썸네일만으로는 링크인지 알 수 없다 */
+.bbs-card-play {
+    position: absolute; inset: 0; margin: auto;
+    width: 44px; height: 44px; border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    background-color: rgba(0, 0, 0, .55); color: #fff;
+}
+.bbs-card-body { display: block; padding: 12px; }
+.bbs-card-title {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; font-weight: 700;
+}
+.bbs-card-meta { display: block; margin-top: 6px; }
+
+/* ── 페이저 ──────────────────────────────────────────────────────────────── */
+.bbs-pager { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+.bbs-page {
+    min-width: 36px; height: 36px; padding: 0 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--c-line); border-radius: 8px;
+    color: var(--c-fg); text-decoration: none;
+}
+.bbs-page:hover { background-color: var(--c-surface-subtle); }
+.bbs-page-on {
+    background-color: var(--brand-50); border-color: var(--brand-50);
+    color: var(--c-fg-on); font-weight: 700;
+}
+
+.bbs-actions {
+    display: flex; gap: 8px; align-items: center; justify-content: center;
+    margin-top: 24px; position: relative;
+}
+/* 글쓰기 버튼은 페이저와 같은 줄 오른쪽 — 좁은 화면에서는 아래로 내려온다 */
+.bbs-actions > .krds-btn-primary:last-child { margin-left: auto; position: absolute; right: 0; }
+@media (max-width: 640px) {
+    .bbs-actions { flex-wrap: wrap; }
+    .bbs-actions > .krds-btn-primary:last-child { position: static; margin-left: 0; }
+}
+
+/* ── 상세 ────────────────────────────────────────────────────────────────── */
+.bbs-article { max-width: 880px; margin: 0 auto; }
+.bbs-article-head {
+    border-top: 2px solid var(--c-line-strong, var(--c-line));
+    border-bottom: 1px solid var(--c-line);
+    padding: 20px 0; margin-bottom: 24px;
+}
+.bbs-article-board { margin: 0 0 4px; }
+.bbs-article-head h1 { margin: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.bbs-article-meta { margin: 12px 0 0; }
+.bbs-article-link { margin: 0 0 16px; }
+.bbs-article-body { min-height: 120px; line-height: 1.7; }
+.bbs-article-body img { max-width: 100%; height: auto; }
+/* 평문 게시판은 줄바꿈이 곧 서식이다 — 그대로 보존한다 */
+.bbs-plain { white-space: pre-wrap; }
+.bbs-secret { margin: 32px 0; }
+
+.bbs-files {
+    margin-top: 24px; padding: 16px;
+    border: 1px solid var(--c-line); border-radius: 8px;
+    background-color: var(--c-surface-subtle);
+}
+.bbs-files h2 { margin: 0 0 8px; }
+.bbs-files ul { margin: 0; padding-left: 18px; }
+.bbs-files li { margin: 4px 0; }
+
+/* 반응 밴드 — 본문 아래 가운데 */
+.krds-reaction {
+    display: flex; gap: 8px; justify-content: center;
+    margin-top: 32px; padding-top: 24px;
+    border-top: 1px solid var(--c-line);
+}
+.krds-reaction .is-on { background-color: var(--brand-5); border-color: var(--brand-50); }
+
+/* ── 댓글 ────────────────────────────────────────────────────────────────── */
+.bbs-comments { max-width: 880px; margin: 40px auto 0; }
+.bbs-comments h2 { margin: 0 0 12px; }
+.bbs-comment-list { list-style: none; margin: 0 0 16px; padding: 0; }
+.bbs-comment { padding: 12px 0; border-bottom: 1px solid var(--c-line); }
+/* 대댓글은 2단까지만 존재한다(서비스가 평탄화) — 들여쓰기도 한 단계뿐 */
+.bbs-comment-reply { padding-left: 32px; background-color: var(--c-surface-subtle); }
+.bbs-comment-meta { margin: 0 0 4px; }
+.bbs-comment-body { margin: 0; white-space: pre-wrap; }
+
+.bbs-comment-form { margin-top: 16px; }
+.bbs-comment-form-actions {
+    display: flex; gap: 12px; align-items: center; justify-content: flex-end;
+    margin-top: 8px;
+}
+.bbs-check {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--c-fg-subtle); cursor: pointer;
+}
+.bbs-check input { accent-color: var(--brand-50); }
+
+/* ── 작성 폼 ─────────────────────────────────────────────────────────────── */
+.bbs-form { max-width: 880px; margin: 0 auto; }
+.bbs-form-row {
+    display: grid; grid-template-columns: 120px minmax(0, 1fr);
+    gap: 12px; align-items: start;
+    padding: 16px 0; border-bottom: 1px solid var(--c-line);
+}
+.bbs-form-row:first-child { border-top: 2px solid var(--c-line-strong, var(--c-line)); }
+.bbs-form-label { font-weight: 700; padding-top: 8px; }
+@media (max-width: 640px) {
+    .bbs-form-row { grid-template-columns: 1fr; gap: 6px; }
+    .bbs-form-label { padding-top: 0; }
+}

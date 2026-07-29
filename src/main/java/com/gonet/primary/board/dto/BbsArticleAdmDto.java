@@ -47,6 +47,8 @@ public class BbsArticleAdmDto extends Auditable {
     private String siteCode;
     private LocalDateTime createdAtView;
     private int fileCount;
+    /** 갤러리·영상 목록의 썸네일 — 첨부 중 첫 이미지. 없으면 null(자리표시자로 대체). */
+    private String thumbFileId;
 
     /** 폼에서 넘어오는 첨부 파일 ID CSV — picker 가 hidden 으로 싣는다. */
     private String attachments;

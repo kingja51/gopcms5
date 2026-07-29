@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- 표 목록 — 공지·자유·자료실·Q&A·보도자료의 기본 모양.
+     공지는 항상 위로(정렬은 매퍼가 한다). 비밀글은 목록에서 자물쇠로 표시하고,
+     제목은 그대로 보여준다 — 제목까지 감추면 어떤 글이 있었는지도 알 수 없다. -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="body" class="bbs-tablewrap">
+    <table class="krds-table bbs-table">
+        <caption class="sr-only" th:text="${master.bbsName} + ' 목록'">목록</caption>
+        <thead>
+        <tr>
+            <th scope="col" class="bbs-col-no">번호</th>
+            <th scope="col" th:if="${!categories.isEmpty()}" class="bbs-col-cat">분류</th>
+            <th scope="col">제목</th>
+            <th scope="col" class="bbs-col-writer">작성자</th>
+            <th scope="col" class="bbs-col-date">등록일</th>
+            <th scope="col" class="bbs-col-view">조회</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="a, st : ${page.content()}" th:classappend="${a.notice} ? 'bbs-notice-row'">
+            <td class="bbs-col-no">
+                <span th:if="${a.notice}" class="krds-badge bbs-badge-notice">공지</span>
+                <span th:unless="${a.notice}" th:text="${page.firstRowNo() - st.index}">1</span>
+            </td>
+            <td th:if="${!categories.isEmpty()}" class="bbs-col-cat text-fg-subtle"
+                th:text="${a.categoryName}">분류</td>
+            <td class="bbs-col-title">
+                <a th:href="@{${boardBase} + '/' + ${a.articleId}}" th:text="${a.title}">제목</a>
+                <span th:if="${a.secret}" class="bbs-lock" aria-label="비밀글">🔒</span>
+                <span th:if="${a.commentCount != null and a.commentCount > 0}"
+                      class="bbs-cmt" th:text="'[' + ${a.commentCount} + ']'">[0]</span>
+                <span th:if="${a.fileCount > 0}" class="bbs-clip" aria-label="첨부 있음">📎</span>
+            </td>
+            <td class="bbs-col-writer text-fg-subtle" th:text="${a.writerName}">작성자</td>
+            <td class="bbs-col-date text-fg-subtle"
+                th:text="${a.createdAtView != null}
+                         ? ${#temporals.format(a.createdAtView, 'yyyy-MM-dd')} : ''">2026-07-29</td>
+            <td class="bbs-col-view text-fg-subtle" th:text="${a.viewCount}">0</td>
+        </tr>
+        <tr th:if="${page.content().isEmpty()}">
+            <td th:attr="colspan=${categories.isEmpty()} ? 5 : 6" class="bbs-empty">
+                등록된 글이 없습니다.
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

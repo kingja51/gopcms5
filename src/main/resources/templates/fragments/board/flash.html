@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<!-- 사용자 화면 알림 — 리다이렉트 후 한 번만 보인다(flash attribute). -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="flash" th:remove="tag">
+    <div th:if="${flashOk}" class="krds-alert krds-alert-success" role="status">
+        <span aria-hidden="true">✓</span><p th:text="${flashOk}">완료</p>
+    </div>
+    <div th:if="${flashError}" class="krds-alert krds-alert-error" role="alert">
+        <span aria-hidden="true">!</span><p th:text="${flashError}">오류</p>
+    </div>
+</div>
+
+</body>
+</html>

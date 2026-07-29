@@ -139,7 +139,49 @@ public class BoardArticleServiceImpl extends AbstractCmsService implements Board
         if (!master.getBbsMasterId().equals(existing.getBbsMasterId())) {
             throw new AccessDeniedException("다른 게시판의 글은 수정할 수 없습니다.");
         }
+        // 쓰기 권한이 있다고 남의 글을 고칠 수 있는 것은 아니다 —
+        // 사용자 화면이 붙으면서 실제 위험이 되는 지점(관리 화면만 있을 땐 드러나지 않았다)
+        if (!canManage(existing)) {
+            throw new AccessDeniedException("본인이 쓴 글만 수정할 수 있습니다.");
+        }
         return false;
+    }
+
+    @Override
+    public void requireRead(BbsMasterAdmDto master) {
+        String auth = master.getReadAuth();
+        if (auth == null || "ALL".equals(auth)) {
+            return;                                  // 공개 게시판
+        }
+        LoginPrincipal principal = accessGuard.currentPrincipal();
+        if (principal == null) {
+            // 비로그인은 401 계열 — 로그인하면 열릴 수도 있는 상태와 영구 거부를 구분한다
+            throw new InsufficientAuthenticationException("로그인이 필요합니다.");
+        }
+        if ("ADMIN".equals(auth) && !accessGuard.hasRole(MANAGE_ROLE)) {
+            throw new AccessDeniedException("이 게시판을 볼 권한이 없습니다.");
+        }
+    }
+
+    @Override
+    public boolean canWrite(BbsMasterAdmDto master) {
+        if (accessGuard.currentPrincipal() == null) {
+            return false;                            // 비로그인 작성은 지원하지 않는다
+        }
+        return !"ADMIN".equals(master.getWriteAuth()) || accessGuard.hasRole(MANAGE_ROLE);
+    }
+
+    @Override
+    public boolean canManage(BbsArticleAdmDto article) {
+        if (article == null) {
+            return false;
+        }
+        if (accessGuard.hasRole(MANAGE_ROLE)) {
+            return true;
+        }
+        LoginPrincipal principal = accessGuard.currentPrincipal();
+        return principal != null && principal.userId() != null
+                && principal.userId().equals(article.getWriterUserId());
     }
 
     /* ── 권한 ──────────────────────────────────────────────────────────── */
