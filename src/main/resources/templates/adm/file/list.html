@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<!-- 파일 목록 — 검사 상태를 먼저 보게 만든다. INFECTED/ERROR 를 놓치면 안 되기 때문. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>파일 관리</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('파일 관리',
+            '업로드된 파일을 확인하고 내려받거나 삭제합니다. 파일은 웹루트 밖에 저장되며 이 화면을 통해서만 나갑니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form method="get" th:action="@{/adm/file}" class="ladm-search">
+                <label class="sr-only" for="keyword">파일명 검색</label>
+                <input id="keyword" name="keyword" class="krds-input krds-input-sm"
+                       th:value="${cond.keyword}" placeholder="파일명"/>
+                <label class="sr-only" for="scanStatus">검사 상태</label>
+                <select id="scanStatus" name="scanStatus" class="krds-select krds-select-sm">
+                    <option value="">검사 상태 전체</option>
+                    <option th:each="s : ${scanStatuses}" th:value="${s}" th:text="${s}"
+                            th:selected="${s == cond.scanStatus}">CLEAN</option>
+                </select>
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">검색</button>
+            </form>
+            <span class="grow"></span>
+            <a th:href="@{/adm/file/picker}" class="krds-btn krds-btn-primary krds-btn-sm">첨부 폼 점검</a>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">업로드된 파일 목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col">파일명</th>
+                    <th scope="col">소유</th>
+                    <th scope="col">형식</th>
+                    <th scope="col" class="num">크기</th>
+                    <th scope="col" class="center">검사</th>
+                    <th scope="col" class="center">다운로드 권한</th>
+                    <th scope="col" class="num">받음</th>
+                    <th scope="col" class="center nowrap">작업</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${page.content()}">
+                    <td>
+                        <a th:href="@{'/file/' + ${f.fileId}}" class="krds-link"
+                           th:text="${f.originalName}">문서.pdf</a>
+                        <span th:if="${f.reencodedYn == 'Y'}" class="krds-badge ladm-badge-on"
+                              style="margin-left:6px" title="이미지를 다시 인코딩해 원본에 붙어 있던 것을 제거했습니다">재인코딩</span>
+                    </td>
+                    <td class="text-fg-subtle">
+                        <span th:text="${f.entityType}">BBS</span>
+                    </td>
+                    <td class="text-fg-subtle">
+                        <code th:text="${f.extension}">pdf</code>
+                        <span class="text-body-xs" th:text="${f.mimeDetected}">application/pdf</span>
+                    </td>
+                    <td class="num"
+                        th:text="${#numbers.formatDecimal(f.sizeBytes / 1024.0, 1, 'COMMA', 0, 'POINT')} + ' KB'">0 KB</td>
+                    <td class="center">
+                        <!-- 안전이 확인되지 않은 상태는 위험 색으로 — 운영자가 먼저 봐야 한다 -->
+                        <span class="krds-badge"
+                              th:classappend="${f.virusScanStatus == 'CLEAN' or f.virusScanStatus == 'PENDING'}
+                                              ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${f.virusScanStatus}">PENDING</span>
+                    </td>
+                    <td class="center text-fg-subtle" th:text="${f.downloadAuth}">ROLE_MEMBER</td>
+                    <td class="num" th:text="${f.downloadCount}">0</td>
+                    <td class="center nowrap">
+                        <a th:href="@{'/adm/file/' + ${f.fileId} + '/download'}"
+                           class="krds-btn krds-btn-tertiary krds-btn-sm">원본</a>
+                        <form th:action="@{'/adm/file/' + ${f.fileId} + '/delete'}" method="post"
+                              style="display:inline">
+                            <button type="submit" class="krds-btn krds-btn-text krds-btn-sm"
+                                    data-confirm="이 파일을 삭제할까요? 파일 실체는 보존기간 경과 후 정리됩니다.">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(8, ${page.content().isEmpty()}, '/adm/file/picker')}"></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:replace="~{adm/fragments/adm-ui :: pager('/adm/file')}"></div>
+    </section>
+</div>
+</body>
+</html>

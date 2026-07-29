@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.file.mapper.FileMapper">
+
+    <sql id="cols">
+        f.file_id, f.file_group_id, f.original_name, f.stored_name, f.stored_path,
+        f.thumbnail_path, f.extension, f.mime_detected, f.mime_client, f.size_bytes,
+        f.file_hash, f.is_image_yn, f.reencoded_yn, f.virus_scan_status,
+        f.download_count, f.sort_order, f.delete_yn, f.created_at AS created_at_view
+    </sql>
+
+    <insert id="insert" parameterType="com.gonet.primary.file.dto.FileItem">
+        INSERT INTO tb_file
+            (file_id, file_group_id, original_name, stored_name, stored_path, thumbnail_path,
+             extension, mime_detected, mime_client, size_bytes, file_hash,
+             is_image_yn, reencoded_yn, virus_scan_status, sort_order,
+             created_by, created_ip, updated_by, updated_ip)
+        VALUES
+            (#{fileId}, #{fileGroupId}, #{originalName}, #{storedName}, #{storedPath}, #{thumbnailPath},
+             #{extension}, #{mimeDetected}, #{mimeClient}, #{sizeBytes}, #{fileHash},
+             #{isImageYn}, #{reencodedYn}, #{virusScanStatus}, #{sortOrder},
+             #{createdBy}, #{createdIp}, #{updatedBy}, #{updatedIp})
+    </insert>
+
+    <!-- 소유 그룹의 정책을 함께 읽는다 — 다운로드 판정이 그룹 값을 봐야 하기 때문 -->
+    <select id="findById" resultType="com.gonet.primary.file.dto.FileItem">
+        SELECT <include refid="cols"/>,
+               g.entity_type, g.entity_id, g.download_auth
+        FROM tb_file f
+        JOIN tb_file_group g ON g.file_group_id = f.file_group_id
+        WHERE f.file_id = #{fileId} AND f.delete_yn = 'N'
+    </select>
+
+    <select id="findByGroup" resultType="com.gonet.primary.file.dto.FileItem">
+        SELECT <include refid="cols"/>
+        FROM tb_file f
+        WHERE f.file_group_id = #{fileGroupId} AND f.delete_yn = 'N'
+        ORDER BY f.sort_order, f.created_at
+    </select>
+
+    <sql id="admWhere">
+        WHERE f.delete_yn = 'N'
+        <if test="keyword != null">
+            AND f.original_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="entityType != null and entityType != ''">AND g.entity_type = #{entityType}</if>
+        <if test="extension != null and extension != ''">AND f.extension = #{extension}</if>
+        <if test="scanStatus != null and scanStatus != ''">AND f.virus_scan_status = #{scanStatus}</if>
+    </sql>
+
+    <select id="findPage" resultType="com.gonet.primary.file.dto.FileItem">
+        SELECT <include refid="cols"/>,
+               g.entity_type, g.entity_id, g.download_auth
+        FROM tb_file f
+        JOIN tb_file_group g ON g.file_group_id = f.file_group_id
+        <include refid="admWhere"/>
+        ORDER BY f.created_at DESC, f.file_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_file f
+        JOIN tb_file_group g ON g.file_group_id = f.file_group_id
+        <include refid="admWhere"/>
+    </select>
+
+    <!-- 다운로드 카운터만 올린다 — 감사 컬럼을 건드리면 내려받은 사람이 최종 수정자가 된다 -->
+    <update id="increaseDownloadCount">
+        UPDATE tb_file SET download_count = download_count + 1
+        WHERE file_id = #{fileId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_file
+        SET delete_yn = 'Y',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE file_id = #{fileId}
+    </update>
+
+    <!-- keep 이 비면 그룹 전체를 내린다(첨부를 모두 뺀 저장) -->
+    <update id="softDeleteNotIn">
+        UPDATE tb_file
+        SET delete_yn = 'Y',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE file_group_id = #{fileGroupId}
+          AND delete_yn = 'N'
+        <if test="keepIds != null and !keepIds.isEmpty()">
+            AND file_id NOT IN
+            <foreach collection="keepIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        </if>
+    </update>
+
+    <update id="updateScanStatus">
+        UPDATE tb_file SET virus_scan_status = #{status}, updated_at = CURRENT_TIMESTAMP
+        WHERE file_id = #{fileId}
+    </update>
+
+    <update id="updateThumbnail">
+        UPDATE tb_file SET thumbnail_path = #{thumbnailPath}, updated_at = CURRENT_TIMESTAMP
+        WHERE file_id = #{fileId}
+    </update>
+
+</mapper>

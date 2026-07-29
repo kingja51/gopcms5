@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.file.mapper.FileGroupMapper">
+
+    <insert id="insert" parameterType="com.gonet.primary.file.dto.FileGroup">
+        INSERT INTO tb_file_group
+            (file_group_id, entity_type, entity_id, site_id, site_code, download_auth,
+             created_by, created_ip, updated_by, updated_ip)
+        VALUES
+            (#{fileGroupId}, #{entityType}, #{entityId}, #{siteId}, #{siteCode}, #{downloadAuth},
+             #{createdBy}, #{createdIp}, #{updatedBy}, #{updatedIp})
+    </insert>
+
+    <!-- created_by 를 반드시 읽는다 — OWNER_PRIVACY 의 '본인' 판정 근거다.
+         빠뜨리면 소유자가 항상 null 이라 본인도 거부된다(실측으로 잡은 결함). -->
+    <select id="findById" resultType="com.gonet.primary.file.dto.FileGroup">
+        SELECT file_group_id, entity_type, entity_id, site_id, site_code, download_auth, delete_yn,
+               created_by
+        FROM tb_file_group
+        WHERE file_group_id = #{fileGroupId} AND delete_yn = 'N'
+    </select>
+
+    <select id="findByEntity" resultType="com.gonet.primary.file.dto.FileGroup">
+        SELECT file_group_id, entity_type, entity_id, site_id, site_code, download_auth, delete_yn,
+               created_by
+        FROM tb_file_group
+        WHERE entity_type = #{entityType} AND entity_id = #{entityId} AND delete_yn = 'N'
+        ORDER BY created_at
+        LIMIT 1
+    </select>
+
+    <update id="updateDownloadAuth">
+        UPDATE tb_file_group
+        SET download_auth = #{downloadAuth},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE file_group_id = #{fileGroupId}
+    </update>
+
+</mapper>

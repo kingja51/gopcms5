@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!-- 공통 첨부 폼 점검 화면 — 게시판·컨텐츠가 붙기 전에도 업로드 경로 전체
+     (권한 → 다중 방어 → 저장 → 목록 → 다운로드)를 한 자리에서 확인한다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>공통 첨부 폼</title>
+    <link rel="stylesheet" href="/css/file-picker.css"/>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('공통 첨부 폼',
+            '모든 프로그램이 같은 형식으로 쓰는 첨부 컴포넌트입니다. 끌어다 놓거나 클릭해서 최대 20개까지 올릴 수 있습니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <form method="post" th:action="@{/adm/file/picker}" class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">첨부</h2>
+        </div>
+        <div class="ladm-panel-body ladm-form">
+
+            <!-- 실제 도메인 폼과 같다: PK 를 먼저 발급해 hidden 으로 들고 다닌다 -->
+            <input type="hidden" name="entityId" th:value="${entityId}"/>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="entityType">소유 도메인</label>
+                <div class="ladm-form-field">
+                    <select id="entityType" name="entityType" class="krds-select">
+                        <option th:each="t : ${entityTypes}" th:value="${t}" th:text="${t}">ETC</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        파일 그룹이 어느 도메인에 속하는지 — 다형 참조라 FK 가 없습니다.</p>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="downloadAuth">다운로드 권한</label>
+                <div class="ladm-form-field">
+                    <select id="downloadAuth" name="downloadAuth" class="krds-select">
+                        <option th:each="a : ${downloadAuths}" th:value="${a}" th:text="${a}"
+                                th:selected="${a == 'ROLE_MEMBER'}">ROLE_MEMBER</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        <b>등록 시점에 정합니다.</b> OWNER_PRIVACY 는 본인과 개인정보 관리자만
+                        열 수 있으며, 최고 관리자도 자동으로 통과하지 않습니다.</p>
+                </div>
+            </div>
+
+            <div class="ladm-form-row">
+                <span class="ladm-form-label">파일</span>
+                <div class="ladm-form-field">
+                    <th:block th:replace="~{fragments/file-picker :: picker(
+                            name='attachments',
+                            entityType='ETC',
+                            entityId=${entityId},
+                            siteId=null,
+                            category='ANY',
+                            downloadAuth='ROLE_MEMBER',
+                            maxFiles=20,
+                            files=null)}"/>
+                    <p class="ladm-hint text-body-xs">
+                        업로드는 <b>실명인증 회원 이상</b>만 가능합니다. 서버가 확장자·매직바이트를
+                        교차 검증하고, 이미지는 다시 인코딩해 원본에 붙어 있던 것을 제거합니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ladm-form-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{/adm/file}" class="krds-btn krds-btn-secondary">목록</a>
+        </div>
+    </form>
+</div>
+
+<th:block layout:fragment="scripts">
+    <script src="/js/file-picker.js" defer></script>
+</th:block>
+</body>
+</html>

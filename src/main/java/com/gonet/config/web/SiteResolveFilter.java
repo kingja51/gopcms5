@@ -41,7 +41,11 @@ public class SiteResolveFilter extends OncePerRequestFilter {
     public static final Set<String> SKIP_PREFIXES = Set.of(
             "adm", "api", "actuator", "error", "favicon.ico",
             "css", "js", "fonts", "images", "tmpl", "webjars",
-            "swagger-ui", "v3");
+            "swagger-ui", "v3",
+            // 파일 스트리밍 — 바이너리 응답이라 사이트 컨텍스트도 템플릿도 필요 없다.
+            // (/bbs·/prg 같은 프로그램 네임스페이스는 반대로 2번째 세그먼트로 사이트를
+            //  해석해야 하므로 여기에 넣지 않는다 — conventions §5.1)
+            "file");
 
     private final SiteService siteService;
     private final ClientIpResolver clientIpResolver;

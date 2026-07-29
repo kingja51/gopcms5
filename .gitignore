@@ -35,3 +35,7 @@ application-local.yml
 # ── 기타 ─────────────────────────────────────
 *.tmp
 *.bak
+
+# 업로드 저장소 — 로컬 개발용 기본 경로(application.yml gopcms.file.upload.*).
+# 운영은 환경변수로 외부 마운트를 가리킨다. 업로드된 파일이 저장소에 들어가면 안 된다.
+/data/

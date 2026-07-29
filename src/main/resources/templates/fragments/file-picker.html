@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     공통 첨부 프래그먼트 — 모든 프로그램이 같은 형식으로 쓴다.
+
+     쓰는 법 (호출 폼 안에서):
+       <th:block th:replace="~{fragments/file-picker :: picker(
+           name='attachments',            (전송될 hidden input 이름 — fileId CSV)
+           entityType='BBS',
+           entityId=${form.articleId},    (폼 GET 시점에 미리 발급한 PK)
+           siteId=${form.siteId},
+           category='ANY',                (ANY|DOCUMENT|IMAGE|VIDEO)
+           downloadAuth='ROLE_MEMBER',
+           maxFiles=20,
+           files=${attachedFiles})}"/>    (수정 화면의 기존 첨부 — 없으면 생략)
+
+     설계 메모
+       · 업로드는 파일 단위 병렬 요청이다. 한 요청에 묶으면 1개 거부가 전부를 실패시킨다.
+       · 진행 표시는 파일마다 따로 — 큰 파일 하나 때문에 전체가 멈춘 것처럼 보이지 않게.
+       · 서버가 개수·형식·크기를 다시 검사한다. 여기 제한은 편의이지 방어가 아니다.
+       · 인라인 스크립트 없음 — 동작은 /js/file-picker.js 가 data-* 를 읽어 붙인다.
+     ============================================================================ -->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="picker(name, entityType, entityId, siteId, category, downloadAuth, maxFiles, files)"
+     class="gp-picker"
+     th:attr="data-picker=true,
+              data-entity-type=${entityType},
+              data-entity-id=${entityId},
+              data-site-id=${siteId},
+              data-category=${category} ?: 'ANY',
+              data-download-auth=${downloadAuth} ?: 'ROLE_MEMBER',
+              data-max-files=${maxFiles} ?: 20,
+              data-input-name=${name} ?: 'attachments'">
+
+    <!-- 드롭 영역. 클릭으로도 열리게 label 로 감싼다(키보드·스크린리더 접근성) -->
+    <label class="gp-picker-drop" tabindex="0">
+        <input type="file" class="gp-picker-input sr-only" multiple/>
+        <span class="gp-picker-drop-icon" aria-hidden="true">⬆</span>
+        <span class="gp-picker-drop-main text-body-md">
+            파일을 끌어다 놓거나 <b>클릭해서 선택</b>하세요
+        </span>
+        <span class="gp-picker-drop-sub text-body-xs">
+            최대 <b th:text="${maxFiles} ?: 20">20</b>개
+        </span>
+    </label>
+
+    <p class="gp-picker-error text-body-sm" role="alert" hidden></p>
+
+    <!-- 목록 — 업로드 완료분과 진행 중인 항목이 함께 쌓인다 -->
+    <ul class="gp-picker-list" th:attr="aria-label='첨부 파일 목록'">
+        <li class="gp-picker-item" th:each="f : ${files}" th:attr="data-file-id=${f.fileId}">
+            <span class="gp-picker-thumb" aria-hidden="true">
+                <img th:if="${f.image}" th:src="@{'/file/' + ${f.fileId} + '/thumb'}" alt=""/>
+                <span th:unless="${f.image}" class="gp-picker-ext text-label-xs"
+                      th:text="${#strings.toUpperCase(f.extension)}">PDF</span>
+            </span>
+            <span class="gp-picker-meta">
+                <a class="gp-picker-name text-body-sm krds-link"
+                   th:href="@{'/file/' + ${f.fileId}}" th:text="${f.originalName}">파일명</a>
+                <span class="gp-picker-size text-body-xs"
+                      th:text="${#numbers.formatDecimal(f.sizeBytes / 1024.0, 1, 'COMMA', 0, 'POINT')} + ' KB'">0 KB</span>
+            </span>
+            <button type="button" class="gp-picker-remove krds-btn krds-btn-text krds-btn-sm"
+                    data-action="picker-remove" th:attr="aria-label='첨부 제거: ' + ${f.originalName}">✕</button>
+        </li>
+    </ul>
+
+    <!-- 폼 전송용 — 남아 있는 fileId 를 CSV 로 직렬화한다 -->
+    <input type="hidden" class="gp-picker-value"
+           th:name="${name} ?: 'attachments'"
+           th:value="${files != null} ? ${#strings.listJoin(files.![fileId], ',')} : ''"/>
+</div>
+
+</body>
+</html>
