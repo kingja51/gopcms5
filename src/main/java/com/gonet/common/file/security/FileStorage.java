@@ -109,4 +109,14 @@ public class FileStorage {
             return false;
         }
     }
+
+    /** 썸네일 삭제 — 원본을 지웠는데 축소본이 남으면 내용이 계속 노출된다. */
+    public boolean deleteThumbnail(String relativePath) {
+        try {
+            return Files.deleteIfExists(resolveThumb(relativePath));
+        } catch (IOException e) {
+            log.warn("썸네일 삭제 실패 {}: {}", relativePath, e.toString());
+            return false;
+        }
+    }
 }

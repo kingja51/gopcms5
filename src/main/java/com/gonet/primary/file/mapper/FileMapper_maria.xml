@@ -102,4 +102,34 @@
         WHERE file_id = #{fileId}
     </update>
 
+    <!-- ══ 정리 배치 (P8-5) ═══════════════════════════════════════════════ -->
+
+    <!-- 오래된 것부터 — 한 번에 다 지우지 않고 조금씩 소화한다 -->
+    <select id="findPurgeTargets" resultType="com.gonet.primary.file.dto.FileItem">
+        SELECT file_id, file_group_id, stored_path, thumbnail_path, original_name, size_bytes
+        FROM tb_file
+        WHERE delete_yn = 'Y'
+          AND updated_at &lt; #{cutoff}
+        ORDER BY updated_at
+        LIMIT #{limit}
+    </select>
+
+    <delete id="hardDelete">
+        DELETE FROM tb_file WHERE file_id = #{fileId} AND delete_yn = 'Y'
+    </delete>
+
+    <!--
+      재검사 대상 = 결과 미확정(PENDING/ERROR/RESCANNING) 상태로 오래 머문 파일.
+      CLEAN·INFECTED 는 결론이 난 것이라 건드리지 않는다.
+    -->
+    <select id="findRescanTargets" resultType="com.gonet.primary.file.dto.FileItem">
+        SELECT file_id, stored_path, original_name, virus_scan_status
+        FROM tb_file
+        WHERE delete_yn = 'N'
+          AND virus_scan_status IN ('PENDING', 'ERROR', 'RESCANNING')
+          AND updated_at &lt; #{staleBefore}
+        ORDER BY updated_at
+        LIMIT #{limit}
+    </select>
+
 </mapper>

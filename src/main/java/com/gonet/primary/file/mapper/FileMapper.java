@@ -36,4 +36,25 @@ public interface FileMapper {
     int updateScanStatus(@Param("fileId") String fileId, @Param("status") String status);
 
     int updateThumbnail(@Param("fileId") String fileId, @Param("thumbnailPath") String thumbnailPath);
+
+    /* ── 정리 배치 (P8-5) ──────────────────────────────────────────────── */
+
+    /**
+     * 물리 삭제 대상 — soft delete 후 보존기간이 지난 파일.
+     *
+     * <p>바로 지우지 않고 유예를 두는 이유: 오삭제를 되돌릴 창이 필요하고,
+     * 무결성 대조(file_hash)를 해야 할 사건이 뒤늦게 드러나기도 한다.
+     */
+    List<FileItem> findPurgeTargets(@Param("cutoff") java.time.LocalDateTime cutoff,
+                                    @Param("limit") int limit);
+
+    /** 물리 파일을 지운 뒤 행도 지운다 — 실체 없는 행이 남으면 목록이 거짓말을 한다. */
+    int hardDelete(@Param("fileId") String fileId);
+
+    /**
+     * 재검사 대상 — 결과가 확정되지 않은 채 오래 머문 파일.
+     * 스캐너가 죽었거나 응답을 못 받은 경우가 여기 쌓인다.
+     */
+    List<FileItem> findRescanTargets(@Param("staleBefore") java.time.LocalDateTime staleBefore,
+                                     @Param("limit") int limit);
 }

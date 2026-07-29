@@ -81,6 +81,25 @@ gopcms:
   file:
     max-files-per-group: 20      # 한 폼당 첨부 상한 — 화면과 서버가 같은 값을 본다
     thumbnail-size: 400
+    # 정리 배치 — 되돌릴 수 없는 작업이라 기본이 dry-run 이다.
+    # 스케줄은 돌지만 대상만 로그에 남고 실제로는 지우지 않는다. 운영자가 로그로 대상을
+    # 확인한 뒤 dry-run 을 false 로 바꿔야 삭제가 시작된다. 배치를 처음 켜는 순간
+    # 오래된 파일이 한꺼번에 사라지는 사고가 가장 흔해서 이렇게 둔다.
+    purge:
+      cron: "0 0 4 * * *"
+      dry-run: true
+      retention-days: 180        # soft delete 후 물리 삭제까지의 유예
+      orphan-group-days: 7       # 저장하지 않고 나간 폼이 남긴 빈 묶음 회수 유예
+      batch-size: 500            # 1회 상한 — 잘못 돌아도 피해가 한 배치로 제한된다
+    # 백신 재검사 — clamav.enabled=true 일 때만 잡이 만들어진다.
+    rescan:
+      cron: "0 */10 * * * *"
+      stale-minutes: 30
+      batch-size: 200
+    clamav:
+      # false = NoOpVirusScanQueue. 신규 파일은 PENDING 으로 남으며,
+      # PENDING 다운로드 허용은 앞의 다중 방어를 통과했다는 전제 위의 운영 판단이다.
+      enabled: false
     upload:
       base-dir: ${GOPCMS_FILE_BASE_DIR:./data/gopcms/files}
       quarantine-dir: ${GOPCMS_FILE_QUARANTINE_DIR:./data/gopcms/quarantine}

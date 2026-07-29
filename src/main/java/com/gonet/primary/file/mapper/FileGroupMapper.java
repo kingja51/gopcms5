@@ -1,6 +1,7 @@
 package com.gonet.primary.file.mapper;
 
 import com.gonet.primary.file.dto.FileGroup;
+import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import org.egovframe.rte.psl.dataaccess.mapper.EgovMapper;
 
@@ -20,4 +21,15 @@ public interface FileGroupMapper {
                            @Param("downloadAuth") String downloadAuth,
                            @Param("updatedBy") String updatedBy,
                            @Param("updatedIp") String updatedIp);
+
+    /**
+     * 고아 그룹 — 파일이 하나도 없는 채 오래된 묶음.
+     *
+     * <p>폼을 열면 PK 를 미리 발급하고 그룹이 생기는데, 저장하지 않고 나가면 그대로 남는다.
+     * 다형 참조(FK 없음)라 DB 가 대신 정리해 주지 않는다.
+     */
+    List<String> findOrphanGroupIds(@Param("cutoff") java.time.LocalDateTime cutoff,
+                                    @Param("limit") int limit);
+
+    int hardDelete(@Param("fileGroupId") String fileGroupId);
 }

@@ -37,4 +37,24 @@
         WHERE file_group_id = #{fileGroupId}
     </update>
 
+    <!--
+      고아 그룹 — 활성 파일이 하나도 없이 오래된 묶음.
+      soft-delete 된 파일만 남은 그룹도 대상이다(그 파일들은 파일 정리 배치가 지운다).
+    -->
+    <select id="findOrphanGroupIds" resultType="string">
+        SELECT g.file_group_id
+        FROM tb_file_group g
+        WHERE g.created_at &lt; #{cutoff}
+          AND NOT EXISTS (
+              SELECT 1 FROM tb_file f
+              WHERE f.file_group_id = g.file_group_id
+                AND f.delete_yn = 'N')
+        ORDER BY g.created_at
+        LIMIT #{limit}
+    </select>
+
+    <delete id="hardDelete">
+        DELETE FROM tb_file_group WHERE file_group_id = #{fileGroupId}
+    </delete>
+
 </mapper>
