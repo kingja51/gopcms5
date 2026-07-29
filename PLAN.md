@@ -569,9 +569,121 @@ gopcms:
 
 ---
 
-## P10+ — 이후 로드맵 (예고)
+## P10 — 회원 관리
 
-회원·조직(직원·부서) → 템플릿 CSS 진짜 구현(blueprint-001 부터, SG 스타일가이드 병행,
+> 원전: gopcms500 `GoPCMS_회원_기술명세서.md`(2026-04-23판) — `doc/` 에 사본이 있다.
+> **테이블 7종은 이미 있다**: `tb_member` · `_consent` · `_dormant` · `_dormant_notice` ·
+> `_oauth` · `_password_history` · `_withdraw` + `vw_user_login`.
+> 메일 템플릿 10종도 V910 에 시드돼 있다(휴면 알림 3단계·전환·복원 포함).
+> **생명주기 정책은 원전과 다르다** — 사용자 확정값(§P10-4)이 우선한다.
+
+### P10-0 착수 전 점검 (원전과 스키마가 어긋나는 지점)
+- [ ] **본인확인 값이 CI 가 아니라 DI 다.** gopcms5 는 `di`/`di_hash`/`parent_di`/
+      `parent_di_hash` 를 쓰는데, 원전 문서는 **DI 를 DROP 하고 CI 로 갔다**. 정반대라
+      그대로 옮기면 컬럼이 안 맞는다. 스키마(DI)를 정본으로 삼는다
+- [ ] `tb_member` 에만 있는 컬럼 반영 — `email_verified_yn`(원전의 미구현 항목 M-01 자리),
+      `birth_year`, `captcha_required_yn`, `site_code`. 반대로 원전의 `group_ids` 는 없다
+- [ ] `tb_member_withdraw` 는 **이미 PII 를 담지 않는 설계** — `login_id_hash`·`di_hash`·
+      탈퇴일시·사유·`retention_expire_at`·`legal_basis` 뿐이다. 탈퇴 원장은 그대로 쓰면 된다
+- [ ] `vw_user_login` 은 `delete_yn='N'` 만 거른다. 휴면은 **행 자체가 `tb_member_dormant`
+      로 이관**되므로 뷰에서 자동으로 사라진다 — 별도 조건이 필요 없다(설계 확인 완료)
+- [ ] 인가 방식 재검토 — 원전은 "회원은 role 매핑이 없으니 `AUTHENTICATED + user_type`" 으로
+      갔지만, gopcms5 는 `role_ids` CSV 가 살아 있고 `ROLE_REAL`(실명인증 회원)도 있다.
+      P6-2 의 site-scoped ROLE 규칙(`/ai/member/**` ROLE_REAL)이 이미 그 전제로 깔려 있다
+
+### P10-1 가입
+- [ ] 7단계 플로우(유형선택 → 약관 → 본인인증 → 폼 → 가입 → 완료), 세션이 유일한 신뢰원 —
+      `userType` 같은 값은 폼 hidden 을 믿지 않는다
+- [ ] ADULT / CHILD(14세 미만, 법정대리인 DI 공유) 분기
+- [ ] 중복 차단 — `login_id` · `email_hash` · UNIQUE(사이트+이름+di_hash+parent_di_hash)
+- [ ] PII 는 `@Encrypt`(`{AG}`) + 검색용 `*_hash` 병행 (conventions §6)
+- [ ] 약관 동의 이력은 UPDATE 가 아니라 INSERT 누적(버전·IP·UA 동반)
+
+### P10-2 로그인·인증
+- [ ] `/member/login` — 관리자(`/adm/login`)와 물리 분리, UserDetailsService 교차 차단
+- [ ] 실패 5회 잠금(30분) · CAPTCHA(`captcha_required_yn`) · Bucket4j 이중 키(IP + loginId)
+- [ ] **enumeration 방지** — 실패 사유를 URL 에 싣지 않고, 미존재 계정에도 더미 해시로
+      BCrypt 를 1회 돌려 응답 시간을 균일화한다
+- [ ] 아이디 찾기(마스킹 노출) · 비밀번호 찾기(임시 비밀번호 즉시 만료 → 변경 강제)
+
+### P10-3 마이페이지
+- [ ] step-up 재인증(TTL 5분, 5회 실패 시 흔적 파기) 후에만 개인정보 수정·탈퇴 진입
+- [ ] 본인인증 근간값(loginId·birthDate·gender·di·parent*)은 수정 불가
+- [ ] 비밀번호 변경 — 최근 이력 재사용 금지(P6-3 에서 이미 만든 규칙 재사용)
+- [ ] 셀프 탈퇴 → §P10-4 의 탈퇴 처리와 **같은 경로**를 탄다(경로가 둘이면 정책이 갈린다)
+
+### P10-4 생명주기 스케줄러 (2026-07-29 사용자 확정)
+
+```
+ACTIVE ──[마지막 로그인 +1년]──▶ 휴면(tb_member_dormant)
+휴면   ──[휴면 전환 +1년]──────▶ 탈퇴(tb_member_withdraw + tb_member PII 전부 NULL)
+탈퇴   ──[탈퇴 +1년]───────────▶ 완전 삭제(hard delete)
+```
+
+- [ ] 3개 잡을 **각각 분리** — 휴면전환 / 탈퇴전환 / 완전삭제. `com.gonet.scheduler` 에 두고
+      **ShedLock** 적용(pom 에 이미 있다). 단건은 `REQUIRES_NEW` 로 격리해 1건 실패가
+      나머지를 막지 않게 한다
+- [ ] 기준 시각은 `Asia/Seoul` 고정. **`last_login_at` 이 NULL 인 계정(가입 후 미로그인)은
+      `created_at` 을 기준**으로 삼는다 — NULL 을 빠뜨리면 그 계정만 영원히 안 늙는다
+- [ ] 사전 통지 — 휴면 30/7/1일 전 알림은 기존 템플릿 3종을 그대로 쓴다.
+      **탈퇴 전환 예고 템플릿은 신규 필요**(현재 시드에 없음). 중복 발송은
+      `tb_member_dormant_notice (member_id, stage)` UNIQUE 로 막고, 로그인하면 이력을 지워
+      다음 사이클을 리셋한다
+- [ ] **탈퇴 처리 순서를 고정한다** — ① 원장(`tb_member_withdraw`) INSERT →
+      ② `tb_member` PII 컬럼 전부 NULL → ③ 커밋, **한 트랜잭션**. PII NULL 은 되돌릴 수
+      없으므로 원장을 먼저 남기지 않으면 사고 시 복구·소명 근거가 사라진다
+- [ ] **완전 삭제 전 자식 행 정리 순서 확인** — `tb_member_consent`·
+      `_password_history`·`_oauth`·`_dormant_notice`. FK CASCADE 여부를 실측하고, 없으면
+      명시 순서로 지운다
+- [ ] **게시판 글은 지우지 않는다** — `tb_bbs_article.writer_user_id` 는 크로스 참조(FK 없음)라
+      회원을 지워도 남는다. `writer_name` 이 스냅샷이라 화면은 유지되지만,
+      `writer_user_id` 를 NULL 로 밀지 여부는 정책 결정 필요(§결정 대기)
+- [ ] **logging_db 는 이 배치가 건드리지 않는다** — 크로스 DB 이고 보존주기가 별개다.
+      개인정보 파기 이력은 이미 있는 `log_pii_purge` 에 남긴다
+- [ ] **안전장치 필수** — dry-run 모드 + 1회 실행 건수 상한 + 실행 요약 로그.
+      첫 가동에서 오래된 계정이 한꺼번에 삭제되는 사고를 막는 장치이며,
+      되돌릴 수 없는 배치에는 상한이 있어야 한다
+
+### P10-5 휴면 복원 — 실명인증 / 이메일 인증번호 (2026-07-29 사용자 확정)
+- [ ] 휴면 계정은 `vw_user_login` 에 없으므로 평범한 로그인은 그냥 실패한다.
+      **아이디·비밀번호가 맞을 때만** 휴면 안내로 분기한다(`tb_member_dormant.password` 가
+      남아 있어 검증 가능). 아이디만으로 "휴면입니다"를 알려주면 계정 존재가 새어나간다
+- [ ] 복원 수단 ① **실명인증** — NICE 본인인증(jar 는 `lib/`, JPMS 플래그 pom 반영 완료).
+      결과 DI 를 `di_hash` 와 대조해 본인 확인. 성공 시 `ROLE_REAL` 연계
+- [ ] 복원 수단 ② **이메일 인증번호** — 6자리 OTP, TTL 5분, 시도 5회 제한, 재발송 쿨다운,
+      Bucket4j 레이트리밋. **평문 저장 금지(해시)** · 로그·예외 메시지에 노출 금지.
+      OTP 보관 테이블 신규 + 접두어 레지스트리 등록 필요
+- [ ] 성공 시 `tb_member_dormant` → `tb_member` 역이관(status=ACTIVE) + 알림 이력 삭제 +
+      복원 메일(`ACCOUNT_DORMANT_RESTORED`, 시드 완료)
+- [ ] 실패 응답은 어느 항목이 틀렸는지 구분하지 않는다(단일 메시지 + 타이밍 균일화)
+
+### P10-6 관리자 회원 관리 (P7-3 잔여분 #19 회수)
+- [ ] `MemberAdmController` `@RequestMapping("/adm/member")` — 목록·상세·상태변경·
+      비밀번호 초기화·잠금해제·강제탈퇴. **관리자는 회원을 생성하지 않는다**(정책)
+- [ ] 검색은 평문 컬럼(`login_id`·`nickname`)만 LIKE, 이메일은 `email_hash` 정확 매칭 —
+      암호화 컬럼에 LIKE 를 걸 수 없다는 제약이 화면 설계를 규정한다
+- [ ] 목록·상세의 개인정보는 **마스킹 기본**. 엑셀 내려받기는 사유 필수 + 건수 상한
+- [ ] 휴면·탈퇴 현황 조회 + 배치 수동 실행(운영 복구 경로)
+
+### P10 이식 시 교정
+| 원전 | gopcms5 | 이유 |
+|---|---|---|
+| `ci` / `ci_hash` (DI 는 DROP) | **`di` / `di_hash`** | 스키마가 DI 기준 — 정반대다 |
+| `VARCHAR(36)` UUID | **`VARCHAR(40)` `MBR_`+UUIDv7** | PK 규약 |
+| `MemberMngController` | **`MemberAdmController`** | 컨트롤러 접미어 |
+| `/admin/system/member` | **`/adm/member`** | URL 네임스페이스 = 보안 경계 |
+| 쿠키 `PCMS_SID` | **`GOPCMS_SID`** | SecurityConfig 상수 |
+| 휴면 5년·탈퇴 5년 보관 | **휴면 1년 → 탈퇴, 탈퇴 1년 → 완전삭제** | 사용자 확정 |
+| 복원 = 3요소(이름·이메일·비번) | **실명인증 또는 이메일 OTP** | 사용자 확정 |
+| `AuditLogger` 5경로 | **미도입** | 6컬럼 감사 + 접속·보안 로그로 충분(기결정) |
+| `group_ids` | 컬럼 없음 | 등급 개념 미도입 |
+| SSO 미구현 | `tb_member_oauth` **존재** | 확장 지점이 이미 열려 있다 |
+
+---
+
+## P11+ — 이후 로드맵 (예고)
+
+조직(직원·부서) → 템플릿 CSS 진짜 구현(blueprint-001 부터, SG 스타일가이드 병행,
 레이아웃 7종은 P7-4 로 완료) → 배너/팝업·일정·설문 → 공통 프로그램 →
 eGov 호환성 확인 신청.
 
@@ -598,4 +710,8 @@ eGov 호환성 확인 신청.
 | **CrossEditor 도입 가부** | 상용 iframe 번들이라 CSP `unsafe-eval`·`frame-src` 를 요구할 수 있다. 요구하면 **관리자 전 구간 CSP 를 여는 셈** — 실측 후 도입 여부를 다시 판단한다 | P9-2b 착수 시 |
 | **CrossEditor 라이선스** | 1도메인 단위 상용. 구매·적용 도메인 확정 전에는 벤더 번들을 저장소에 커밋하지 않는다 | 도입 전 |
 | **에디터 간 본문 호환** | provider 를 바꿔도 기존 `body` 가 열려야 한다. CrossEditor 는 HTML4.01/XHTML 계열 마크업을 뱉으므로 allowlist 를 두 출력의 합집합으로 잡지 않으면 기존 글이 저장할 때마다 깎인다 | P9-2b |
+| **탈퇴 시 `di_hash` 존치 여부** | 탈퇴 원장(`tb_member_withdraw`)의 `di_hash`·`login_id_hash` 는 **재가입 제한·중복가입 차단·분쟁 대응의 유일한 근거**다. "개인정보 필드 모두 NULL" 을 원장까지 적용하면 그 기능이 사라진다. `tb_member` 는 전부 NULL, 원장 해시는 존치가 기본안 — 확인 필요 | P10-4 착수 전 |
+| **완전 삭제 후 게시글 작성자** | `tb_bbs_article.writer_user_id` 는 크로스 참조(FK 없음)라 회원을 지워도 남는다. `writer_name` 스냅샷 덕에 화면은 유지되지만, 끊긴 ID 를 NULL 로 밀지 그대로 둘지 정책 필요 | P10-4 |
+| **탈퇴 원장 자체의 보존기간** | `retention_expire_at`·`legal_basis` 컬럼이 이미 있다. "탈퇴 1년 후 완전 삭제" 가 `tb_member` 행만인지 원장까지인지 확정 필요 | P10-4 |
+| **휴면 정책의 법적 근거** | 1년 미이용자 분리보관·파기 의무(개인정보 유효기간제)는 폐지된 것으로 알고 있다 — 그렇다면 1년 휴면은 법적 의무가 아니라 서비스 정책이고 사전통지 의무 범위도 달라진다. 개인정보 담당자 확인 권장(내 판단을 근거로 삼지 말 것) | P10-4 착수 전 |
 | **프로그램 네임스페이스 3중 동기화** | `/bbs/`·`/prg/` 목록이 `SKIP_PREFIXES`·컨텐츠 예약 slug·사이트코드 예약어 세 곳에 흩어지면 라우팅이 조용히 깨진다 — 상수 한 곳을 세 곳이 참조하도록 | P9-0 |
