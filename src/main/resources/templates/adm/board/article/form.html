@@ -130,6 +130,57 @@
                class="krds-btn krds-btn-secondary">취소</a>
         </div>
     </form>
+
+    <!--
+      댓글 모더레이션 — 신고·부적절 댓글을 숨긴다. 본문을 지우지 않고 상태만 바꾸는 이유는
+      나중에 왜 숨겼는지 확인할 근거가 남아야 하기 때문이다. 삭제는 자식 대댓글까지 함께.
+      ※ 폼 안에 폼을 넣을 수 없어 게시글 폼 밖에 둔다(HTML 파싱 규칙).
+    -->
+    <section class="ladm-panel" th:if="${comments != null}" style="margin-top:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">댓글</h2>
+            <span class="grow"></span>
+            <span class="text-body-xs text-fg-subtle"
+                  th:text="${comments.size()} + '건'">0건</span>
+        </div>
+
+        <div class="ladm-panel-body" th:if="${comments.isEmpty()}">
+            <p class="text-body-sm text-fg-subtle" style="margin:0">아직 댓글이 없습니다.</p>
+        </div>
+
+        <div class="ladm-panel-body" th:unless="${comments.isEmpty()}">
+            <div class="ladm-catrow" th:each="c : ${comments}"
+                 th:style="${c.depth != null and c.depth > 1} ? 'padding-left:32px' : ''">
+                <span class="text-body-xs text-fg-subtle" th:if="${c.depth != null and c.depth > 1}"
+                      aria-label="대댓글">↳</span>
+                <b class="text-body-sm" th:text="${c.writerName}">작성자</b>
+                <span class="krds-badge ladm-badge-off" th:if="${c.secret}">비밀</span>
+                <span class="krds-badge ladm-badge-off" th:if="${c.hidden}"
+                      th:text="${c.status}">HIDDEN</span>
+                <span class="text-body-sm" th:text="${c.content}">내용</span>
+                <span class="grow"></span>
+                <span class="text-body-xs text-fg-subtle"
+                      th:text="${c.createdAtView != null}
+                               ? ${#temporals.format(c.createdAtView, 'yyyy-MM-dd HH:mm')} : ''">일시</span>
+
+                <form method="post" style="display:inline"
+                      th:action="@{'/adm/board/' + ${master.bbsMasterId} + '/article/comment/moderate'}">
+                    <input type="hidden" name="articleId" th:value="${article.articleId}"/>
+                    <input type="hidden" name="commentId" th:value="${c.commentId}"/>
+                    <input type="hidden" name="status" th:value="${c.hidden} ? 'PUBLISHED' : 'HIDDEN'"/>
+                    <button type="submit" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                            th:text="${c.hidden} ? '노출' : '숨김'">숨김</button>
+                </form>
+                <form method="post" style="display:inline"
+                      th:action="@{'/adm/board/' + ${master.bbsMasterId} + '/article/comment/delete'}">
+                    <input type="hidden" name="articleId" th:value="${article.articleId}"/>
+                    <input type="hidden" name="commentId" th:value="${c.commentId}"/>
+                    <button type="submit" class="krds-btn krds-btn-tertiary krds-btn-sm"
+                            data-confirm="댓글을 삭제할까요? 답글도 함께 삭제됩니다.">삭제</button>
+                </form>
+            </div>
+        </div>
+    </section>
 </div>
 
 <th:block layout:fragment="scripts">

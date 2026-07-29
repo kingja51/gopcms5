@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.board.mapper.BbsCommentMapper">
+
+    <sql id="cols">
+        c.comment_id, c.article_id, c.parent_comment_id,
+        c.writer_user_id, c.writer_user_type, c.writer_name,
+        c.content, c.like_count, c.report_count, c.secret_yn, c.depth,
+        c.client_ip, c.status, c.created_by, c.created_at, c.updated_by, c.updated_at
+    </sql>
+
+    <!--
+      트리 정렬 — 부모 바로 아래에 그 자식이 오게 한다. depth 가 2 로 제한돼 있어
+      COALESCE(parent, self) 한 벌로 충분하다(재귀 CTE 불필요).
+    -->
+    <select id="findByArticle" resultType="com.gonet.primary.board.dto.BbsCommentDto">
+        SELECT <include refid="cols"/>, c.created_at AS created_at_view
+        FROM tb_bbs_comment c
+        WHERE c.article_id = #{articleId} AND c.delete_yn = 'N'
+        ORDER BY COALESCE(c.parent_comment_id, c.comment_id), c.depth, c.created_at, c.comment_id
+    </select>
+
+    <select id="findById" resultType="com.gonet.primary.board.dto.BbsCommentDto">
+        SELECT <include refid="cols"/>, c.created_at AS created_at_view
+        FROM tb_bbs_comment c
+        WHERE c.comment_id = #{commentId} AND c.delete_yn = 'N'
+    </select>
+
+    <insert id="insert">
+        INSERT INTO tb_bbs_comment (
+            comment_id, article_id, parent_comment_id,
+            writer_user_id, writer_user_type, writer_name, writer_password,
+            content, secret_yn, depth, client_ip, status,
+            created_by, created_ip, created_at, updated_by, updated_ip, updated_at
+        ) VALUES (
+            #{commentId}, #{articleId}, #{parentCommentId},
+            #{writerUserId}, #{writerUserType}, #{writerName}, #{writerPassword},
+            #{content}, #{secretYn}, #{depth}, #{clientIp}, #{status},
+            #{createdBy}, #{createdIp}, CURRENT_TIMESTAMP,
+            #{updatedBy}, #{updatedIp}, CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE tb_bbs_comment
+        SET content = #{content}, secret_yn = #{secretYn},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE comment_id = #{commentId}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE tb_bbs_comment
+        SET status = #{status},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE comment_id = #{commentId}
+    </update>
+
+    <update id="softDelete">
+        UPDATE tb_bbs_comment
+        SET delete_yn = 'Y', status = 'DELETED',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE comment_id = #{commentId}
+    </update>
+
+    <update id="softDeleteChildren">
+        UPDATE tb_bbs_comment
+        SET delete_yn = 'Y', status = 'DELETED',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE parent_comment_id = #{parentCommentId} AND delete_yn = 'N'
+    </update>
+
+</mapper>

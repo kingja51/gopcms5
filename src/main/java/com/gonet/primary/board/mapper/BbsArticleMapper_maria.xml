@@ -122,10 +122,16 @@
         WHERE article_id = #{articleId} AND delete_yn = 'N'
     </update>
 
+    <!--
+      화면에 보이는 댓글만 센다 — 숨김(HIDDEN)·신고보류(REPORTED)는 목록에서 사라지므로
+      카운트에 남으면 "댓글 3" 인데 하나도 안 보이는 상태가 된다.
+      증분이 아니라 재계산인 이유도 같다: 모더레이션·삭제가 섞이면 증감은 반드시 어긋난다.
+    -->
     <update id="refreshCommentCount">
         UPDATE tb_bbs_article a
         SET a.comment_count = (SELECT COUNT(*) FROM tb_bbs_comment c
-                                WHERE c.article_id = a.article_id AND c.delete_yn = 'N'),
+                                WHERE c.article_id = a.article_id
+                                  AND c.delete_yn = 'N' AND c.status = 'PUBLISHED'),
             a.updated_at = a.updated_at
         WHERE a.article_id = #{articleId}
     </update>

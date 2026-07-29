@@ -7,6 +7,7 @@ import com.gonet.primary.board.dto.BbsArticleSearch;
 import com.gonet.primary.board.dto.BbsMasterAdmDto;
 import com.gonet.primary.board.service.BoardArticleService;
 import com.gonet.primary.board.service.BoardCategoryService;
+import com.gonet.primary.board.service.BoardCommentService;
 import com.gonet.primary.board.service.BoardMasterService;
 import com.gonet.primary.file.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class BoardArticleAdmController {
     private final BoardArticleService boardArticleService;
     private final BoardMasterService boardMasterService;
     private final BoardCategoryService boardCategoryService;
+    private final BoardCommentService boardCommentService;
     private final FileService fileService;
 
     @GetMapping
@@ -66,6 +68,8 @@ public class BoardArticleAdmController {
                 return redirectList(bbsMasterId);
             }
             model.addAttribute("attachedFiles", attachedFiles(article));
+            // 댓글은 글에 종속된 모더레이션 대상이라 같은 화면에서 다룬다
+            model.addAttribute("comments", boardCommentService.getByArticle(articleId));
         }
         model.addAttribute("master", master);
         model.addAttribute("article", article);
@@ -97,6 +101,35 @@ public class BoardArticleAdmController {
         boardArticleService.delete(articleId);
         redirect.addFlashAttribute("flashOk", "삭제되었습니다.");
         return redirectList(bbsMasterId);
+    }
+
+    /* ── 댓글 모더레이션 — 글 화면 안에서 처리한다 ─────────────────────── */
+
+    @PostMapping("/comment/moderate")
+    public String moderateComment(@PathVariable String bbsMasterId,
+            @RequestParam String articleId, @RequestParam String commentId,
+            @RequestParam String status, RedirectAttributes redirect) {
+        try {
+            boardCommentService.moderate(commentId, status);
+            redirect.addFlashAttribute("flashOk",
+                    "HIDDEN".equals(status) ? "댓글을 숨겼습니다." : "댓글을 다시 노출했습니다.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("flashError", e.getMessage());
+        }
+        return redirectForm(bbsMasterId, articleId);
+    }
+
+    @PostMapping("/comment/delete")
+    public String deleteComment(@PathVariable String bbsMasterId,
+            @RequestParam String articleId, @RequestParam String commentId,
+            RedirectAttributes redirect) {
+        boardCommentService.delete(commentId);
+        redirect.addFlashAttribute("flashOk", "댓글을 삭제했습니다.");
+        return redirectForm(bbsMasterId, articleId);
+    }
+
+    private String redirectForm(String bbsMasterId, String articleId) {
+        return "redirect:/adm/board/" + bbsMasterId + "/article/form?articleId=" + articleId;
     }
 
     /** 첨부 그룹이 없는 글(첨부 0건)은 질의하지 않는다. */
