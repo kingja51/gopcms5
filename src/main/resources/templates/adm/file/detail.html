@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<!-- 파일 상세 — 메타데이터·무결성 해시·공개 범위·다운로드 기록.
+     수정 가능한 것은 표시명·정렬·검사상태·공개범위뿐이다. 저장 경로·해시·MIME 은
+     방어 판정의 근거값이라 화면에서 바꾸지 못한다(읽기 전용으로만 보여준다). -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>파일 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('파일 상세',
+            '업로드 시점의 검증 결과와 내려받은 기록을 봅니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <!-- 삭제 표시된 파일은 먼저 알려준다 — 왜 목록에 없는지 헷갈리지 않게 -->
+    <div class="ladm-panel" th:if="${file.deleteYn == 'Y'}">
+        <div class="ladm-panel-body">
+            <p class="text-body-sm" style="margin:0 0 12px">
+                <b>삭제 표시된 파일입니다.</b>
+                보존기간이 지나면 정리 배치가 실체를 지웁니다. 그 전까지는 복구할 수 있습니다.
+            </p>
+            <form th:action="@{'/adm/file/' + ${file.fileId} + '/restore'}" method="post"
+                  style="margin:0">
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">복구</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 검증 결과 — 읽기 전용. 업로드 때 무엇을 확인했는지가 여기 남는다 -->
+    <section class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">검증 결과</h2>
+            <span class="grow"></span>
+            <a th:href="@{'/adm/file/' + ${file.fileId} + '/download'}"
+               class="krds-btn krds-btn-tertiary krds-btn-sm">원본 내려받기</a>
+        </div>
+        <div class="ladm-tablewrap">
+            <table class="krds-table">
+                <caption class="sr-only">파일 검증 정보</caption>
+                <tbody>
+                <tr>
+                    <th scope="row">저장 이름</th>
+                    <td><code th:text="${file.storedName}">FIL_….pdf</code>
+                        <span class="text-body-xs text-fg-subtle">
+                            원본명을 저장에 쓰지 않는다 — 경로 조작·확장자 위장을 구조적으로 막는다</span></td>
+                </tr>
+                <tr>
+                    <th scope="row">저장 경로</th>
+                    <td><code th:text="${file.storedPath}">2026/07/29/…</code>
+                        <span class="text-body-xs text-fg-subtle">웹루트 밖 · 이 화면을 통해서만 나간다</span></td>
+                </tr>
+                <tr>
+                    <th scope="row">판별 형식</th>
+                    <td>
+                        <code th:text="${file.mimeDetected}">application/pdf</code>
+                        <span class="text-body-xs text-fg-subtle">
+                            매직바이트 기준 — 클라이언트 신고값(<span th:text="${file.mimeClient} ?: '없음'">-</span>)은 신뢰하지 않는다</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">재인코딩</th>
+                    <td>
+                        <span class="krds-badge"
+                              th:classappend="${file.reencodedYn == 'Y'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${file.reencodedYn == 'Y'} ? '수행' : '해당 없음'">수행</span>
+                        <span class="text-body-xs text-fg-subtle">
+                            이미지는 픽셀만 다시 써서 원본에 붙어 있던 것을 버린다</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">SHA-256</th>
+                    <td><code class="text-body-xs" th:text="${file.fileHash}">…</code>
+                        <span class="text-body-xs text-fg-subtle">무결성 대조·중복 판정용</span></td>
+                </tr>
+                <tr>
+                    <th scope="row">크기</th>
+                    <td th:text="${#numbers.formatDecimal(file.sizeBytes / 1024.0, 1, 'COMMA', 0, 'POINT')} + ' KB'">0 KB</td>
+                </tr>
+                <tr>
+                    <th scope="row">등록</th>
+                    <td>
+                        <span th:text="${#temporals.format(file.createdAtView, 'yyyy-MM-dd HH:mm')}">-</span>
+                        <span class="text-fg-subtle" th:text="${file.createdBy} ?: '(알 수 없음)'">-</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 수정 — 바꿀 수 있는 것만 -->
+    <form th:action="@{'/adm/file/' + ${file.fileId} + '/save'}" method="post" class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">표시 정보</h2>
+        </div>
+        <div class="ladm-panel-body ladm-form">
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="originalName">표시명</label>
+                <div class="ladm-form-field">
+                    <input id="originalName" name="originalName" class="krds-input"
+                           th:value="${file.originalName}" maxlength="255"/>
+                    <p class="ladm-hint text-body-xs">
+                        목록과 내려받기 파일명에 쓰입니다. 경로 문자(<code>/</code> <code>\</code> <code>..</code>)는
+                        저장되지 않습니다 — 파일명 자체가 공격 표면이기 때문입니다.</p>
+                </div>
+            </div>
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="sortOrder">정렬</label>
+                <div class="ladm-form-field">
+                    <input id="sortOrder" name="sortOrder" type="number" class="krds-input"
+                           style="max-width:120px" th:value="${file.sortOrder}"/>
+                    <p class="ladm-hint text-body-xs">같은 묶음 안에서의 표시 순서입니다.</p>
+                </div>
+            </div>
+        </div>
+        <div class="ladm-form-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">저장</button>
+            <a th:href="@{/adm/file}" class="krds-btn krds-btn-secondary">목록</a>
+            <span class="grow"></span>
+            <button type="submit" th:if="${file.deleteYn != 'Y'}" formnovalidate
+                    th:formaction="@{'/adm/file/' + ${file.fileId} + '/delete'}"
+                    class="krds-btn krds-btn-point"
+                    data-confirm="삭제 표시할까요? 보존기간 전에는 복구할 수 있습니다.">삭제</button>
+        </div>
+    </form>
+
+    <!-- 공개 범위 — 묶음 단위 -->
+    <form th:action="@{'/adm/file/' + ${file.fileId} + '/download-auth'}" method="post"
+          class="ladm-panel">
+        <input type="hidden" name="fileGroupId" th:value="${file.fileGroupId}"/>
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">공개 범위</h2>
+        </div>
+        <div class="ladm-panel-body ladm-form">
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="downloadAuth">다운로드 권한</label>
+                <div class="ladm-form-field">
+                    <select id="downloadAuth" name="downloadAuth" class="krds-select">
+                        <option th:each="a : ${downloadAuths}" th:value="${a}" th:text="${a}"
+                                th:selected="${a == file.downloadAuth}">ROLE_MEMBER</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        <b>같은 묶음의 첨부 전체에 적용됩니다</b>(소유: <code th:text="${file.entityType}">BBS</code>
+                        <code th:text="${file.entityId}">…</code>).
+                        한 글의 첨부가 서로 다른 공개 범위를 갖는 것은 정책 오류에 가까워 묶음 단위로 겁니다.
+                        <br><b>OWNER_PRIVACY</b> 는 본인과 개인정보 관리자만 열 수 있으며,
+                        최고 관리자도 자동으로 통과하지 않습니다.</p>
+                </div>
+            </div>
+        </div>
+        <div class="ladm-form-actions">
+            <button type="submit" class="krds-btn krds-btn-primary">공개 범위 변경</button>
+        </div>
+    </form>
+
+    <!-- 검사 상태 -->
+    <form th:action="@{'/adm/file/' + ${file.fileId} + '/scan-status'}" method="post"
+          class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">검사 상태</h2>
+            <span class="grow"></span>
+            <span class="krds-badge"
+                  th:classappend="${file.virusScanStatus == 'CLEAN' or file.virusScanStatus == 'PENDING'}
+                                  ? 'ladm-badge-on' : 'ladm-badge-off'"
+                  th:text="${file.virusScanStatus}">PENDING</span>
+        </div>
+        <div class="ladm-panel-body ladm-form">
+            <div class="ladm-form-row">
+                <label class="ladm-form-label" for="status">상태 변경</label>
+                <div class="ladm-form-field">
+                    <select id="status" name="status" class="krds-select">
+                        <option th:each="s : ${scanStatuses}" th:value="${s}" th:text="${s}"
+                                th:selected="${s == file.virusScanStatus}">PENDING</option>
+                    </select>
+                    <p class="ladm-hint text-body-xs">
+                        <b>CLEAN·PENDING 만 내려받을 수 있습니다.</b> 나머지는 "안전하다고 확인되지
+                        않았다" 는 뜻이라 막습니다(관리자 강제 다운로드는 예외이며 기록이 남습니다).
+                        오탐을 푸는 것은 되돌릴 수 없는 판단이라 변경 이력이 남습니다.</p>
+                </div>
+            </div>
+        </div>
+        <div class="ladm-form-actions">
+            <button type="submit" class="krds-btn krds-btn-secondary"
+                    data-confirm="검사 상태를 바꿀까요? 변경 이력이 남습니다.">상태 변경</button>
+        </div>
+    </form>
+
+    <!-- 다운로드 기록 -->
+    <section class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-heading-sm text-fg-strong" style="margin:0">내려받은 기록</h2>
+            <span class="grow"></span>
+            <span class="text-body-xs text-fg-subtle">
+                전체 <b th:text="${downloadTotal}">0</b>건 · 최근 20건 표시</span>
+        </div>
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">이 파일의 최근 다운로드 기록</caption>
+                <thead>
+                <tr>
+                    <th scope="col">일시</th>
+                    <th scope="col">받은 사람</th>
+                    <th scope="col">IP</th>
+                    <th scope="col" class="center">경로</th>
+                    <th scope="col" class="center">결과</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${recentDownloads}">
+                    <td th:text="${#temporals.format(d.downloadedAt, 'yyyy-MM-dd HH:mm:ss')}">-</td>
+                    <td>
+                        <span th:text="${d.actorLoginId} ?: '(비로그인)'">-</span>
+                        <span class="text-body-xs text-fg-subtle" th:text="${d.actorUserType}">ADMIN</span>
+                    </td>
+                    <td class="text-fg-subtle" th:text="${d.clientIp}">-</td>
+                    <td class="center text-fg-subtle" th:text="${d.downloadType}">SINGLE</td>
+                    <td class="center">
+                        <!-- 거부도 남긴다 — 반복 거부는 그 자체로 신호다 -->
+                        <span class="krds-badge"
+                              th:classappend="${d.result == 'SUCCESS'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${d.result}">SUCCESS</span>
+                    </td>
+                </tr>
+                <tr th:if="${recentDownloads.isEmpty()}">
+                    <td colspan="5" class="center text-fg-subtle">아직 내려받은 기록이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.logging.file.mapper.FileDownloadLogMapper">
+
+    <insert id="insert" parameterType="com.gonet.logging.file.dto.FileDownloadLog"
+            useGeneratedKeys="true" keyProperty="logFileDownloadId">
+        INSERT INTO log_file_download
+            (file_id, file_group_id, download_type, actor_user_id, actor_user_type,
+             actor_login_id, original_name, extension, size_bytes,
+             request_uri, client_ip, user_agent, trace_id, result, created_ip)
+        VALUES
+            (#{fileId}, #{fileGroupId}, #{downloadType}, #{actorUserId}, #{actorUserType},
+             #{actorLoginId}, #{originalName}, #{extension}, #{sizeBytes},
+             #{requestUri}, #{clientIp}, #{userAgent}, #{traceId}, #{result}, #{clientIp})
+    </insert>
+
+    <select id="findRecentByFile" resultType="com.gonet.logging.file.dto.FileDownloadLog">
+        SELECT log_file_download_id, file_id, download_type, actor_login_id, actor_user_type,
+               client_ip, result, downloaded_at
+        FROM log_file_download
+        WHERE file_id = #{fileId}
+        ORDER BY downloaded_at DESC, log_file_download_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="countByFile" resultType="long">
+        SELECT COUNT(*) FROM log_file_download WHERE file_id = #{fileId}
+    </select>
+
+</mapper>

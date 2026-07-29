@@ -50,5 +50,20 @@ public interface FileService {
 
     PageResult<FileItem> getAdmPage(FileSearch cond);
 
+    /** 관리 상세 — 삭제 표시된 것도 조회한다(복구 화면이 필요로 한다). */
+    FileItem findAnyById(String fileId);
+
+    /** 관리자 수정 — 표시명·정렬. 저장 경로·해시·MIME 은 방어의 근거라 대상이 아니다. */
+    void updateAdm(String fileId, String originalName, Integer sortOrder);
+
+    /** 검사 상태 수동 변경 — 오탐 해제·재검사. 누가 바꿨는지 남는다. */
+    void updateScanStatusAdm(String fileId, String status);
+
+    /** 소유 묶음의 다운로드 정책 변경 — 공개 범위를 바꾸는 유일한 관리 경로. */
+    void updateDownloadAuthAdm(String fileGroupId, String downloadAuth);
+
     void deleteAdm(String fileId);
+
+    /** 복구 — 물리 삭제 전까지는 되돌릴 수 있어야 오삭제가 사고로 끝나지 않는다. */
+    void restoreAdm(String fileId);
 }

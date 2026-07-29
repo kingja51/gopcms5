@@ -26,6 +26,12 @@
                     <option th:each="s : ${scanStatuses}" th:value="${s}" th:text="${s}"
                             th:selected="${s == cond.scanStatus}">CLEAN</option>
                 </select>
+                <label class="ladm-check text-body-sm">
+                    <input type="checkbox" name="includeDeleted" value="true"
+                           th:checked="${cond.includeDeleted}"
+                           data-submit-on-change/>
+                    삭제된 항목 포함
+                </label>
                 <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">검색</button>
             </form>
             <span class="grow"></span>
@@ -50,8 +56,10 @@
                 <tbody>
                 <tr th:each="f : ${page.content()}">
                     <td>
-                        <a th:href="@{'/file/' + ${f.fileId}}" class="krds-link"
+                        <a th:href="@{'/adm/file/' + ${f.fileId}}" class="krds-link"
                            th:text="${f.originalName}">문서.pdf</a>
+                        <span th:if="${f.deleteYn == 'Y'}" class="krds-badge ladm-badge-off"
+                              style="margin-left:6px">삭제됨</span>
                         <span th:if="${f.reencodedYn == 'Y'}" class="krds-badge ladm-badge-on"
                               style="margin-left:6px" title="이미지를 다시 인코딩해 원본에 붙어 있던 것을 제거했습니다">재인코딩</span>
                     </td>
@@ -74,13 +82,10 @@
                     <td class="center text-fg-subtle" th:text="${f.downloadAuth}">ROLE_MEMBER</td>
                     <td class="num" th:text="${f.downloadCount}">0</td>
                     <td class="center nowrap">
+                        <a th:href="@{'/adm/file/' + ${f.fileId}}"
+                           class="krds-btn krds-btn-tertiary krds-btn-sm">상세</a>
                         <a th:href="@{'/adm/file/' + ${f.fileId} + '/download'}"
-                           class="krds-btn krds-btn-tertiary krds-btn-sm">원본</a>
-                        <form th:action="@{'/adm/file/' + ${f.fileId} + '/delete'}" method="post"
-                              style="display:inline">
-                            <button type="submit" class="krds-btn krds-btn-text krds-btn-sm"
-                                    data-confirm="이 파일을 삭제할까요? 파일 실체는 보존기간 경과 후 정리됩니다.">삭제</button>
-                        </form>
+                           class="krds-btn krds-btn-text krds-btn-sm">원본</a>
                     </td>
                 </tr>
                 <tr th:replace="~{adm/fragments/adm-ui :: empty(8, ${page.content().isEmpty()}, '/adm/file/picker')}"></tr>

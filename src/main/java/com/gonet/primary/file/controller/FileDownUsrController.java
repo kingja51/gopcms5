@@ -1,8 +1,10 @@
 package com.gonet.primary.file.controller;
 
 import com.gonet.common.file.security.FileStorage;
+import com.gonet.logging.file.service.FileDownloadLogger;
 import com.gonet.primary.file.dto.FileItem;
 import com.gonet.primary.file.service.FileService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,12 +40,33 @@ public class FileDownUsrController {
 
     private final FileService fileService;
     private final FileStorage storage;
+    private final FileDownloadLogger downloadLogger;
 
     /** 원본 다운로드 — 권한·검사상태를 통과해야 열린다. */
     @GetMapping("/{fileId}")
-    public void download(@PathVariable String fileId, HttpServletResponse response) {
-        FileItem item = fileService.openForDownload(fileId);
+    public void download(@PathVariable String fileId,
+            HttpServletRequest request, HttpServletResponse response) {
+        FileItem item = open(fileId, request, FileDownloadLogger.TYPE_SINGLE);
         stream(item, storage.resolve(item.getStoredPath()), response, true);
+        downloadLogger.write(request, item.getFileId(), item.getFileGroupId(),
+                item.getOriginalName(), item.getExtension(), item.getSizeBytes(),
+                FileDownloadLogger.TYPE_SINGLE, FileDownloadLogger.RESULT_SUCCESS);
+    }
+
+    /**
+     * 권한 판정을 감싸 <b>거부도 기록</b>한다.
+     *
+     * <p>성공만 남기면 "한 계정이 남의 비공개 자료를 반복해서 두드리는" 패턴이 보이지 않는다.
+     * 거부 기록이야말로 사고 조사에서 먼저 찾는 것이다.
+     */
+    private FileItem open(String fileId, HttpServletRequest request, String type) {
+        try {
+            return fileService.openForDownload(fileId);
+        } catch (RuntimeException e) {
+            downloadLogger.write(request, fileId, null, null, null, null,
+                    type, FileDownloadLogger.RESULT_BLOCKED);
+            throw e;
+        }
     }
 
     /**
@@ -52,8 +75,9 @@ public class FileDownUsrController {
      * 작게나마 새어 나간다.
      */
     @GetMapping("/{fileId}/thumb")
-    public void thumbnail(@PathVariable String fileId, HttpServletResponse response) {
-        FileItem item = fileService.openForDownload(fileId);
+    public void thumbnail(@PathVariable String fileId,
+            HttpServletRequest request, HttpServletResponse response) {
+        FileItem item = open(fileId, request, FileDownloadLogger.TYPE_SINGLE);
         if (item.getThumbnailPath() == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }

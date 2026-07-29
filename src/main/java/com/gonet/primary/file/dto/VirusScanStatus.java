@@ -20,7 +20,16 @@ public final class VirusScanStatus {
 
     private static final Set<String> DOWNLOADABLE = Set.of(CLEAN, PENDING);
 
+    /** 화면 선택지 겸 검증 집합 — V9 chk_file_scan_status 와 1:1. */
+    public static final Set<String> ALL =
+            Set.of(PENDING, CLEAN, INFECTED, ERROR, QUARANTINED, RESCANNING);
+
     private VirusScanStatus() {
+    }
+
+    /** V9 CHECK 제약이 허용하는 값인가 — 화면에서 임의 문자열이 들어오는 것을 막는다. */
+    public static boolean isKnown(String status) {
+        return status != null && ALL.contains(status);
     }
 
     /** 일반 사용자에게 내보내도 되는 상태인가. 관리자 강제 다운로드는 이 판정을 우회한다. */

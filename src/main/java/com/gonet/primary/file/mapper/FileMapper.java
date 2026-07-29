@@ -14,6 +14,9 @@ public interface FileMapper {
 
     FileItem findById(@Param("fileId") String fileId);
 
+    /** 삭제 표시된 것까지 포함 — 관리 상세·복구 화면은 지운 것도 봐야 한다. */
+    FileItem findAnyById(@Param("fileId") String fileId);
+
     /** 그룹의 활성 파일 — 목록·ZIP·picker 초기 표시가 모두 이걸 쓴다. */
     List<FileItem> findByGroup(@Param("fileGroupId") String fileGroupId);
 
@@ -33,7 +36,17 @@ public interface FileMapper {
                         @Param("updatedBy") String updatedBy,
                         @Param("updatedIp") String updatedIp);
 
-    int updateScanStatus(@Param("fileId") String fileId, @Param("status") String status);
+    int updateScanStatus(@Param("fileId") String fileId, @Param("status") String status,
+                         @Param("updatedBy") String updatedBy,
+                         @Param("updatedIp") String updatedIp);
+
+    /** 관리자 수정 — 표시명·정렬만. 저장 경로·해시·MIME 은 방어의 근거라 손대지 않는다. */
+    int updateAdm(FileItem file);
+
+    /** 복구 — 보존기간 안에 되돌릴 수 있어야 오삭제가 사고로 끝나지 않는다. */
+    int restore(@Param("fileId") String fileId,
+                @Param("updatedBy") String updatedBy,
+                @Param("updatedIp") String updatedIp);
 
     int updateThumbnail(@Param("fileId") String fileId, @Param("thumbnailPath") String thumbnailPath);
 

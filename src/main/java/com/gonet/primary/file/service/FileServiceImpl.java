@@ -246,6 +246,61 @@ public class FileServiceImpl extends AbstractCmsService implements FileService {
     }
 
     @Override
+    public FileItem findAnyById(String fileId) {
+        return fileMapper.findAnyById(fileId);
+    }
+
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public void updateAdm(String fileId, String originalName, Integer sortOrder) {
+        FileItem patch = new FileItem();
+        patch.setFileId(fileId);
+        // 표시명은 화면에 그대로 나가고 Content-Disposition 에도 실린다 —
+        // 파일명 자체가 공격 표면이므로 업로드 때와 같은 기준으로 다시 거른다
+        if (originalName != null && !originalName.isBlank()) {
+            String name = originalName.trim();
+            if (name.length() > 255 || name.indexOf(' ') >= 0
+                    || name.contains("/") || name.contains("\\") || name.contains("..")) {
+                throw new IllegalArgumentException("사용할 수 없는 파일명입니다.");
+            }
+            patch.setOriginalName(name);
+        }
+        patch.setSortOrder(sortOrder == null ? 0 : sortOrder);
+        fileMapper.updateAdm(patch);
+    }
+
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public void updateScanStatusAdm(String fileId, String status) {
+        if (!VirusScanStatus.isKnown(status)) {
+            throw new IllegalArgumentException("알 수 없는 검사 상태입니다.");
+        }
+        // 오탐 해제는 되돌릴 수 없는 판단이라 흔적을 남긴다
+        log.info("검사 상태 수동 변경 file={} status={} actor={}",
+                fileId, status, AuditorContext.currentUserId());
+        fileMapper.updateScanStatus(fileId, status,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
+    }
+
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public void updateDownloadAuthAdm(String fileGroupId, String downloadAuth) {
+        if (!DownloadAuth.isValid(downloadAuth)) {
+            throw new IllegalArgumentException("알 수 없는 다운로드 권한입니다.");
+        }
+        log.info("첨부 공개 범위 변경 group={} auth={} actor={}",
+                fileGroupId, downloadAuth, AuditorContext.currentUserId());
+        fileGroupMapper.updateDownloadAuth(fileGroupId, downloadAuth,
+                AuditorContext.currentUserId(), AuditorContext.currentIp());
+    }
+
+    @Override
+    @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
+    public void restoreAdm(String fileId) {
+        fileMapper.restore(fileId, AuditorContext.currentUserId(), AuditorContext.currentIp());
+    }
+
+    @Override
     @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
     public void deleteAdm(String fileId) {
         // soft delete 만 한다 — 물리 삭제는 보존기간 배치의 몫이다.

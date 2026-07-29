@@ -32,6 +32,14 @@
         WHERE f.file_id = #{fileId} AND f.delete_yn = 'N'
     </select>
 
+    <select id="findAnyById" resultType="com.gonet.primary.file.dto.FileItem">
+        SELECT <include refid="cols"/>,
+               g.entity_type, g.entity_id, g.download_auth
+        FROM tb_file f
+        JOIN tb_file_group g ON g.file_group_id = f.file_group_id
+        WHERE f.file_id = #{fileId}
+    </select>
+
     <select id="findByGroup" resultType="com.gonet.primary.file.dto.FileItem">
         SELECT <include refid="cols"/>
         FROM tb_file f
@@ -40,13 +48,15 @@
     </select>
 
     <sql id="admWhere">
-        WHERE f.delete_yn = 'N'
+        <trim prefix="WHERE" prefixOverrides="AND ">
+        <if test="!includeDeleted">AND f.delete_yn = 'N'</if>
         <if test="keyword != null">
             AND f.original_name LIKE CONCAT('%', #{keyword}, '%')
         </if>
         <if test="entityType != null and entityType != ''">AND g.entity_type = #{entityType}</if>
         <if test="extension != null and extension != ''">AND f.extension = #{extension}</if>
         <if test="scanStatus != null and scanStatus != ''">AND f.virus_scan_status = #{scanStatus}</if>
+        </trim>
     </sql>
 
     <select id="findPage" resultType="com.gonet.primary.file.dto.FileItem">
@@ -92,9 +102,32 @@
         </if>
     </update>
 
+    <!--
+      검사 상태 수동 변경 — 오탐(INFECTED)을 풀거나 재검사를 걸 때 쓴다.
+      누가 풀었는지 남아야 하므로 감사 컬럼을 함께 쓴다(자동 갱신과 구분되는 지점).
+    -->
     <update id="updateScanStatus">
-        UPDATE tb_file SET virus_scan_status = #{status}, updated_at = CURRENT_TIMESTAMP
+        UPDATE tb_file
+        SET virus_scan_status = #{status},
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
         WHERE file_id = #{fileId}
+    </update>
+
+    <!-- 저장 경로·해시·MIME 은 바꿀 수 없다 — 방어 판정의 근거값이라 수정 대상이 아니다 -->
+    <update id="updateAdm" parameterType="com.gonet.primary.file.dto.FileItem">
+        UPDATE tb_file
+        SET
+            <if test="originalName != null and originalName != ''">original_name = #{originalName},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE file_id = #{fileId}
+    </update>
+
+    <update id="restore">
+        UPDATE tb_file
+        SET delete_yn = 'N',
+            updated_by = #{updatedBy}, updated_ip = #{updatedIp}, updated_at = CURRENT_TIMESTAMP
+        WHERE file_id = #{fileId} AND delete_yn = 'Y'
     </update>
 
     <update id="updateThumbnail">

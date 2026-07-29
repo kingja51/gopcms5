@@ -183,6 +183,13 @@ a.ladm-stat:hover { border-color: var(--brand-50); background-color: var(--brand
 .ladm-stat-sub { display: block; margin-top: 4px; color: var(--c-fg-subtle); }
 /* 갈 곳이 아직 없는 카드 — 링크가 아니므로 hover 반응도 주지 않는다(오해 방지) */
 .ladm-stat-static { cursor: default; }
+
+/* 검색바의 인라인 체크박스 — 라벨 전체가 클릭 대상이라 터치에서도 잘 눌린다 */
+.ladm-check {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--c-fg-subtle); white-space: nowrap; cursor: pointer;
+}
+.ladm-check input { accent-color: var(--brand-50); }
 .ladm-stat-sub b { color: var(--c-fg); font-weight: 700; }
 
 /* ── 차트 ─────────────────────────────────────────────────────────────────
