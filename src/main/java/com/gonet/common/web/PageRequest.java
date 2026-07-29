@@ -38,4 +38,26 @@ public class PageRequest {
     public String getKeyword() {
         return keyword == null || keyword.isBlank() ? null : keyword.trim();
     }
+
+    /**
+     * LIKE 검색에 넣을 값 — 와일드카드를 <b>글자로</b> 취급하게 이스케이프한다.
+     *
+     * <p>{@code %} 를 그대로 넘기면 검색이 아니라 전체 조회가 되고, {@code _} 는 한 글자
+     * 아무거나와 맞는다. 사용자가 친 문자는 문자여야 한다.
+     *
+     * <p>이스케이프 문자로 역슬래시 대신 {@code |} 를 쓴다 — {@code ESCAPE '\\'} 는
+     * MariaDB 와 PostgreSQL 이 문자열 리터럴을 다르게 해석해(standard_conforming_strings)
+     * 벤더마다 값이 달라진다. 매퍼는 반드시 {@code ESCAPE '|'} 와 짝지어 쓴다.
+     *
+     * <p>화면 표시는 {@link #getKeyword()} 를 쓴다 — 여기 값은 검색용이라
+     * 입력창에 되돌려 주면 {@code |%} 같은 흔적이 보인다.
+     */
+    public String getKeywordLike() {
+        String value = getKeyword();
+        if (value == null) {
+            return null;
+        }
+        // 이스케이프 문자 자신을 먼저 — 순서가 바뀌면 %가 |%→||% 로 깨진다
+        return value.replace("|", "||").replace("%", "|%").replace("_", "|_");
+    }
 }

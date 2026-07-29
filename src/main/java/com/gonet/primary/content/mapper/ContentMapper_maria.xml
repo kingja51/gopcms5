@@ -45,8 +45,8 @@
         WHERE c.site_id = #{siteId}
           AND c.delete_yn = 'N'
         <if test="cond.keyword != null">
-            AND (c.title LIKE CONCAT('%', #{cond.keyword}, '%')
-              OR c.slug  LIKE CONCAT('%', #{cond.keyword}, '%'))
+            AND (c.title LIKE CONCAT('%', #{cond.keywordLike}, '%') ESCAPE '|'
+              OR c.slug  LIKE CONCAT('%', #{cond.keywordLike}, '%') ESCAPE '|')
         </if>
     </sql>
 

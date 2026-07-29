@@ -51,9 +51,9 @@
     <sql id="admWhere">
         WHERE s.delete_yn = 'N'
         <if test="keyword != null">
-            AND (s.site_code LIKE CONCAT('%', #{keyword}, '%')
-              OR s.site_name LIKE CONCAT('%', #{keyword}, '%')
-              OR s.domain    LIKE CONCAT('%', #{keyword}, '%'))
+            AND (s.site_code LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR s.site_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR s.domain    LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
         </if>
     </sql>
 

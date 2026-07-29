@@ -19,7 +19,8 @@ public interface MenuMapper {
      * 부모 없는 자식이 보이는 화면이 된다(사이트당 수십 건 규모).
      */
     List<MenuAdmDto> findAdmBySite(@Param("siteId") String siteId,
-            @Param("keyword") String keyword);
+            @Param("keyword") String keyword,
+            @Param("keywordLike") String keywordLike);
 
     MenuAdmDto findAdmById(@Param("menuId") String menuId);
 

@@ -2,6 +2,7 @@ package com.gonet.primary.menu.service;
 
 import com.gonet.common.audit.AuditorContext;
 import com.gonet.common.service.AbstractCmsService;
+import com.gonet.common.util.LikeQuery;
 import com.gonet.common.util.Uid;
 import com.gonet.common.util.UidPrefix;
 import com.gonet.config.CacheConfig;
@@ -69,8 +70,10 @@ public class MenuServiceImpl extends AbstractCmsService implements MenuService {
 
     @Override
     public List<MenuAdmDto> getAdmList(String siteId, String keyword) {
-        return menuMapper.findAdmBySite(siteId,
-                keyword == null || keyword.isBlank() ? null : keyword.trim());
+        // 메뉴는 페이징하지 않아 PageRequest 를 타지 않는다 — 이스케이프를 여기서 건다
+        // (LIKE 검색은 어디서든 같은 규칙이어야 한다)
+        String trimmed = keyword == null || keyword.isBlank() ? null : keyword.trim();
+        return menuMapper.findAdmBySite(siteId, trimmed, LikeQuery.escape(trimmed));
     }
 
     @Override

@@ -61,8 +61,8 @@
     <sql id="admWhere">
         WHERE r.delete_yn = 'N'
         <if test="keyword != null">
-            AND (r.role_code LIKE CONCAT('%', #{keyword}, '%')
-              OR r.role_name LIKE CONCAT('%', #{keyword}, '%'))
+            AND (r.role_code LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR r.role_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
         </if>
     </sql>
 

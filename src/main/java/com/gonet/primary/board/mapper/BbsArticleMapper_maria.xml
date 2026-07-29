@@ -34,17 +34,17 @@
         <if test="keyword != null">
             <choose>
                 <when test="searchType == 'TITLE'">
-                    AND a.title LIKE CONCAT('%', #{keyword}, '%')
+                    AND a.title LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
                 </when>
                 <when test="searchType == 'CONTENT'">
-                    AND a.content LIKE CONCAT('%', #{keyword}, '%')
+                    AND a.content LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
                 </when>
                 <when test="searchType == 'WRITER'">
-                    AND a.writer_name LIKE CONCAT('%', #{keyword}, '%')
+                    AND a.writer_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
                 </when>
                 <otherwise>
-                    AND (a.title LIKE CONCAT('%', #{keyword}, '%')
-                      OR a.content LIKE CONCAT('%', #{keyword}, '%'))
+                    AND (a.title LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+                      OR a.content LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
                 </otherwise>
             </choose>
         </if>

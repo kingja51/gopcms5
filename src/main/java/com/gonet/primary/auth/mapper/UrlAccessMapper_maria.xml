@@ -29,9 +29,9 @@
     <sql id="admWhere">
         WHERE r.delete_yn = 'N'
         <if test="keyword != null">
-            AND (r.url_pattern  LIKE CONCAT('%', #{keyword}, '%')
-              OR r.description  LIKE CONCAT('%', #{keyword}, '%')
-              OR r.access_type  LIKE CONCAT('%', #{keyword}, '%'))
+            AND (r.url_pattern  LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR r.description  LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR r.access_type  LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
         </if>
     </sql>
 

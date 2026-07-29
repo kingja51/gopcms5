@@ -51,7 +51,7 @@
         <trim prefix="WHERE" prefixOverrides="AND ">
         <if test="!includeDeleted">AND f.delete_yn = 'N'</if>
         <if test="keyword != null">
-            AND f.original_name LIKE CONCAT('%', #{keyword}, '%')
+            AND f.original_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
         </if>
         <if test="entityType != null and entityType != ''">AND g.entity_type = #{entityType}</if>
         <if test="extension != null and extension != ''">AND f.extension = #{extension}</if>

@@ -6,8 +6,8 @@
     <sql id="admWhere">
         WHERE l.delete_yn = 'N'
         <if test="keyword != null">
-            AND (l.layout_code LIKE CONCAT('%', #{keyword}, '%')
-              OR l.layout_name LIKE CONCAT('%', #{keyword}, '%'))
+            AND (l.layout_code LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR l.layout_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
         </if>
     </sql>
 

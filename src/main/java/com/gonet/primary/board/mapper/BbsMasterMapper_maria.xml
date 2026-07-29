@@ -13,8 +13,8 @@
     <sql id="admWhere">
         WHERE m.delete_yn = 'N'
         <if test="keyword != null">
-            AND (m.bbs_code LIKE CONCAT('%', #{keyword}, '%')
-              OR m.bbs_name LIKE CONCAT('%', #{keyword}, '%'))
+            AND (m.bbs_code LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR m.bbs_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
         </if>
         <if test="siteId != null and siteId != ''">AND m.site_id = #{siteId}</if>
         <if test="bbsType != null and bbsType != ''">AND m.bbs_type = #{bbsType}</if>

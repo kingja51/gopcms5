@@ -43,7 +43,7 @@
         WHERE m.site_id = #{siteId}
           AND m.delete_yn = 'N'
         <if test="keyword != null">
-            AND m.menu_name LIKE CONCAT('%', #{keyword}, '%')
+            AND m.menu_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
         </if>
         ORDER BY m.depth, m.sort_order, m.menu_id
     </select>
