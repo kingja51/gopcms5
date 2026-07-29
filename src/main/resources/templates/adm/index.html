@@ -41,6 +41,133 @@
         </a>
     </div>
 
+    <!--
+      회원 · 게시판 · 파일 규모.
+      해당 관리 화면(P8~P10)이 아직 없으므로 <b>링크로 만들지 않는다</b> — LNB 가 '예정' 으로
+      비워 둔 것과 같은 규칙이다. 없는 화면으로 가는 링크는 404 를 클릭하게 만든다.
+    -->
+    <div class="ladm-stats">
+        <div class="ladm-stat ladm-stat-static">
+            <span class="ladm-stat-label text-label-md">회원</span>
+            <span class="ladm-stat-value text-display-sm" th:text="${stats.memberTotal}">0</span>
+            <span class="ladm-stat-sub text-body-xs">
+                휴면 <b th:text="${stats.memberDormant}">0</b> ·
+                탈퇴 <b th:text="${stats.memberWithdraw}">0</b>
+            </span>
+        </div>
+        <div class="ladm-stat ladm-stat-static">
+            <span class="ladm-stat-label text-label-md">게시판 · 게시글</span>
+            <span class="ladm-stat-value text-display-sm">
+                <span th:text="${stats.boardCount}">0</span><span class="ladm-stat-unit text-body-md"> / </span
+                ><span th:text="${stats.articleTotal}">0</span>
+            </span>
+            <span class="ladm-stat-sub text-body-xs">댓글 <b th:text="${stats.commentTotal}">0</b></span>
+        </div>
+        <div class="ladm-stat ladm-stat-static">
+            <span class="ladm-stat-label text-label-md">파일</span>
+            <span class="ladm-stat-value text-display-sm" th:text="${stats.fileTotal}">0</span>
+            <span class="ladm-stat-sub text-body-xs">
+                <!-- 바이트를 그대로 보여주면 읽을 수 없다 — MB 로 환산 -->
+                <b th:text="${#numbers.formatDecimal(stats.fileBytes / 1048576.0, 1, 'COMMA', 1, 'POINT')}">0.0</b> MB
+            </span>
+        </div>
+        <div class="ladm-stat ladm-stat-static">
+            <span class="ladm-stat-label text-label-md">잠긴 계정 · 정지</span>
+            <span class="ladm-stat-value text-display-sm">
+                <span th:text="${stats.memberLocked}">0</span><span class="ladm-stat-unit text-body-md"> / </span
+                ><span th:text="${stats.memberSuspended}">0</span>
+            </span>
+            <span class="ladm-stat-sub text-body-xs">활성 <b th:text="${stats.memberActive}">0</b></span>
+        </div>
+    </div>
+
+    <!--
+      차트 — Chart.js(자체호스팅). 데이터는 인라인 스크립트 대신 data-* 로 넘긴다
+      (CSP: script-src 'self' 'nonce-…' 이므로 인라인 JSON 블록도 쓰지 않는다).
+      실제 렌더는 /js/adm-dashboard.js 한 곳에서 담당한다.
+    -->
+    <div class="ladm-chart-grid">
+        <section class="ladm-panel">
+            <div class="ladm-panel-head">
+                <h2 class="text-heading-sm text-fg-strong" style="margin:0">월별 가입 추이</h2>
+                <span class="grow"></span>
+                <span class="text-body-xs text-fg-subtle">최근 12개월</span>
+            </div>
+            <div class="ladm-chart">
+                <canvas data-chart="bar" data-chart-title="가입"
+                        th:attr="data-chart-data=${@dashboardJson.buckets(stats.memberJoinTrend)}"
+                        aria-label="월별 회원 가입 추이 막대 그래프" role="img"></canvas>
+            </div>
+        </section>
+
+        <section class="ladm-panel">
+            <div class="ladm-panel-head">
+                <h2 class="text-heading-sm text-fg-strong" style="margin:0">월별 게시글 추이</h2>
+                <span class="grow"></span>
+                <span class="text-body-xs text-fg-subtle">최근 12개월</span>
+            </div>
+            <div class="ladm-chart">
+                <canvas data-chart="line" data-chart-title="게시글"
+                        th:attr="data-chart-data=${@dashboardJson.buckets(stats.articleTrend)}"
+                        aria-label="월별 게시글 등록 추이 선 그래프" role="img"></canvas>
+            </div>
+        </section>
+
+        <section class="ladm-panel">
+            <div class="ladm-panel-head">
+                <h2 class="text-heading-sm text-fg-strong" style="margin:0">회원 상태 분포</h2>
+            </div>
+            <div class="ladm-chart">
+                <canvas data-chart="doughnut" data-chart-title="회원"
+                        th:attr="data-chart-data=${@dashboardJson.buckets(stats.memberStatus)}"
+                        aria-label="회원 상태별 분포 도넛 그래프" role="img"></canvas>
+            </div>
+        </section>
+
+        <section class="ladm-panel">
+            <div class="ladm-panel-head">
+                <h2 class="text-heading-sm text-fg-strong" style="margin:0">컨텐츠 상태 분포</h2>
+            </div>
+            <div class="ladm-chart">
+                <canvas data-chart="doughnut" data-chart-title="컨텐츠"
+                        th:attr="data-chart-data=${@dashboardJson.buckets(stats.contentStatus)}"
+                        aria-label="컨텐츠 상태별 분포 도넛 그래프" role="img"></canvas>
+            </div>
+        </section>
+
+        <section class="ladm-panel">
+            <div class="ladm-panel-head">
+                <h2 class="text-heading-sm text-fg-strong" style="margin:0">게시판별 게시글</h2>
+            </div>
+            <div class="ladm-chart">
+                <canvas data-chart="horizontalBar" data-chart-title="게시글"
+                        th:attr="data-chart-data=${@dashboardJson.buckets(stats.articleByBoard)}"
+                        aria-label="게시판별 게시글 수 가로 막대 그래프" role="img"></canvas>
+            </div>
+        </section>
+
+        <section class="ladm-panel">
+            <div class="ladm-panel-head">
+                <h2 class="text-heading-sm text-fg-strong" style="margin:0">파일 형식 · 검사 상태</h2>
+            </div>
+            <div class="ladm-chart">
+                <canvas data-chart="horizontalBar" data-chart-title="파일"
+                        th:attr="data-chart-data=${@dashboardJson.buckets(stats.fileByExtension)}"
+                        aria-label="확장자별 파일 수 가로 막대 그래프" role="img"></canvas>
+            </div>
+            <!-- 검사 상태는 수치가 작아 차트보다 표가 읽힌다. INFECTED/ERROR 를 놓치면 안 된다 -->
+            <div class="ladm-panel-body" th:if="${!stats.fileByScanStatus.isEmpty()}">
+                <span th:each="b : ${stats.fileByScanStatus}" class="krds-badge"
+                      th:classappend="${b.label == 'INFECTED' or b.label == 'ERROR'}
+                                      ? 'ladm-badge-off' : 'ladm-badge-on'"
+                      style="margin-right:6px">
+                    <span th:text="${b.label}">CLEAN</span>
+                    <span th:text="${b.value}">0</span>
+                </span>
+            </div>
+        </section>
+    </div>
+
     <!-- 사이트 현황 — 3축 배정과 규모를 한 줄에 -->
     <section class="ladm-panel">
         <div class="ladm-panel-head">
@@ -100,5 +227,12 @@
         </div>
     </section>
 </div>
+
+<!-- Chart.js 는 이 화면에서만 쓰므로 공통 레이아웃이 아니라 여기서 싣는다(다른 관리 화면의
+     로드 비용 200KB 를 아낀다). CDN 금지 규약대로 자체호스팅. -->
+<th:block layout:fragment="scripts">
+    <script src="/js/vendor/chart.min.js" defer></script>
+    <script src="/js/adm-dashboard.js" defer></script>
+</th:block>
 </body>
 </html>

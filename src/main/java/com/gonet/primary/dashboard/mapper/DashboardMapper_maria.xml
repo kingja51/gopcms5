@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  대시보드 집계 — 전부 읽기 전용.
+  soft-delete 규약상 `delete_yn='N'` 을 빠뜨리면 지운 데이터까지 세므로 모든 문장에 넣는다.
+-->
+<mapper namespace="com.gonet.primary.dashboard.mapper.DashboardMapper">
+
+    <resultMap id="bucketMap" type="com.gonet.primary.dashboard.dto.DashboardStats$Bucket">
+        <result property="label" column="label"/>
+        <result property="value" column="value"/>
+    </resultMap>
+
+    <!-- ══ 회원 ═══════════════════════════════════════════════════════════ -->
+
+    <select id="countMembers" resultType="long">
+        SELECT COUNT(*) FROM tb_member WHERE delete_yn = 'N'
+    </select>
+
+    <select id="countMembersByStatus" resultType="long">
+        SELECT COUNT(*) FROM tb_member WHERE delete_yn = 'N' AND status = #{status}
+    </select>
+
+    <select id="countDormant" resultType="long">
+        SELECT COUNT(*) FROM tb_member_dormant WHERE delete_yn = 'N' AND restored_at IS NULL
+    </select>
+
+    <select id="countWithdraw" resultType="long">
+        SELECT COUNT(*) FROM tb_member_withdraw
+    </select>
+
+    <!-- 값이 없는 달은 행 자체가 안 나온다 — 빈 달 채우기는 서비스 몫 -->
+    <select id="memberJoinTrend" resultMap="bucketMap">
+        SELECT DATE_FORMAT(created_at, '%Y-%m') AS label, COUNT(*) AS value
+        FROM tb_member
+        WHERE delete_yn = 'N'
+          AND created_at >= DATE_SUB(DATE_FORMAT(CURRENT_DATE, '%Y-%m-01'),
+                                     INTERVAL #{months} - 1 MONTH)
+        GROUP BY label
+        ORDER BY label
+    </select>
+
+    <select id="memberStatusDistribution" resultMap="bucketMap">
+        SELECT status AS label, COUNT(*) AS value
+        FROM tb_member
+        WHERE delete_yn = 'N'
+        GROUP BY status
+        ORDER BY value DESC
+    </select>
+
+    <!-- ══ 게시판 ═════════════════════════════════════════════════════════ -->
+
+    <select id="countBoards" resultType="long">
+        SELECT COUNT(*) FROM tb_bbs_master WHERE delete_yn = 'N'
+    </select>
+
+    <select id="countArticles" resultType="long">
+        SELECT COUNT(*) FROM tb_bbs_article WHERE delete_yn = 'N'
+    </select>
+
+    <select id="countComments" resultType="long">
+        SELECT COUNT(*) FROM tb_bbs_comment WHERE delete_yn = 'N'
+    </select>
+
+    <!-- 글이 0건인 게시판도 보여준다(LEFT JOIN) — 비어 있다는 사실이 운영 정보다 -->
+    <select id="articleByBoard" resultMap="bucketMap">
+        SELECT m.bbs_name AS label, COUNT(a.article_id) AS value
+        FROM tb_bbs_master m
+        LEFT JOIN tb_bbs_article a
+               ON a.bbs_master_id = m.bbs_master_id AND a.delete_yn = 'N'
+        WHERE m.delete_yn = 'N' AND m.use_yn = 'Y'
+        GROUP BY m.bbs_master_id, m.bbs_name
+        ORDER BY value DESC, label
+        LIMIT #{limit}
+    </select>
+
+    <select id="articleTrend" resultMap="bucketMap">
+        SELECT DATE_FORMAT(created_at, '%Y-%m') AS label, COUNT(*) AS value
+        FROM tb_bbs_article
+        WHERE delete_yn = 'N'
+          AND created_at >= DATE_SUB(DATE_FORMAT(CURRENT_DATE, '%Y-%m-01'),
+                                     INTERVAL #{months} - 1 MONTH)
+        GROUP BY label
+        ORDER BY label
+    </select>
+
+    <!-- ══ 파일 ═══════════════════════════════════════════════════════════ -->
+
+    <select id="countFiles" resultType="long">
+        SELECT COUNT(*) FROM tb_file WHERE delete_yn = 'N'
+    </select>
+
+    <select id="sumFileBytes" resultType="long">
+        SELECT COALESCE(SUM(size_bytes), 0) FROM tb_file WHERE delete_yn = 'N'
+    </select>
+
+    <select id="fileByExtension" resultMap="bucketMap">
+        SELECT extension AS label, COUNT(*) AS value
+        FROM tb_file
+        WHERE delete_yn = 'N'
+        GROUP BY extension
+        ORDER BY value DESC, label
+        LIMIT #{limit}
+    </select>
+
+    <select id="fileByScanStatus" resultMap="bucketMap">
+        SELECT virus_scan_status AS label, COUNT(*) AS value
+        FROM tb_file
+        WHERE delete_yn = 'N'
+        GROUP BY virus_scan_status
+        ORDER BY value DESC
+    </select>
+
+    <!-- ══ 컨텐츠 ═════════════════════════════════════════════════════════ -->
+
+    <select id="contentStatusDistribution" resultMap="bucketMap">
+        SELECT status AS label, COUNT(*) AS value
+        FROM tb_content
+        WHERE delete_yn = 'N'
+        GROUP BY status
+        ORDER BY value DESC
+    </select>
+
+</mapper>

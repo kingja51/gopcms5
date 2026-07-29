@@ -35,6 +35,16 @@
         <b class="text-heading-2xs">GOPCMS</b><span class="text-body-sm">관리자</span>
     </a>
     <span class="grow"></span>
+    <!--
+      이전 로그인 일시 — 자격증명이 새면 정상 로그인처럼 보이므로, 본인이 "내가 접속한 적
+      없는 시각" 을 알아채는 것이 사실상 유일한 단서다. 값이 없으면(첫 로그인) 감춘다.
+    -->
+    <span class="ladm-prevlogin" th:if="${previousLogin != null}">
+        <span class="ladm-prevlogin-label text-label-xs">이전 로그인</span>
+        <span class="ladm-prevlogin-value text-body-xs"
+              th:text="${#temporals.format(previousLogin.attemptedAt, 'yyyy-MM-dd HH:mm')}"
+              th:title="${'IP ' + (previousLogin.clientIp ?: '-')}">2026-07-08 17:45</span>
+    </span>
     <span class="ladm-account text-body-sm">
         <span class="ladm-avatar text-label-sm" aria-hidden="true"
               th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 1))}">A</span>

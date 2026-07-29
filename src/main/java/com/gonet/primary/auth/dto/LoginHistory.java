@@ -1,7 +1,10 @@
 package com.gonet.primary.auth.dto;
 
+import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -14,6 +17,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
+// MyBatis 결과 매핑에는 무인자 생성자가 필요하다 — @Builder 만 두면 전인자 생성자만 남아
+// 생성자 auto-mapping 으로 넘어가고, 컬럼 수가 다르면 조회가 실패한다(실측).
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoginHistory {
 
     /** SUCCESS | FAIL_NOT_FOUND | FAIL_PASSWORD | FAIL_LOCKED | FAIL_DISABLED | FAIL_IP | FAIL_2FA | FAIL_CAPTCHA */
@@ -38,4 +45,7 @@ public class LoginHistory {
     private String clientIp;
     private String userAgent;
     private String sessionId;
+
+    /** 시도 시각 — 적재는 DB DEFAULT 가 채우고, 조회(직전 로그인 표시) 때만 쓴다. */
+    private LocalDateTime attemptedAt;
 }

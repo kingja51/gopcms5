@@ -33,6 +33,15 @@
 }
 .ladm-brand b { letter-spacing: -0.01em; }
 .ladm-brand span { color: var(--color-gray-30); }
+/* 이전 로그인 — 계정 옆에 조용히. 우변 정렬이라 아이디 블록과 붙지 않게 구분선을 둔다 */
+.ladm-prevlogin {
+    display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.3;
+    padding-right: 16px; margin-right: 0;
+    border-right: 1px solid var(--color-gray-70);
+}
+.ladm-prevlogin-label { color: var(--color-gray-40); }
+.ladm-prevlogin-value { color: var(--color-gray-20); }
+
 .ladm-account {
     display: inline-flex; align-items: center; gap: 8px;
     color: var(--color-gray-20);
@@ -170,6 +179,25 @@ a.ladm-stat:hover { border-color: var(--brand-50); background-color: var(--brand
     color: var(--c-fg-strong);
 }
 .ladm-stat-unit { color: var(--c-fg-subtle); margin-left: 2px; }
+/* 지표 카드 보조 줄 — 본값 아래 한 줄로 맥락(휴면·탈퇴 등)을 준다 */
+.ladm-stat-sub { display: block; margin-top: 4px; color: var(--c-fg-subtle); }
+/* 갈 곳이 아직 없는 카드 — 링크가 아니므로 hover 반응도 주지 않는다(오해 방지) */
+.ladm-stat-static { cursor: default; }
+.ladm-stat-sub b { color: var(--c-fg); font-weight: 700; }
+
+/* ── 차트 ─────────────────────────────────────────────────────────────────
+   높이를 고정하는 이유: Chart.js 의 responsive 는 부모 높이를 따라가는데, 부모가
+   auto 면 캔버스가 매 프레임 조금씩 커지는 무한 성장이 생긴다. 폭만 반응형으로 둔다. */
+.ladm-chart-grid {
+    display: grid; gap: 16px; margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+.ladm-chart { position: relative; height: 260px; padding: 16px 20px 20px; }
+.ladm-chart canvas { max-width: 100%; }
+.ladm-chart-empty {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; margin: 0; color: var(--c-fg-disabled);
+}
 
 /* ── 폼 ──────────────────────────────────────────────────────────────────── */
 .ladm-form { display: grid; gap: 20px; }
