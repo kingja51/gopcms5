@@ -14,7 +14,7 @@
 
     <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
 
-    <section class="ladm-panel" style="max-width:860px">
+    <section class="ladm-panel">
         <div class="ladm-panel-body">
             <form th:action="@{/adm/url-access/save}" method="post" class="ladm-form">
                 <input type="hidden" name="urlAccessId" th:value="${rule.urlAccessId}"/>
