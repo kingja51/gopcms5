@@ -132,6 +132,21 @@
         WHERE site_id = #{siteId} AND di_hash = #{diHash} AND delete_yn = 'N'
     </select>
 
+    <!--
+      임시 비밀번호 — 실패 카운트·잠금도 함께 푼다. 비밀번호를 새로 받았는데
+      이전 실패 때문에 잠겨 있으면 사용자는 여전히 못 들어온다.
+    -->
+    <update id="updateTemporaryPassword">
+        UPDATE tb_member
+        SET password = #{password},
+            password_changed_at = CURRENT_TIMESTAMP,
+            password_expire_at = #{passwordExpireAt},
+            login_fail_count = 0,
+            locked_until = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE member_id = #{memberId} AND delete_yn = 'N'
+    </update>
+
     <insert id="insertConsent" parameterType="com.gonet.primary.member.dto.MemberConsentDto">
         INSERT INTO tb_member_consent
             (member_consent_id, member_id, consent_type, consent_version, agree_yn,

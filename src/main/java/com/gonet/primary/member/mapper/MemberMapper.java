@@ -29,6 +29,16 @@ public interface MemberMapper {
     /** 본인확인 중복가입 차단 — 같은 사람이 한 사이트에 두 계정을 만들 수 없다. */
     int countByDiHash(@Param("siteId") String siteId, @Param("diHash") String diHash);
 
+    /**
+     * 임시 비밀번호 적용 — 만료 시각을 <b>과거로</b> 둔다.
+     *
+     * <p>로그인은 되지만 인증 Provider 가 만료로 막아 변경 화면으로 보낸다(P6-3).
+     * 임시 비밀번호를 계속 쓰는 상태를 만들지 않는 장치다.
+     */
+    int updateTemporaryPassword(@Param("memberId") String memberId,
+                                @Param("password") String password,
+                                @Param("passwordExpireAt") java.time.LocalDateTime passwordExpireAt);
+
     /** 동의 이력 — UPDATE 가 아니라 INSERT 누적(언제 무엇에 동의했는지가 증빙이다). */
     int insertConsent(MemberConsentDto consent);
 }

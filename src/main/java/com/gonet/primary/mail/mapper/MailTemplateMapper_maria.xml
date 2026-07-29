@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gonet.primary.mail.mapper.MailTemplateMapper">
+
+    <select id="findByCode" resultType="com.gonet.primary.mail.dto.MailTemplate">
+        SELECT mail_template_id, template_code, template_name, subject, body_html,
+               sender_email, sender_name, variables_hint
+        FROM tb_mail_template
+        WHERE template_code = #{templateCode} AND use_yn = 'Y' AND delete_yn = 'N'
+    </select>
+
+</mapper>
