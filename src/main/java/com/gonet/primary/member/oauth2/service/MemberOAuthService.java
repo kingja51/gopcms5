@@ -26,10 +26,16 @@ public interface MemberOAuthService {
     void recordLogin(String memberOauthId);
 
     /**
-     * 연결 해제 — 행을 지우지 않고 {@code use_yn='N'} 으로 내린다.
+     * 연결 해제 — 행을 <b>지운다</b>.
      *
-     * <p>탈퇴한 회원에 매달린 연결이 남아 있을 때도 이걸 쓴다. 그래야 같은 외부 계정으로
-     * 다시 가입할 수 있다.
+     * <p>표시만 내리면 재연결이 막힌다 —
+     * {@code uk_oauth_provider_user (provider, provider_user_id, delete_yn)} 에
+     * 해제된 행이 그대로 잡혀 같은 계정의 INSERT 가 중복 키로 실패하고, 그 INSERT 가
+     * 가입 트랜잭션 안에 있어 가입 전체가 롤백된다.
+     *
+     * <p>정상 탈퇴는 이 경로를 타지 않는다 — {@code MemberLifecycleService.withdraw()} 가
+     * 원장을 남기고 연결을 함께 지운다. 여기는 회원 행이 사라졌는데 연결만 남은
+     * 비정상 상태를 정리하는 방어 경로다.
      */
     void unlink(String memberOauthId);
 }

@@ -6,6 +6,7 @@ import com.gonet.common.web.RequestAttrs;
 import com.gonet.common.web.SiteContextHolder;
 import com.gonet.logging.access.dto.AccessLog;
 import com.gonet.logging.access.service.AccessLogService;
+import com.gonet.logging.error.service.ErrorLogger;
 import com.gonet.primary.site.dto.SiteContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -50,6 +51,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
     private final AccessLogService accessLogService;
     private final ClientIpResolver clientIpResolver;
+    private final ErrorLogger errorLogger;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -72,6 +74,9 @@ public class AccessLogFilter extends OncePerRequestFilter {
                         (int) (System.currentTimeMillis() - startedAt)));
             } catch (Exception e) {
                 log.warn("접근 로그 적재 실패 — 요청은 정상 처리됨: {}", e.getMessage());
+                // 요청마다 불리는 자리다 — 스로틀 없이 적재하면 장애 한 번에 log_error 가 넘친다
+                errorLogger.logRecordFailureThrottled("ACCESS_LOG",
+                        cut(request.getRequestURI(), 200), e);
             }
         }
     }

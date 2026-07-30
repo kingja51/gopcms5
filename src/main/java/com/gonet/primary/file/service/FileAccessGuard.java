@@ -19,10 +19,20 @@ import org.springframework.stereotype.Component;
  * <p>권한 판단이 여러 곳에 흩어지면 그중 하나만 느슨해도 전체가 뚫린다. 컨트롤러가 아니라
  * 여기서만 판정하고, 컨트롤러는 결과를 따른다.
  *
- * <h3>업로드 = ROLE_REAL 이상</h3>
- * 전개된 역할 집합에 {@code ROLE_REAL} 이 있으면 통과한다. 계층상 ADMIN·MANAGER·STAFF·
- * MEMBER 는 모두 ROLE_REAL 을 포함하므로 자동으로 열리고, <b>단독 역할인 ROLE_PRIVACY 만
- * 가진 계정은 업로드할 수 없다</b> — 계층 단절의 의도된 결과다.
+ * <h3>업로드 = ROLE_MEMBER 이상</h3>
+ * 로그인한 회원이면 올릴 수 있다. <b>단독 역할인 ROLE_PRIVACY 만 가진 계정은 업로드할 수
+ * 없다</b> — 계층 단절의 의도된 결과다.
+ *
+ * <p><b>ROLE_REAL 을 기준으로 쓰지 않는 이유</b>(2026-07-30 사용자 확정):
+ * {@code ROLE_REAL} 은 "실명확인을 거쳤다" 는 <b>사실 표시</b>이고 업로드 권한의 기준이
+ * 아니다. 게다가 기준으로 삼을 수도 없었다 — {@code vw_user_login} 이 회원의
+ * {@code role_codes} 를 {@code 'ROLE_MEMBER'} 리터럴로 고정하고 있어(V6 의 "보류" 주석),
+ * {@code role_ids} 에 ROLE_REAL 이 있어도 Security 권한 목록에는 절대 나타나지 않는다.
+ * 그 결과 <b>회원의 업로드가 전면 차단</b>돼 있었다(실측: 403 "실명인증 회원 이상만…").
+ *
+ * <p>주의: 이 판정은 {@code role_codes} 기반(Security 권한)이고 URL 접근 규칙은
+ * {@code role_ids} 기반이다. 두 축이 담는 값이 다르므로 한쪽 기준을 다른 쪽에
+ * 그대로 옮겨 쓰면 안 된다.
  *
  * <h3>다운로드 = tb_file_group.download_auth</h3>
  * 등록 시점에 정해진 그룹 정책이 유일한 근거다. 그중 {@code OWNER_PRIVACY} 만 성격이
@@ -32,8 +42,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class FileAccessGuard {
 
-    /** 업로드 최소 역할 — 실명인증 이전 계정의 업로드를 원천 차단한다. */
-    public static final String UPLOAD_MIN_ROLE = "ROLE_REAL";
+    /**
+     * 업로드 최소 역할 — 로그인 회원.
+     *
+     * <p>{@code role_codes} 에 실제로 담기는 값이어야 한다. ROLE_REAL 은 회원의
+     * role_codes 에 들어오지 않으므로 기준이 될 수 없다(클래스 주석 참조).
+     */
+    public static final String UPLOAD_MIN_ROLE = "ROLE_MEMBER";
 
     /**
      * 개인정보 관리자 역할 ID. 계층이 끊겨 있어(parent NULL) 상속으로는 얻을 수 없고,
@@ -55,7 +70,7 @@ public class FileAccessGuard {
      * 업로드 권한 검사.
      *
      * @throws InsufficientAuthenticationException 비로그인
-     * @throws AccessDeniedException               ROLE_REAL 미만
+     * @throws AccessDeniedException               ROLE_MEMBER 미만
      */
     public LoginPrincipal requireUploadPermission() {
         LoginPrincipal principal = currentPrincipal();
@@ -63,7 +78,7 @@ public class FileAccessGuard {
             throw new InsufficientAuthenticationException("로그인이 필요합니다.");
         }
         if (!hasRole(principal, UPLOAD_MIN_ROLE)) {
-            throw new AccessDeniedException("실명인증 회원 이상만 파일을 올릴 수 있습니다.");
+            throw new AccessDeniedException("회원만 파일을 올릴 수 있습니다.");
         }
         return principal;
     }

@@ -138,6 +138,23 @@ public class MyBatisConfig {
         configuration.setMapUnderscoreToCamelCase(true); // site_code → siteCode
         configuration.setJdbcTypeForNull(JdbcType.NULL);
         configuration.addInterceptor(new AuditInterceptor()); // 감사컬럼 자동 세팅
+        /*
+         * SQL 로거 이름에 접두어를 붙인다 — logback 이 SQL 만 따로 뽑아낼 수 있게 하려는 것이다.
+         *
+         * MyBatis 는 SQL(Preparing / Parameters / Total)을 <b>매퍼 인터페이스 FQN</b> 로거로
+         * 찍는다(예: com.gonet.primary.member.mapper.MemberMapper.findById). 그래서 접두어가
+         * 없으면 SQL 을 잡으려면 com.gonet 전체를 DEBUG 로 열어야 하고, 그러면 애플리케이션
+         * 로그와 SQL 이 한 파일에 섞여 둘 다 읽기 어려워진다.
+         *
+         * 접두어를 붙이면 로거가 gopcms.sql.com.gonet…MemberMapper.findById 가 되어
+         * logback 의 "gopcms.sql" 로거 하나로 전부 잡아 sql.log 로만 보낼 수 있다
+         * (logback-spring.xml, additivity=false).
+         *
+         * ※ 부작용: 이제 SQL 로거는 com.gonet 하위가 아니다. application.yml 의
+         *   logging.level.com.gonet 을 DEBUG 로 해도 SQL 은 켜지지 않는다 —
+         *   SQL 수준은 logback 의 gopcms.sql 로거가 정한다.
+         */
+        configuration.setLogPrefix("gopcms.sql.");
         factoryBean.setConfiguration(configuration);
 
         // 벤더 분기: <if test="_databaseId == 'mariadb'"> / databaseId 속성

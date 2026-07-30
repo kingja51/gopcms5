@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  log_error — 애플리케이션 에러 로그.
+
+  암호화하지 않는다. 담기는 것은 "무엇이 실패했는가" 이고 정보주체의 PII 는 없다.
+  다만 query_string·error_message 에는 값이 섞여 들어올 수 있으므로 <b>호출부가</b>
+  마스킹·절단해서 넣는다(ErrorLogger).
+
+  UPDATE 문을 두지 않는다 — 에러 기록은 고치지 않는다.
+-->
+<mapper namespace="com.gonet.logging.error.mapper.ErrorLogMapper">
+
+    <resultMap id="errorLogMap" type="com.gonet.logging.error.dto.ErrorLog">
+        <id property="logErrorId" column="log_error_id"/>
+        <result property="siteId" column="site_id"/>
+        <result property="siteCode" column="site_code"/>
+        <result property="menuId" column="menu_id"/>
+        <result property="actorUserId" column="actor_user_id"/>
+        <result property="actorUserType" column="actor_user_type"/>
+        <result property="actorLoginId" column="actor_login_id"/>
+        <result property="requestUri" column="request_uri"/>
+        <result property="httpMethod" column="http_method"/>
+        <result property="queryString" column="query_string"/>
+        <result property="clientIp" column="client_ip"/>
+        <result property="userAgent" column="user_agent"/>
+        <result property="errorClass" column="error_class"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="stackTrace" column="stack_trace"/>
+        <result property="statusCode" column="status_code"/>
+        <result property="traceId" column="trace_id"/>
+        <result property="sessionId" column="session_id"/>
+        <result property="loggedAt" column="logged_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdIp" column="created_ip"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.gonet.logging.error.dto.ErrorLog">
+        INSERT INTO log_error (
+            site_id, site_code, menu_id,
+            actor_user_id, actor_user_type, actor_login_id,
+            request_uri, http_method, query_string, client_ip, user_agent,
+            error_class, error_message, stack_trace, status_code,
+            trace_id, session_id, logged_at, created_by, created_ip
+        ) VALUES (
+            #{siteId}, #{siteCode}, #{menuId},
+            #{actorUserId}, #{actorUserType}, #{actorLoginId},
+            #{requestUri}, #{httpMethod}, #{queryString}, #{clientIp}, #{userAgent},
+            #{errorClass}, #{errorMessage}, #{stackTrace}, #{statusCode},
+            #{traceId}, #{sessionId}, NOW(), #{createdBy}, #{createdIp}
+        )
+    </insert>
+
+    <!--
+      목록은 stack_trace 를 싣지 않는다 — mediumtext 를 페이지마다 끌어오면
+      목록 조회가 통째로 느려진다. 스택은 상세에서만 읽는다.
+    -->
+    <sql id="listWhere">
+        <where>
+            <if test="keyword != null">
+                (   error_class   LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+                 OR error_message LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+                 OR request_uri   LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|' )
+            </if>
+            <if test="errorClass != null and errorClass != ''">
+                AND error_class = #{errorClass}
+            </if>
+        </where>
+    </sql>
+
+    <select id="findPage" resultMap="errorLogMap">
+        SELECT log_error_id, site_code, actor_login_id, request_uri, http_method,
+               error_class, error_message, status_code, trace_id, client_ip, logged_at
+          FROM log_error
+        <include refid="listWhere"/>
+         ORDER BY logged_at DESC, log_error_id DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM log_error
+        <include refid="listWhere"/>
+    </select>
+
+    <!--
+      분류별 집계 — idx_log_error_class (error_class(100), logged_at) 를 탄다.
+      LIMIT 을 두는 이유: 분류가 폭발한 상황에서 화면이 집계로 뒤덮이면 안 된다.
+    -->
+    <select id="findClassCounts" resultType="com.gonet.logging.error.dto.ErrorLog$ClassCount">
+        SELECT error_class        AS errorClass,
+               COUNT(*)          AS total,
+               MAX(logged_at)    AS lastAt
+          FROM log_error
+         WHERE logged_at >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+         GROUP BY error_class
+         ORDER BY total DESC
+         LIMIT 20
+    </select>
+
+    <select id="findById" resultMap="errorLogMap">
+        SELECT * FROM log_error
+         WHERE log_error_id = #{logErrorId}
+         ORDER BY logged_at DESC
+         LIMIT 1
+    </select>
+
+</mapper>

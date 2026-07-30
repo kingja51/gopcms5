@@ -2,6 +2,7 @@ package com.gonet.logging.privacy.service;
 
 import com.gonet.common.web.ClientIpResolver;
 import com.gonet.common.web.LoginPrincipal;
+import com.gonet.logging.error.service.ErrorLogger;
 import com.gonet.logging.privacy.dto.PrivacyAccessLog;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -36,6 +37,7 @@ public class PrivacyAccessLogger {
 
     private final PrivacyAccessLogService logService;
     private final ClientIpResolver clientIpResolver;
+    private final ErrorLogger errorLogger;
 
     /** 한 사람의 상세를 열었다. */
     public void read(HttpServletRequest request, String targetId, String piiFields) {
@@ -129,6 +131,9 @@ public class PrivacyAccessLogger {
         } catch (RuntimeException e) {
             log.warn("개인정보 접근 이력 적재 실패(업무는 계속) action={} target={}: {}",
                     action, targetId, e.toString());
+            // 파일에만 남기면 아무도 보지 않는다 — 관리자 화면(/adm/error-log)까지 끌어올린다
+            errorLogger.logRecordFailure("PRIVACY_ACCESS_LOG",
+                    "action=%s target=%s result=%s".formatted(action, targetId, result), e);
         }
     }
 

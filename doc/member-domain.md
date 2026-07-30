@@ -76,7 +76,7 @@ scheduler/         MemberLifecycleJob · LogRetentionJob
 | `tb_member` | 활성 회원 | PII 다수 — [§2](#2-개인정보-취급-pii) |
 | `tb_member_consent` | 동의 이력 | UPDATE 아닌 **INSERT 누적** |
 | `tb_member_dormant` | 휴면 분리보관 | `tb_member` 와 컬럼 구조 동일 |
-| `tb_member_withdraw` | 탈퇴 원장 | **해시만** — 사람 식별 불가 |
+| `tb_member_withdraw` | 탈퇴 원장 | **해시 + 마스킹 이름**(V11) — 사람 식별 불가 |
 | `tb_member_dormant_notice` | 휴면 사전 안내 이력 | `(member_id, stage)` UNIQUE |
 | `tb_member_oauth` | 소셜 계정 연결 | `(provider, provider_user_id, delete_yn)` UNIQUE |
 | `tb_member_otp` | 인증번호 | **평문 미보관**(HMAC), 시도 횟수를 행에 둔다 |
@@ -84,7 +84,8 @@ scheduler/         MemberLifecycleJob · LogRetentionJob
 | `tb_login_history` | 로그인 이력 | 성격은 로그인데 **primary_db** 에 있다 |
 
 마이그레이션: `V6__auth_tables.sql`(본체) · `V7__login_history.sql` ·
-`V8__login_captcha_expired.sql` · `V10__member_otp.sql`
+`V8__login_captcha_expired.sql` · `V10__member_otp.sql` ·
+`V11__member_withdraw_masked_name.sql` · `V12__member_name_not_null.sql`
 
 ### 1.2 상태값 — DDL CHECK 와 1:1
 
@@ -140,21 +141,58 @@ scheduler/         MemberLifecycleJob · LogRetentionJob
 
 ### 2.2 암호화 대상 컬럼 (`tb_member`)
 
-`member_name` `nickname` `email` `phone` `birth_date` `di` `parent_name` `parent_di`
-`address` `address_detail`
-
+**암호화**: `email` `phone` `birth_date` `di` `parent_di` `address` `address_detail`
 병행 해시 컬럼: `email_hash` `phone_hash` `di_hash` `parent_di_hash`
+
+**평문**: `login_id` `nickname` `member_name` `parent_name` `birth_year` `gender`
+`address_zipcode`
+
+개인정보인 것과 암호화 대상인 것은 다르다 — 판단 근거는
+[conventions.md §6.1](conventions.md#61-무엇을-암호화하고-무엇을-하지-않는가-2026-07-30-확정).
+
+#### 이름은 평문이다 (2026-07-30 사용자 확정)
+
+`member_name` · `parent_name` 은 **평문으로 저장한다.** 이름은 개인정보지만 저장 암호화
+의무 대상이 아니고(고유식별정보·비밀번호·생체정보만 의무), **이름 검색이 실무에 필수**다.
+
+전에는 `@Encrypt` + `PiiTypeHandler` 가 붙어 있었는데, V6 DDL 의 컬럼 주석은 처음부터
+`'회원 이름 (평문)'` 이었다 — 코드 쪽이 어긋나 있었다. 그리고 그 어긋남은 **기능 하나를
+조용히 죽이고 있었다**:
+
+```
+UNIQUE KEY uk_member_identity (site_id, member_name, di_hash, parent_di_hash)
+```
+
+AES-GCM 은 건당 난수 IV 를 쓴다 — 같은 이름도 매번 다른 암호문이 되므로 이 UNIQUE 는
+**중복을 하나도 잡지 못했다.** 중복가입 차단 장치가 있는 척만 하고 있었다.
+평문으로 되돌린 뒤에는 작동한다(실측: 2건째 INSERT 가 `ERROR 1062` 로 거부되고
+중복키 값에 평문 이름이 들어간다).
+
+> **아직 성인 회원은 막지 못한다.** MariaDB UNIQUE 는 NULL 을 서로 다른 값으로 보므로
+> 인덱스 컬럼 하나라도 NULL 이면 충돌하지 않는다. `parent_di_hash` 는 14세 미만에만
+> 채워지므로 **성인은 항상 NULL** 이고, 같은 `di_hash` 로 몇 번이든 가입된다(실측).
+> 암호화 해제로 제약이 살아난 범위는 **아동 회원뿐**이다. 성인까지 막으려면
+> `(site_id, di_hash)` 별도 UNIQUE 가 필요하다 — 스키마 결정 사항이라 손대지 않았다.
+
+암호화를 뺐다고 보호를 놓는 것은 아니다. 마스킹([§2.4](#24-마스킹))·접근 이력
+([§2.5](#25-접근-이력))·탈퇴 시 파기([§7.2](#72-탈퇴))는 그대로 적용된다.
+탈퇴 원장에 남는 이름은 **마스킹된 값**이다([§7.2a](#72a-원장에-남는-이름은-마스킹된-값이다-v11)).
+
+> `{AG}` 암호문은 SQL 로 복호화할 수 없다. 평문 전환 전에 쌓인 값이 있는지는
+> `SELECT COUNT(*) FROM tb_member WHERE member_name LIKE '{AG}%'` 로 확인한다(0이어야 한다).
+> 전환 시점의 dev DB 는 0건이었다.
 
 ### 2.3 검색이 제약된다
 
 암호문에는 `=` 도 `LIKE` 도 걸 수 없다. 그래서:
 
-- **부분 검색**은 평문 컬럼(`login_id`, `nickname`)에만 가능하다
+- **부분 검색**은 평문 컬럼(`login_id` · `nickname` · **`member_name`**)에 가능하다
 - **이메일·전화**는 해시 정확 일치뿐 — 전체 주소를 알아야 찾을 수 있다
 - 해시는 **서비스가 만들어 넣는다**. 정규화 규칙(소문자·trim·숫자만)이 정책이라
   SQL 이 정할 수 없고, 가입 때와 같은 규칙이어야 값이 맞는다
 
-이 제약이 관리자 화면 설계를 규정한다([§8.2](#82-검색)).
+이 비대칭(이름은 부분일치 / 이메일은 정확일치)은 실수가 아니라 암호화 정책의 결과다.
+관리자 화면 설계가 여기서 나온다([§8.2](#82-검색)).
 
 ### 2.4 마스킹
 
@@ -200,6 +238,101 @@ scheduler/         MemberLifecycleJob · LogRetentionJob
 - **이력을 먼저, 파기를 나중에.** 크로스 DB 라 한 트랜잭션으로 묶을 수 없으므로
   순서가 유일한 안전장치다. 뒤에 남기면 "흔적 없는 삭제" 가 생긴다
 - `table_list` 에 실제로 손댄 테이블을 적는다 — 파기 **범위**의 증빙
+
+### 2.7 삼킨 실패는 `log_error` 로 끌어올린다
+
+부가 기록(접근·개인정보취급·파기·로그인·다운로드 이력)의 적재 실패는 **삼킨다.**
+로그 하나 때문에 사용자 업무가 멈추면 손해가 더 크기 때문이다 — 실제로 파기 이력 적재
+실패가 **회원 탈퇴 자체를 롤백**시키고 있었다(코드 리뷰 2026-07-30).
+
+그런데 삼킨 실패가 서버 파일 로그에만 남으면 아무도 보지 않는다. 그래서 창구를 하나
+둔다: `logging/error/ErrorLogger`.
+
+```
+부가 기록 insert 실패
+  → log.warn/error (파일)
+  → errorLogger.logRecordFailure(channel, detail, e)
+      → log_error INSERT (REQUIRES_NEW, logging_db)
+      → 그마저 실패하면 파일 로그만 (재귀 금지)
+  → 본 업무는 그대로 계속
+```
+
+| 채널 | 실패한 기록 | 부르는 자리 |
+|---|---|---|
+| `PII_PURGE_LOG` | `log_pii_purge` | `PiiPurgeLogServiceImpl` |
+| `PRIVACY_ACCESS_LOG` | `log_privacy_access` | `PrivacyAccessLogger` |
+| `LOGIN_HISTORY` | `tb_login_history` | `LoginHistoryRecorder` |
+| `FILE_DOWNLOAD_LOG` | `log_file_download` | `FileDownloadLogger` |
+| `ACCESS_LOG` | `log_access` | `AccessLogFilter` — **스로틀 60초**(요청마다 불리는 자리라 장애 한 번에 표가 넘친다). 억제 건수는 다음 행 상세에 함께 적힌다 |
+| `AUDIT_LOG` | `log_audit` | `AuditTrailRecorder` — 관리자 CUD 전수 감사([§2.8](#28-감사-로그--관리자-cud-전수)) |
+
+`error_class` 는 `RECORD_FAILURE:{채널}` 형태로 저장돼 분류 필터가 그대로 먹는다.
+관리자 확인은 [`/adm/error-log`](#106-에러-로그-확인) — 목록·상세(스택트레이스)·분류별 집계.
+
+> **삼키면 안 되는 것.** 탈퇴 원장(`tb_member_withdraw`)과 동의 이력
+> (`tb_member_consent`) 적재 실패는 **반드시 전파**해 트랜잭션을 롤백시킨다.
+> 근거 없이 PII 를 파기하거나 동의 없이 가입을 성립시키면 안 된다.
+> 삼킬 대상은 "있으면 좋은 기록" 이고, 없으면 안 되는 기록은 실패가 곧 중단이다.
+
+### 2.8 감사 로그 — 관리자 CUD 전수
+
+`log_audit` — **관리자 화면에서 상태를 바꾼 요청 전부**. 2026-07-30 사용자 요청으로
+도입했다(그 전까지는 스키마만 있고 적재 코드가 없어 0건이었다).
+
+| | |
+|---|---|
+| 적재 지점 | `AuditTrailInterceptor`(`HandlerInterceptor`) → `AuditTrailRecorder` |
+| 대상 | `/adm/**` 의 **비-GET** 요청. `/adm/login`·`/adm/logout` 제외 |
+| 화면 | `/adm/audit-log` 목록·상세 (읽기 전용) |
+| 보존 | 36개월 — `LogRetentionWorker` 가 이미 대상에 넣고 있었다 |
+
+**왜 도메인 서비스가 아니라 인터셉터인가.** 테이블 주석이 "전수" 를 요구하는데,
+서비스마다 호출을 심으면 새 관리자 화면을 만들 때 한 줄만 빠뜨려도 그 화면이 조용히
+감사에서 제외된다. `/adm/**` 패턴 하나로 걸면 **새 화면은 등록 없이 자동으로 걸린다** —
+전수를 코드 규율이 아니라 구조로 보장한다.
+
+**왜 필터가 아니라 인터셉터인가.** 감사에는 행위자가 필요하다. `AccessLogFilter` 처럼
+시큐리티 체인 **바깥**에서 돌면 그 시점에 `SecurityContextHolder` 가 이미 비어 있다.
+인터셉터는 DispatcherServlet 안, 즉 체인 **안쪽**이라 주체를 직접 읽는다.
+
+#### 값 해석 규칙 (URL 에서 기계적으로)
+
+```
+/adm/board/save                             → BOARD               CREATE 또는 UPDATE
+/adm/url-access/evict                       → URL_ACCESS          EVICT
+/adm/board/category/save                    → BOARD_CATEGORY      CREATE
+/adm/board/BBM_…/article/save               → BOARD_ARTICLE       SAVE
+/adm/board/BBM_…/article/comment/moderate   → BOARD_ARTICLE_COMMENT  MODERATE
+/adm/member/MBR_…/status                    → MEMBER              STATUS
+/adm/member/batch/notice                    → MEMBER              BATCH_NOTICE
+/adm/password                               → PASSWORD            UPDATE
+```
+
+- `target_id` 는 **엔티티가 정한 파라미터를 먼저** 본다(`BOARD`→`bbsMasterId`).
+  없으면 경로의 ID 마디. 둘 다 없으면 NULL 이고, 그 NULL 이 CREATE/UPDATE 를 가른다
+- `siteId`·`fileGroupId` 는 **대상이 아니라 상위 참조**라 후보에서 뺐다 —
+  처음에 "알려진 ID 목록" 을 훑었더니 게시판 신규 등록이 `siteId` 를 집어
+  *사이트를 고친 것처럼* 기록되고 CREATE 도 UPDATE 가 됐다(실측)
+- 게시글은 **PK 선발급** 도메인이라 요청만으로 신규/수정을 가릴 수 없다
+  ([§게시글 생명주기 §1](게시글%20생명주기.md)) → 모른다고 적는다: `SAVE`
+
+#### 결과 판정 — 2xx 가 실패 신호다
+
+관리자 쓰기 핸들러는 **성공하면 반드시 리다이렉트**한다(PRG). 값 검증에 걸리면
+`model.addAttribute("flashError", …)` 후 **폼 뷰를 다시 그려 200** 을 낸다.
+그 오류는 Model 에 있고 플래시 맵에는 없어서 플래시로는 잡히지 않는다 — 그래서
+"쓰기 요청 + 2xx" 를 FAIL 로 본다. 이 규칙은 인터셉터가 `/adm/**` 에만 걸려
+200 이 곧 성공인 자리가 없어서 성립한다. `/api/**` 로 확장하려면 먼저 고쳐야 한다.
+
+#### 알려진 한계 (전부 의도된 선택)
+
+| 한계 | 이유 |
+|---|---|
+| `before_json`·`after_json` 이 항상 NULL | 인터셉터는 요청이 끝난 뒤에 돌아 "전" 을 볼 수 없다. 서비스가 넘기게 하면 전수 보장이 깨진다 |
+| 인가·CSRF 로 막힌 요청은 미기록 | 시큐리티 필터가 DispatcherServlet 앞에서 끊는다. 그 시도는 `log_access` 의 403 으로 남는다 |
+| `flashMessage` 로 실패를 알리는 화면은 SUCCESS | 그 키는 성공·실패에 모두 쓰여 신호로 못 쓴다(파일 관리 화면) |
+| 사용자 화면 쓰기(게시글·댓글)는 미기록 | 도메인 데이터가 감사컬럼 6종을 이미 갖고 있어 중복이다 |
+| 관리자 로그인·로그아웃 미기록 | `tb_login_history` 가 성공·실패·사유·잠금까지 담당한다 |
 
 ---
 
@@ -248,10 +381,22 @@ CHILD 는 DI 중복 검사를 **하지 않는다.** 한 법정대리인이 자�
 
 | 상황 | `role_ids` |
 |---|---|
-| 본인인증 완료 | `ROLE_MEMBER` + `ROLE_REAL` |
+| 실명확인 완료 | `ROLE_MEMBER` + `ROLE_REAL` |
 | 미인증 | `ROLE_MEMBER` 만 |
 
 설정: `gopcms.member.default-role-id` · `gopcms.member.real-role-id`
+
+**`ROLE_REAL` 은 "실명확인을 거쳤다" 는 사실 표시다**(2026-07-30 사용자 확정).
+기능 권한의 기준이 아니다 — 파일 업로드는 `ROLE_MEMBER` 를 본다
+([file-domain.md §4.1b](file-domain.md#41b-업로드-권한--role_member)).
+
+CHILD 도 이 표시를 받는다. 법정대리인이 실명확인을 했고, 그것이 14세 미만에게 법이 요구하는
+확인이기 때문이다.
+
+> **주의**: `role_ids` 에 ROLE_REAL 을 넣어도 Security 권한 목록에는 나타나지 않는다 —
+> `vw_user_login` 이 회원의 `role_codes` 를 `'ROLE_MEMBER'` 리터럴로 고정한다.
+> URL 접근 규칙(`role_ids` 기반)에는 반영되고 `hasRole()`(`role_codes` 기반)에는
+> 반영되지 않는, 두 축이 갈리는 지점이다.
 
 ### 3.6 동의 이력
 
@@ -449,13 +594,107 @@ enum 이름이 곧 `provider` 값이자 `join_type` 값이다 — 변환표를 �
 
 처리 순서 — **바꾸지 말 것**:
 
-1. **원장 INSERT** (`tb_member_withdraw`) — PII 삭제는 되돌릴 수 없으므로 근거를 먼저 남긴다
-2. **파기 이력** (`log_pii_purge`) — 크로스 DB 라 순서가 유일한 안전장치
-3. **PII NULL** (`nullifyPii` / `nullifyDormantPii`)
-4. **작성자 익명화** (게시글·댓글)
+1. **두 원본을 먼저 읽는다** (`findNameSource` + `findDormantNameSource`) — 이름을 마스킹해
+   둘 곳이 여기뿐이다. 파기 뒤에는 만들 수 없다
+2. **원장 INSERT** (`tb_member_withdraw`) — PII 삭제는 되돌릴 수 없으므로 근거를 먼저 남긴다
+3. **파기 이력** (`log_pii_purge`) — 크로스 DB 라 순서가 유일한 안전장치
+4. **PII 파기** — `nullifyPii` **와** `nullifyDormantPii` 를 **둘 다** 부른다(아래)
+5. **소셜 연결 삭제** (`tb_member_oauth` — **행째로**, [§7.2b](#72b-소셜-연결은-행째로-지운다))
+6. **작성자 익명화** (게시글·댓글)
 
-> `tb_member.password` 는 NOT NULL 이라 NULL 로 만들 수 없다. `'-'` 를 넣는다
-> (BCrypt 형식이 아니라 어떤 비밀번호와도 일치하지 않는다).
+#### NULL 로 비우지 않는 컬럼 셋
+
+| 컬럼 | 파기 후 값 | 이유 |
+|---|---|---|
+| `login_id` | 원본 유지 | 탈퇴한 아이디의 재사용을 막는 유일한 근거 |
+| `password` | `'-'` | NOT NULL. BCrypt 형식이 아니라 어떤 입력과도 맞지 않는다 |
+| `member_name` | **마스킹 값**(`홍*동`) | NOT NULL(V12) + 사용자 확정 — [§7.2c](#72c-탈퇴-시-이름은-마스킹해서-남긴다-v12) |
+
+#### 두 테이블을 모두 파기해야 한다 (2026-07-30 실측 결함)
+
+`nullifyPii`(tb_member)와 `nullifyDormantPii`(tb_member_dormant)를 **둘 다** 부른다.
+있는 쪽만 실제로 바뀌고 없으면 0건이다.
+
+전에는 원장이 적재된 쪽만 파기했다. 그런데 `insertWithdrawLedger` 의 조회에는
+`delete_yn` 필터가 없고, **휴면 전환은 복사 + soft-delete** 라 휴면 회원도 `tb_member`
+행을 그대로 갖고 있다 — 그래서 원장은 **언제나** `tb_member` 에서 적재됐고,
+`nullifyDormantPii` 는 사실상 한 번도 실행되지 않았다.
+
+결과: 휴면 만료 자동 탈퇴가 **휴면 스냅샷의 이름·이메일·전화·주소를 통째로 남겨** 두고
+있었다. 실측 로그에 `탈퇴 처리(휴면 경유)` 가 아니라 `탈퇴 처리` 만 찍히는 것이 단서였다.
+
+### 7.2a 원장에 남는 이름은 마스킹된 값이다 (V11)
+
+원장이 해시만 들고 있던 동안 관리자 화면의 탈퇴 목록은 **읽을 수 없는 표**였다.
+어느 행이 누구인지 가늠할 단서가 없어 문의 응대마다 해시를 다시 계산해야 했다.
+그래서 이름 한 칸을 두되 **마스킹해서** 넣는다 — 홍길동 → `홍*동`.
+
+| | |
+|---|---|
+| 컬럼 | `tb_member_withdraw.member_name varchar(150)` |
+| 값 | `Mask.name()` 결과. 빈 이름은 NULL(문자열 `'-'` 를 넣지 않는다) |
+| 암호화 | **하지 않는다** — 이미 되돌릴 수 없는 값이다. `PiiTypeHandler` 를 붙이면 평문을 복호화하려 들어 깨진다 |
+| 넣는 자리 | `MemberLifecycleServiceImpl.withdraw()` — 원장 INSERT 파라미터 |
+| 구 데이터 | NULL. 원본이 이미 파기돼 채울 값이 없다 |
+
+**왜 SQL 이 아니라 앱인가.** `tb_member.member_name` 의 저장값은 암호문(`{AG}…`)이다.
+기존 `INSERT … SELECT` 로 컬럼을 그대로 복사하면 원장에 **암호문이 박히고**, 키가 있는
+쪽에서는 그것이 곧 평문이다. 그래서 서비스가 복호화된 이름을 읽어(`findNameSource` /
+`findDormantNameSource`) 마스킹한 뒤 파라미터로 넘긴다.
+
+**순서 주의.** 반드시 `nullifyPii` **앞에서** 읽는다. 뒤에서 읽으면 이미 NULL 이라
+영구히 채울 수 없다 — 원장 INSERT 가 1단계인 이유와 같다.
+
+읽을 때 다시 마스킹하지 말 것. `홍*동` 을 `Mask.name()` 에 또 넣으면 `홍*동` → `홍*동`
+으로 별이 늘어나 대조가 어긋난다. 화면(`adm/member/withdraw.html`)은 값을 그대로 쓴다.
+
+### 7.2c 탈퇴 시 이름은 마스킹해서 남긴다 (V12)
+
+`tb_member.member_name` 은 **NOT NULL** 이다 — 회원 테이블에 이름이 없는 행은 성립하지
+않는다(사용자 확정 2026-07-30). 가입 경로가 이미 이름을 필수 검증하고 있었으므로
+DDL 이 코드를 뒤늦게 따라간 변경이다.
+
+그래서 파기 때 NULL 로 비울 수 없다. **마스킹한 값을 남긴다** — 홍길동 → `홍*동`.
+
+```
+tb_member.member_name          홍*동   ← 파기 후 (마스킹)
+tb_member_dormant.member_name  홍*동   ← 같은 값
+tb_member_withdraw.member_name 홍*동   ← 원장 (V11)
+```
+
+세 값이 같은 이유는 **한 번 계산해서 돌려쓰기** 때문이다. 두 번 계산하면 한쪽만 고쳐져
+값이 갈린다. 원본 이름을 못 읽은 경우(이미 파기된 행을 다시 탈퇴시키는 등)에는 `'-'` 다 —
+이름 하나 때문에 탈퇴가 실패하면 파기 자체가 막히기 때문이다.
+
+**되마스킹하지 말 것.** `Mask.name("홍*동")` 은 `홍*동` 그대로라 다행히 멱등이지만,
+설계상 이 값은 이미 최종형이다.
+
+> `tb_member_dormant.member_name` 에는 NOT NULL 을 걸지 않았다. 값은 같은 규칙으로
+> 채우지만 스냅샷은 원본이 아니라 사본이라 "이름 없는 행" 의 의미가 다르다 — 맞추려면
+> 별도 결정이 필요하다. `parent_name` 도 NULL 허용이다: 법정대리인은 14세 미만에만
+> 있으므로 NOT NULL 로 만들면 성인이 가입할 수 없다.
+
+### 7.2b 소셜 연결은 행째로 지운다
+
+탈퇴 사실은 원장이 해시로 보관하므로 `tb_member_oauth` 행이 이력을 대신할 이유가 없다.
+그런데 남겨 두면 **재가입이 막힌다.**
+
+```
+UNIQUE KEY uk_oauth_provider_user (provider, provider_user_id, delete_yn)
+```
+
+표시만 내리는 방식(`use_yn='N'`)으로는 해결되지 않는다 — 조회에서는 빠지지만 UNIQUE 키에는
+`delete_yn='N'` 행이 그대로 잡힌다. 같은 소셜 계정으로 다시 가입하면 연결 INSERT 가 중복
+키로 실패하고, 그 INSERT 가 **가입 트랜잭션 안에 있어 가입 전체가 롤백**된다. 사용자는
+원인 불명의 실패를 겪고 재시도해도 계속 막힌다.
+
+> 코드 리뷰(2026-07-30)에서 잡힌 결함이다. 실측으로 양쪽을 대조했다 —
+> `use_yn='N'` 만 내린 뒤 재연결하면 `Duplicate entry 'NAVER-…-N'`,
+> 행을 지운 뒤에는 정상 INSERT.
+
+`MemberOAuthService.unlink()` 도 같은 이유로 하드 삭제다. 정상 탈퇴는 그 경로를 타지 않고
+(`withdraw()` 가 직접 지운다), `unlink()` 는 회원 행이 사라졌는데 연결만 남은 비정상 상태를
+정리하는 방어 경로다.
 
 ### 7.2 작성자 익명화
 
@@ -561,10 +800,14 @@ enum 이름이 곧 `provider` 값이자 `join_type` 값이다 — 변환표를 �
 
 | 조건 | 방식 |
 |---|---|
-| `keyword` | `login_id` · `nickname` 부분일치 |
+| `keyword` | `login_id` · `nickname` · **`member_name`** 부분일치 |
 | `email` / `phone` | 해시 **정확 일치** — 전체 값 필요 |
 | `siteId` `status` `joinType` | 동등 비교 |
 | `lockedOnly` `unverifiedOnly` | 플래그 |
+
+이름이 `keyword` 에 들어간 것은 평문 저장으로 되돌린 결과다([§2.2](#22-암호화-대상-컬럼-tb_member)).
+휴면 현황(`/adm/member/dormant`)의 검색도 같이 `login_id` + `member_name` 이 된다.
+검색 결과 조회는 `ACTION_SEARCH` 로 접근 이력에 남는다 — 이름으로 훑는 것도 열람이다.
 
 `MemberAdmSearch` 는 **표시값과 해시를 분리**해서 갖는다(`email` vs `emailHash`).
 입력 자리에 해시를 덮어쓰면 검색창에 64자 16진수가 되돌아와 관리자가 방금 친 값을 잃는다.
@@ -602,6 +845,35 @@ CSV 인젝션 방어로 `=` `+` `-` `@` 로 시작하는 값은 따옴표로 고
 놓쳤을 때 쓰는 운영 복구 경로.
 
 **dry-run 설정이 그대로 적용된다.** 손으로 돌릴 때만 진짜로 지워지는 동작은 사고를 부른다.
+
+### 8.6 에러 로그 확인 (`/adm/error-log`)
+
+[§2.7](#27-삼킨-실패는-log_error-로-끌어올린다) 의 짝이 되는 화면. 삼킨 기록 실패와
+미처리 예외를 사람이 보는 자리다.
+
+| URL | 화면 |
+|---|---|
+| `GET /adm/error-log` | 목록 + 최근 7일 분류별 집계. `?errorClass=` 로 분류 필터 |
+| `GET /adm/error-log/{id}` | 상세 — 스택트레이스는 **여기서만** 읽는다 |
+
+- **읽기 전용.** 등록·수정·삭제가 없다. 정리는 화면이 아니라 보존기간 배치가 맡는다
+  (`log_error` 36개월, [§9.3](#93-파기-등록부))
+- 목록 쿼리는 `stack_trace`(mediumtext)를 **싣지 않는다** — 페이지마다 끌어오면 목록이
+  통째로 느려진다
+- `trace_id` 가 `log_access.trace_id` · `sql.log` 의 `[traceId]` 와 같은 값이다.
+  "이 오류를 낸 요청이 어떤 쿼리를 돌렸나" 를 세 곳에서 맞춰 볼 수 있다
+- `query_string` 은 **적재 시점에** 민감 파라미터 값이 `***` 로 가려진 상태다
+  (`ErrorLogger.MASKED_PARAMS` — `reason` `state` `encodedata` `token` 등).
+  화면이 가리는 것이 아니므로 CSV·API 로 내보내도 안전하다
+- 세션 ID 는 **마지막 8자만** 남긴다 — 전체를 보관하면 유출 시 세션 탈취 재료가 된다
+- URL 규칙을 새로 넣지 않았다. `/adm/**` ROLE_ADMIN(priority 20)이 이미 덮는다
+- 상세는 없는 ID 에 404 대신 목록으로 되돌린다. 보존기간 배치가 지운 직후의 북마크
+  접근이 대표적인데, 그건 오류가 아니다
+
+미처리 예외는 `UnhandledErrorRecorder`(`HandlerExceptionResolver`, 최우선 order)가 담는다.
+**응답은 건드리지 않는다** — `null` 을 돌려주므로 오류 화면은 기존 흐름이 만든다.
+4xx 계열(`ErrorResponse`)과 인가 거부(`AccessDeniedException`)는 남기지 않는다 —
+봇의 404 탐색만으로 표가 가득 차고, 인가 거부는 접근 로그의 상태코드가 이미 갖고 있다.
 
 ---
 
@@ -827,6 +1099,7 @@ V918(휴면) · V919(본인인증·소셜·가입 하위) · V920(관리자 내�
 | CHECK 제약 위반 | 저장이 통째로 실패 | [§1.2](#12-상태값--ddl-check-와-11) 표 확인 |
 | FK 때문에 하드 삭제 실패 | 휴면 전환이 조용히 실패 | soft delete 사용 |
 | Thymeleaf elvis 체인 | `${a} ?: ${b} ?: '-'` 파싱 실패 | 삼항 연산자로 |
+| soft delete 행이 UNIQUE 에 남음 | **재가입이 통째로 롤백** | 해제·탈퇴 시 행째로 삭제 |
 | `th:if` + `th:replace` 동일 태그 | `th:replace`(100)가 먼저 실행 | 바깥 `th:block` 으로 감싼다 |
 | 템플릿 캐시 | 뷰 수정이 반영 안 됨 | 재기동 (`spring.thymeleaf.cache`) |
 | CSP `form-action` | 외부 폼 전송이 **조용히** 차단 | `csp-form-action-extra` |

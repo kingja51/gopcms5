@@ -36,9 +36,9 @@
     <section class="ladm-panel">
         <div class="ladm-panel-head ladm-listbar">
             <form method="get" th:action="@{/adm/member}" class="ladm-search">
-                <label class="sr-only" for="keyword">아이디·닉네임 검색</label>
+                <label class="sr-only" for="keyword">아이디·닉네임·이름 검색</label>
                 <input id="keyword" name="keyword" class="krds-input krds-input-sm"
-                       th:value="${cond.keyword}" placeholder="아이디·닉네임"/>
+                       th:value="${cond.keyword}" placeholder="아이디·닉네임·이름"/>
 
                 <!-- 암호화 컬럼이라 전체 주소가 아니면 찾히지 않는다 -->
                 <label class="sr-only" for="email">이메일(전체)</label>

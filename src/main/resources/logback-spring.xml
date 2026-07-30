@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+  gopcms5 로깅 구성 — 파일로 남긴다.
+
+  선행 프로젝트(gopcms2026)의 구성을 바탕으로 하되 이 저장소에 맞게 고쳤다:
+    · LOG_HOME 을 환경변수 기반으로 (원본의 value="${/data/…}" 는 프로퍼티 조회로
+      해석돼 경로가 되지 않는다 — LOG_HOME_IS_UNDEFINED 가 된다)
+    · audit.log(com.gonet.audit) 파일은 만들지 않는다 — 감사는 <b>DB 가 받는다</b>
+      (log_audit · log_access · log_privacy_access · log_pii_purge · tb_login_history).
+      ※ 2026-07-30 정정: log_audit 은 "미도입" 이 아니라 <b>적재 중</b>이다
+        (AuditTrailInterceptor → 관리자 CUD 전수). 파일 로그로 이중화하지 않는 이유는
+        같은 사실을 두 곳에 남기면 보존기간·조회 경로가 갈리기 때문이다
+    · SQL 분리가 실제로 동작하도록 MyBatisConfig 에 logPrefix("gopcms.sql.") 추가
+    · ERROR_FILE 신설 — 문제만 따로 보는 파일이 없으면 200MB 로그를 grep 하게 된다
+
+  ── 파일 4종 ───────────────────────────────────────────────────────────────
+    gopcms.log        애플리케이션 로그 (SQL 제외 — 그래서 읽을 수 있다)
+    gopcms-error.log  WARN 이상만. 장애 확인은 여기부터
+    sql.log           MyBatis SQL 전용 (Preparing / Parameters / Total)
+    (콘솔)             local 에서만. 운영은 catalina.out 중복을 피해 끈다
+
+  ── 감사 기록과의 관계 ─────────────────────────────────────────────────────
+  이 파일들은 <b>운영 진단용</b>이다. 법적 보존 대상인 접속·개인정보취급·파기 이력은
+  logging_db 에 있고 보존기간도 거기서 관리한다(doc/member-domain.md §9).
+  그래서 파일 보존기간은 DB(36개월·5년)보다 짧아도 된다 — 지워도 감사 추적은 남는다.
+
+  ── 운영 배포 주의 ─────────────────────────────────────────────────────────
+  war 를 외부 Tomcat 에 올리면 상대경로는 Tomcat 의 작업 디렉터리(보통 CATALINA_HOME/bin)
+  기준으로 풀린다. <b>운영에서는 GOPCMS_LOG_DIR 을 절대경로로 반드시 지정</b>한다.
+  ============================================================================
+-->
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <!--
+    로그 디렉터리. 다른 저장 경로(파일 업로드 등)와 같은 관례를 따른다.
+    .gitignore 가 /data/ 와 *.log 를 이미 제외하고 있다.
+  -->
+  <property name="LOG_HOME" value="${GOPCMS_LOG_DIR:-./data/gopcms/logs}"/>
+
+  <!--
+    보존 정책 — 환경변수로 조정한다. 기본값은 "운영 진단에 충분한 만큼".
+    maxHistory 는 fileNamePattern 이 일 단위(%d{yyyy-MM-dd})이므로 <b>일수</b>다.
+  -->
+  <property name="LOG_MAX_HISTORY"    value="${GOPCMS_LOG_MAX_HISTORY:-180}"/>
+  <property name="LOG_TOTAL_SIZE_CAP" value="${GOPCMS_LOG_TOTAL_SIZE_CAP:-5GB}"/>
+  <property name="SQL_MAX_HISTORY"    value="${GOPCMS_SQL_LOG_MAX_HISTORY:-30}"/>
+  <property name="SQL_TOTAL_SIZE_CAP" value="${GOPCMS_SQL_LOG_TOTAL_SIZE_CAP:-3GB}"/>
+
+  <!--
+    SQL 파일 패턴에 traceId 를 넣는다 — log_access.trace_id 와 같은 값이라
+    "이 요청이 어떤 쿼리를 돌렸나" 를 접근 로그와 맞춰 볼 수 있다
+    (micrometer-tracing-bridge-brave 가 요청마다 MDC 에 넣어 준다).
+    gopcms.log / gopcms-error.log 는 Spring Boot 의 FILE_LOG_PATTERN 을 쓰며
+    거기에 이미 상관ID 가 포함된다.
+  -->
+  <property name="SQL_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{traceId:-}] %msg%n"/>
+
+  <!-- ① 콘솔 -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder><pattern>${CONSOLE_LOG_PATTERN}</pattern></encoder>
+  </appender>
+
+  <!-- ② 애플리케이션 로그 -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_HOME}/gopcms.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_HOME}/gopcms.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>200MB</maxFileSize>
+      <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+      <totalSizeCap>${LOG_TOTAL_SIZE_CAP}</totalSizeCap>
+    </rollingPolicy>
+    <encoder><pattern>${FILE_LOG_PATTERN}</pattern></encoder>
+  </appender>
+
+  <!--
+    ③ 오류 전용 — WARN 이상만 통과시킨다.
+    ThresholdFilter 를 쓰는 이유: 장애를 볼 때 정상 로그 사이에서 찾지 않아도 되게.
+    FILE 에도 같은 줄이 남으므로 이 파일은 "요약" 이고 맥락은 gopcms.log 에서 본다.
+  -->
+  <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>WARN</level>
+    </filter>
+    <file>${LOG_HOME}/gopcms-error.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_HOME}/gopcms-error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder><pattern>${FILE_LOG_PATTERN}</pattern></encoder>
+  </appender>
+
+  <!-- ④ SQL 전용 파일 -->
+  <appender name="SQL_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_HOME}/sql.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_HOME}/sql.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>${SQL_MAX_HISTORY}</maxHistory>
+      <totalSizeCap>${SQL_TOTAL_SIZE_CAP}</totalSizeCap>
+    </rollingPolicy>
+    <encoder><pattern>${SQL_PATTERN}</pattern></encoder>
+  </appender>
+
+  <!-- ⑤ SQL 콘솔 — local 전용(아래 springProfile 에서 붙인다) -->
+  <appender name="SQL_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder><pattern>%d{HH:mm:ss.SSS} [%X{traceId:-}] %msg%n</pattern></encoder>
+  </appender>
+
+  <!-- ── 프레임워크 로거 (기본 INFO — 필요할 때만 내린다) ───────────────── -->
+  <logger name="org.springframework.security" level="INFO"/>
+  <!-- 프레임워크 내부 로거. 실제 SQL 은 여기가 아니라 gopcms.sql 에서 나온다. -->
+  <logger name="org.mybatis" level="INFO"/>
+  <logger name="org.apache.ibatis" level="INFO"/>
+  <logger name="com.zaxxer.hikari" level="INFO"/>
+  <logger name="org.flywaydb.core" level="INFO"/>
+
+  <!--
+    MyBatis SQL 전용 로거.
+    MyBatisConfig 의 logPrefix("gopcms.sql.") 덕분에 3-DB 의 모든 매퍼 SQL 로거가
+    "gopcms.sql." 로 시작한다 → 이 하나로 전부 잡는다.
+    additivity="false" 라 gopcms.log 에는 SQL 이 섞이지 않는다.
+    결과 행 데이터까지 보려면 level 을 TRACE 로 (운영에서는 쓰지 말 것 — 값이 그대로 남는다).
+  -->
+  <logger name="gopcms.sql" level="DEBUG" additivity="false">
+    <appender-ref ref="SQL_FILE"/>
+  </logger>
+
+  <root level="INFO">
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="ERROR_FILE"/>
+  </root>
+
+  <!-- ── local ─────────────────────────────────────────────────────────────
+       콘솔과 SQL 콘솔을 함께 켠다. 개발 중에는 화면에서 바로 보는 편이 빠르다.
+  -->
+  <springProfile name="local | dev">
+    <logger name="com.gonet" level="DEBUG"/>
+    <logger name="gopcms.sql" level="DEBUG" additivity="false">
+      <appender-ref ref="SQL_FILE"/>
+      <appender-ref ref="SQL_CONSOLE"/>
+    </logger>
+    <root level="INFO">
+      <appender-ref ref="STDOUT"/>
+    </root>
+  </springProfile>
+
+  <!-- ── prod ──────────────────────────────────────────────────────────────
+       콘솔을 붙이지 않는다 — 외부 Tomcat 에서는 표준출력이 catalina.out 으로 가
+       같은 내용이 두 파일에 중복 적재된다.
+       SQL 은 파일로만, 필요 없으면 GOPCMS_SQL_LOG_MAX_HISTORY 를 줄이거나
+       이 로거 level 을 INFO 로 올려 사실상 끈다.
+  -->
+  <springProfile name="prod">
+    <logger name="com.gonet" level="INFO"/>
+  </springProfile>
+
+</configuration>

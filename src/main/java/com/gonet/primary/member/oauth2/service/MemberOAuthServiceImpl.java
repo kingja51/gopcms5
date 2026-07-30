@@ -80,7 +80,7 @@ public class MemberOAuthServiceImpl extends AbstractCmsService implements Member
     @Override
     @Transactional(transactionManager = MyBatisConfig.PRIMARY_TX)
     public void unlink(String memberOauthId) {
-        oauthMapper.deactivate(memberOauthId);
+        oauthMapper.delete(memberOauthId);
         log.info("소셜 계정 연결 해제 oauth={}", memberOauthId);
     }
 }

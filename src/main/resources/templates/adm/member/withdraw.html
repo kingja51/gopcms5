@@ -2,9 +2,11 @@
 <!-- ============================================================================
      탈퇴 원장.
 
-     검색창이 없다 — 원장에는 평문 식별자가 없다(login_id_hash·di_hash 뿐). 아이디로
-     찾을 수 있게 하려면 평문을 남겨야 하는데, 그건 "탈퇴 시 개인정보 즉시 파기" 원칙과
-     정면으로 어긋난다. 사람을 찾는 화면이 아니라 대조·소명 자료를 보는 화면이다.
+     검색창이 없다 — 원장에는 평문 식별자가 없다(login_id_hash·di_hash, 그리고 V11 부터
+     마스킹된 이름). 아이디로 찾을 수 있게 하려면 평문을 남겨야 하는데, 그건 "탈퇴 시
+     개인정보 즉시 파기" 원칙과 정면으로 어긋난다. 마스킹 이름으로 LIKE 를 걸어도
+     '홍*동' 에 맞추는 셈이라 검색이 되지 않는다.
+     사람을 찾는 화면이 아니라 대조·소명 자료를 보는 화면이다.
      ============================================================================ -->
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
@@ -16,7 +18,7 @@
 <div layout:fragment="content">
 
     <header th:replace="~{adm/fragments/adm-ui :: pageHead('탈퇴 원장',
-            '탈퇴한 회원의 기록입니다. 개인정보는 파기되고 대조용 해시만 남습니다 — 재가입 제한·중복가입 차단·분쟁 대응의 근거입니다.')}"></header>
+            '탈퇴한 회원의 기록입니다. 개인정보는 파기되고 대조용 해시와 <b>마스킹된 이름</b>만 남습니다 — 재가입 제한·중복가입 차단·분쟁 대응의 근거입니다.')}"></header>
 
     <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
 
@@ -44,6 +46,7 @@
                 <tr>
                     <th scope="col" class="center nowrap">탈퇴일</th>
                     <th scope="col" class="center">사이트</th>
+                    <th scope="col" class="center">이름</th>
                     <th scope="col" class="center">유형</th>
                     <th scope="col">사유</th>
                     <th scope="col">DI 해시</th>
@@ -57,6 +60,8 @@
                         th:text="${w.withdrawAt != null
                                   ? #temporals.format(w.withdrawAt, 'yyyy-MM-dd') : '-'}">-</td>
                     <td class="center text-fg-subtle" th:text="${w.siteCode}">ai</td>
+                    <!-- 저장 시점에 이미 마스킹된 값 — 화면에서 다시 가리지 않는다 -->
+                    <td class="center" th:text="${w.memberName} ?: '-'">홍*동</td>
                     <td class="center">
                         <span class="krds-badge ladm-badge-off"
                               th:text="${w.withdrawStatus}">USER_REQUEST</span>
@@ -71,7 +76,7 @@
                     </td>
                     <td class="text-body-xs text-fg-subtle" th:text="${w.legalBasis} ?: '-'">-</td>
                 </tr>
-                <tr th:replace="~{adm/fragments/adm-ui :: empty(7, ${page.total() == 0}, null)}"></tr>
+                <tr th:replace="~{adm/fragments/adm-ui :: empty(8, ${page.total() == 0}, null)}"></tr>
                 </tbody>
             </table>
         </div>

@@ -20,8 +20,8 @@
         <result property="passwordExpireAt" column="password_expire_at"/>
         <result property="roleIds" column="role_ids"/>
 
-        <result property="memberName" column="member_name"
-                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <!-- member_name·parent_name 은 평문이다(DDL 주석도 '평문') — §검색 필요 -->
+        <result property="memberName" column="member_name"/>
         <result property="nickname" column="nickname"/>
         <result property="email" column="email"
                 typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
@@ -38,8 +38,7 @@
         <result property="di" column="di"
                 typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
         <result property="diHash" column="di_hash"/>
-        <result property="parentName" column="parent_name"
-                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="parentName" column="parent_name"/>
         <result property="parentDi" column="parent_di"
                 typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
         <result property="parentDiHash" column="parent_di_hash"/>
@@ -82,7 +81,7 @@
         ) VALUES (
             #{memberId}, #{siteId}, #{siteCode}, #{loginId}, #{password}, #{passwordChangedAt},
             #{roleIds},
-            #{memberName, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{memberName},
             #{nickname},
             #{email, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
             #{emailHash}, #{emailVerifiedYn},
@@ -92,7 +91,7 @@
             #{birthYear}, #{gender},
             #{di, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
             #{diHash},
-            #{parentName, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
+            #{parentName},
             #{parentDi, typeHandler=com.gonet.common.crypto.PiiTypeHandler},
             #{parentDiHash},
             #{addressZipcode},

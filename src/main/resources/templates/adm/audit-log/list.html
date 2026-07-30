@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!--
+  감사 로그 목록 — 관리자 CUD 전수.
+
+  before_json·after_json 을 싣지 않는다(매퍼 findPage 가 컬럼을 고른다) — longtext 를
+  페이지마다 끌어오면 목록이 통째로 느려진다. 스냅샷은 상세에서만 읽는다.
+-->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>감사 로그</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('감사 로그',
+            '관리자 화면에서 <b>상태를 바꾼 요청</b>을 전수 기록합니다. 조회(GET)는 남기지 않습니다 — 그건 접속 로그와 개인정보 접근 이력이 담당합니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <div class="krds-alert krds-alert-info" role="note" style="margin-bottom:16px">
+        <span aria-hidden="true">i</span>
+        <p><code>FAIL</code> 은 요청이 거부됐다는 뜻입니다 — 값 검증 실패, 또는 정책상
+            거부(예: 게시글이 있는 게시판 삭제). 실패 시도가 남는 것이 감사의 목적입니다.</p>
+    </div>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form th:action="@{/adm/audit-log}" method="get" class="ladm-search" role="search">
+                <label class="sr-only" for="keyword">검색어</label>
+                <input id="keyword" name="keyword" class="krds-input krds-input-sm"
+                       th:value="${cond?.keyword}" placeholder="행위·대상·URI 검색"/>
+
+                <label class="sr-only" for="result">결과</label>
+                <select id="result" name="result" class="krds-select krds-select-sm">
+                    <option value="">결과 전체</option>
+                    <option value="SUCCESS" th:selected="${cond?.result == 'SUCCESS'}">SUCCESS</option>
+                    <option value="FAIL" th:selected="${cond?.result == 'FAIL'}">FAIL</option>
+                    <option value="ERROR" th:selected="${cond?.result == 'ERROR'}">ERROR</option>
+                </select>
+
+                <label class="sr-only" for="action">행위</label>
+                <input id="action" name="action" class="krds-input krds-input-sm"
+                       th:value="${cond?.action}" placeholder="CREATE/UPDATE/DELETE"/>
+
+                <label class="sr-only" for="targetEntity">대상</label>
+                <input id="targetEntity" name="targetEntity" class="krds-input krds-input-sm"
+                       th:value="${cond?.targetEntity}" placeholder="BOARD/MEMBER…"/>
+
+                <button type="submit" class="krds-btn krds-btn-secondary krds-btn-sm">검색</button>
+            </form>
+            <span class="grow"></span>
+            <a th:href="@{/adm/audit-log}" class="krds-btn krds-btn-tertiary krds-btn-sm">필터 해제</a>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">감사 로그 — 최근 발생 순</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="nowrap">일시</th>
+                    <th scope="col">행위자</th>
+                    <th scope="col">행위</th>
+                    <th scope="col">대상</th>
+                    <th scope="col">대상 ID</th>
+                    <th scope="col" class="center">결과</th>
+                    <th scope="col">요청</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${page.content()}">
+                    <td class="nowrap text-body-xs">
+                        <a th:href="@{'/adm/audit-log/' + ${r.logAuditId}}" class="krds-link"
+                           th:text="${r.loggedAt != null
+                                     ? #temporals.format(r.loggedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">
+                            2026-07-30 12:00:00</a>
+                    </td>
+                    <td>
+                        <span th:text="${r.actorLoginId} ?: '-'">admin</span>
+                        <span class="krds-badge ladm-badge-off"
+                              th:text="${r.actorUserType} ?: 'UNKNOWN'">ADMIN</span>
+                    </td>
+                    <td><code th:text="${r.action}">CREATE</code></td>
+                    <td class="text-fg-subtle" th:text="${r.targetEntity} ?: '-'">BOARD</td>
+                    <td class="text-body-xs">
+                        <code th:if="${r.targetId}" th:text="${r.targetId}">BBM_…</code>
+                        <!-- 신규 등록은 대상 ID 가 없다 — 저장 시점에 채번된다 -->
+                        <span th:unless="${r.targetId}" class="text-fg-subtle">신규</span>
+                    </td>
+                    <td class="center">
+                        <span class="krds-badge"
+                              th:classappend="${r.result == 'SUCCESS'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                              th:text="${r.result}">SUCCESS</span>
+                    </td>
+                    <td class="text-fg-subtle text-body-xs"
+                        th:text="${r.httpMethod} + ' ' + ${r.requestUri}">POST /adm/board/save</td>
+                </tr>
+                <tr th:if="${page.content().isEmpty()}">
+                    <td colspan="7" class="ladm-empty">
+                        <p class="text-body-md text-fg-subtle">기록된 변경이 없습니다.</p>
+                        <p class="text-body-sm text-fg-subtle">
+                            관리자 화면에서 무엇이든 저장하면 여기에 남습니다.</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!--
+      공통 pager 프래그먼트는 keyword 만 유지한다 — 여기는 result·action·targetEntity 도
+      함께 실어야 필터가 2페이지에서 풀리지 않는다. 그래서 직접 쓴다.
+    -->
+    <nav th:if="${page.totalPages() > 1}" class="krds-pagination" style="margin-top:20px"
+         aria-label="페이지 이동">
+        <a th:if="${page.hasPrev()}" class="krds-page"
+           th:href="@{/adm/audit-log(page=${page.page() - 1}, keyword=${cond?.keyword},
+                      result=${cond?.result}, action=${cond?.action},
+                      targetEntity=${cond?.targetEntity})}">이전</a>
+        <a th:each="p : ${page.blockPages()}"
+           th:href="@{/adm/audit-log(page=${p}, keyword=${cond?.keyword},
+                      result=${cond?.result}, action=${cond?.action},
+                      targetEntity=${cond?.targetEntity})}"
+           th:text="${p}" class="krds-page"
+           th:attr="aria-current=${p == page.page()} ? 'page' : null">1</a>
+        <a th:if="${page.hasNext()}" class="krds-page"
+           th:href="@{/adm/audit-log(page=${page.page() + 1}, keyword=${cond?.keyword},
+                      result=${cond?.result}, action=${cond?.action},
+                      targetEntity=${cond?.targetEntity})}">다음</a>
+    </nav>
+</div>
+</body>
+</html>

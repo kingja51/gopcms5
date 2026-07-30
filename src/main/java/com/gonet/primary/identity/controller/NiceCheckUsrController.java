@@ -7,6 +7,7 @@ import com.gonet.primary.identity.dto.NiceEncodeResult;
 import com.gonet.primary.identity.service.NiceCheckService;
 import com.gonet.primary.site.dto.SiteContext;
 import jakarta.servlet.http.HttpSession;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -59,6 +60,19 @@ public class NiceCheckUsrController {
 
     public static final String PURPOSE_SELF = "SELF";
     public static final String PURPOSE_PARENT = "PARENT";
+
+    /**
+     * 복귀 경로 허용 형태 — 슬래시 <b>하나</b>로 시작하고 곧바로 경로 문자가 오며,
+     * 이후에도 소문자·숫자·하이픈·밑줄·슬래시만 나오는 경로.
+     *
+     * <p>두 번째 자리에 슬래시를 허용하지 않는 것이 핵심이다. 그 한 글자가
+     * {@code //evil} 같은 프로토콜 상대 URL 을 만든다(점이 없어도 사내망에서는 해석된다).
+     * {@code /\}·{@code %2f}·{@code :}·개행은 문자 집합에서 이미 탈락한다.
+     *
+     * <p>쿼리스트링도 허용하지 않는다 — 지금 필요한 복귀 주소는 전부 순수 경로이고,
+     * 허용 범위를 넓히면 그만큼 검사가 어려워진다.
+     */
+    private static final Pattern SAFE_NEXT = Pattern.compile("/[a-z0-9_-][a-z0-9_/-]{0,199}");
 
     private final NiceCheckService niceCheckService;
     private final NiceCheckProperties props;
@@ -139,13 +153,23 @@ public class NiceCheckUsrController {
     }
 
     /**
-     * 부모창 복귀 경로 정리 — {@code /} 로 시작하고 {@code //} 가 아닌 값만 받는다.
+     * 부모창 복귀 경로 정리 — <b>우리 사이트 안의 경로만</b> 받는다.
      *
-     * <p>{@code //evil.com} 은 브라우저가 프로토콜 상대 URL 로 읽어 외부로 나간다.
-     * 값이 수상하면 가입 폼(사이트 컨텍스트 기준)으로 되돌린다.
+     * <p>이 값은 팝업이 부모창을 보낼 주소가 되므로(`window.location.href`) 느슨하면
+     * 그대로 오픈 리다이렉트다. 걸러야 하는 것이 {@code //evil.com} 하나가 아니다:
+     * <ul>
+     *   <li>{@code //evil.com} — 브라우저가 프로토콜 상대 URL 로 읽는다</li>
+     *   <li>{@code /\evil.com} — 브라우저는 URL 의 백슬래시를 슬래시로 정규화하므로
+     *       (WHATWG URL 표준) 위와 같은 결과가 된다. <b>코드 리뷰 2026-07-30 지적</b></li>
+     *   <li>{@code /%2fevil.com}·개행 삽입 등 — 인코딩·제어문자로 같은 효과를 노린다</li>
+     * </ul>
+     *
+     * <p>그래서 "무엇을 막을까" 대신 <b>"무엇만 허용할까"</b> 로 뒤집는다 —
+     * 사용자 프로그램 경로에 쓰이는 문자만 있는 단일 슬래시 시작 경로여야 통과한다.
+     * 값이 조건을 벗어나면 가입 폼(사이트 컨텍스트 기준)으로 되돌린다.
      */
     private String safeNext(String next) {
-        if (next != null && next.startsWith("/") && !next.startsWith("//")) {
+        if (next != null && SAFE_NEXT.matcher(next).matches()) {
             return next;
         }
         SiteContext site = SiteContextHolder.get();

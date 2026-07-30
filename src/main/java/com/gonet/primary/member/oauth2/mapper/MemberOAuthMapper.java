@@ -25,6 +25,12 @@ public interface MemberOAuthMapper {
 
     int updateLastLogin(@Param("memberOauthId") String memberOauthId);
 
-    /** 연결 해제 — 행을 지우지 않고 표시만 바꾼다(언제 끊었는지가 이력이다). */
-    int deactivate(@Param("memberOauthId") String memberOauthId);
+    /**
+     * 연결 해제 — 행을 <b>지운다</b>.
+     *
+     * <p>표시만 내리면({@code use_yn='N'}) 재연결이 막힌다:
+     * {@code uk_oauth_provider_user (provider, provider_user_id, delete_yn)} 에
+     * {@code delete_yn='N'} 행이 남아 같은 계정의 INSERT 가 중복 키로 실패한다.
+     */
+    int delete(@Param("memberOauthId") String memberOauthId);
 }

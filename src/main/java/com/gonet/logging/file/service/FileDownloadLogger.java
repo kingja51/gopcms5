@@ -2,6 +2,7 @@ package com.gonet.logging.file.service;
 
 import com.gonet.common.web.ClientIpResolver;
 import com.gonet.common.web.LoginPrincipal;
+import com.gonet.logging.error.service.ErrorLogger;
 import com.gonet.logging.file.dto.FileDownloadLog;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,6 +43,7 @@ public class FileDownloadLogger {
 
     private final FileDownloadLogService logService;
     private final ClientIpResolver clientIpResolver;
+    private final ErrorLogger errorLogger;
 
     /** 적재 실패는 삼킨다 — 부가 기록 때문에 본 기능이 무너지면 안 된다. */
     public void write(HttpServletRequest request, String fileId, String fileGroupId,
@@ -70,6 +72,9 @@ public class FileDownloadLogger {
             logService.insert(row);   // 별도 빈 — 자기호출이면 REQUIRES_NEW 가 무시된다
         } catch (RuntimeException e) {
             log.warn("다운로드 이력 적재 실패(다운로드는 계속) file={}: {}", fileId, e.toString());
+            // CHECK 제약 위반으로 기록이 조용히 사라지던 실측 사례가 여기에 걸린다
+            errorLogger.logRecordFailure("FILE_DOWNLOAD_LOG",
+                    "file=%s type=%s result=%s".formatted(fileId, downloadType, result), e);
         }
     }
 

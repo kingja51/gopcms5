@@ -11,8 +11,7 @@
         <id property="memberId" column="member_id"/>
         <result property="siteCode" column="site_code"/>
         <result property="loginId" column="login_id"/>
-        <result property="memberName" column="member_name"
-                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="memberName" column="member_name"/>
         <result property="email" column="email"
                 typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
         <result property="baseAt" column="base_at"/>
@@ -108,12 +107,18 @@
     <!-- ── 탈퇴 ─────────────────────────────────────────────────────────
          원장에는 <b>해시만</b> 남는다. login_id_hash·di_hash 는 재가입 제한·중복가입
          차단·분쟁 대응의 유일한 근거라 PII NULL 정책의 예외다(PLAN §결정 대기 → 존치). -->
+    <!--
+      member_name 은 <b>마스킹된 값</b>이고 앱이 파라미터로 넣는다(V11).
+      원본은 암호문({AG}…)이라 SQL 안에서 가릴 수 없다 — SELECT 로 끌어오면
+      원장에 암호문이 그대로 박힌다(복호화 키가 있으면 평문이 된다).
+    -->
     <insert id="insertWithdrawLedger">
         INSERT INTO tb_member_withdraw
-            (member_id, member_seq, site_id, site_code, login_id_hash, di_hash,
+            (member_id, member_seq, site_id, site_code, member_name,
+             login_id_hash, di_hash,
              withdraw_at, withdraw_reason, withdraw_status, retention_expire_at,
              legal_basis, created_by, created_ip, created_at)
-        SELECT member_id, member_seq, site_id, site_code,
+        SELECT member_id, member_seq, site_id, site_code, #{memberName},
                SHA2(login_id, 256), di_hash,
                CURRENT_TIMESTAMP, #{reason}, #{withdrawType}, #{retentionExpireAt},
                #{legalBasis}, #{actor}, #{clientIp}, CURRENT_TIMESTAMP
@@ -123,10 +128,11 @@
 
     <insert id="insertWithdrawLedgerFromDormant">
         INSERT INTO tb_member_withdraw
-            (member_id, member_seq, site_id, site_code, login_id_hash, di_hash,
+            (member_id, member_seq, site_id, site_code, member_name,
+             login_id_hash, di_hash,
              withdraw_at, withdraw_reason, withdraw_status, retention_expire_at,
              legal_basis, created_by, created_ip, created_at)
-        SELECT member_id, member_seq, site_id, site_code,
+        SELECT member_id, member_seq, site_id, site_code, #{memberName},
                SHA2(login_id, 256), di_hash,
                CURRENT_TIMESTAMP, #{reason}, #{withdrawType}, #{retentionExpireAt},
                #{legalBasis}, #{actor}, #{clientIp}, CURRENT_TIMESTAMP
@@ -135,13 +141,38 @@
     </insert>
 
     <!--
-      PII 전부 NULL — <b>되돌릴 수 없다</b>. 반드시 원장 INSERT 이후에 부른다.
-      login_id 는 남긴다(중복 아이디 재사용 방지). status 로 탈퇴 상태를 표시하고
-      delete_yn='Y' 로 모든 조회에서 제외한다.
+      마스킹 원본 조회 — targetMap 을 재사용한다(member_name 은 평문 컬럼이라
+      복호화 단계가 없다). base_at 은 이 용도에 쓰이지 않아 채우지 않는다.
+      조건에 delete_yn·status 를 걸지 않는다 — 강제 탈퇴 대상의 상태는 다양하고,
+      원장에 이름을 남기는 목적은 상태와 무관하다.
+    -->
+    <select id="findNameSource" resultMap="targetMap">
+        SELECT member_id, site_code, login_id, member_name, email
+        FROM tb_member
+        WHERE member_id = #{memberId}
+    </select>
+
+    <select id="findDormantNameSource" resultMap="targetMap">
+        SELECT member_id, site_code, login_id, member_name, email
+        FROM tb_member_dormant
+        WHERE member_id = #{memberId}
+    </select>
+
+    <!--
+      PII 파기 — <b>되돌릴 수 없다</b>. 반드시 원장 INSERT 이후에 부른다.
+
+      NULL 로 비우지 <b>않는</b> 컬럼이 셋 있고, 각각 이유가 다르다:
+        · login_id    남긴다 — 탈퇴한 아이디의 재사용을 막는 유일한 근거
+        · password    NOT NULL 이라 '-' — BCrypt 형식이 아니어서 어떤 입력과도 안 맞는다
+        · member_name NOT NULL(V12) 이라 <b>마스킹된 값</b>(홍*동) — 사용자 확정
+      status 로 탈퇴 상태를 표시하고 delete_yn='Y' 로 모든 조회에서 제외한다.
     -->
     <update id="nullifyPii">
         UPDATE tb_member
-        SET member_name = NULL, nickname = NULL,
+        -- member_name 은 NOT NULL(V12) 이고, 비우는 대신 마스킹된 값을 남긴다.
+        -- 호출부가 Mask.name() 을 거친 값을 넘긴다 — 여기서 평문이 들어오면 파기가 아니다.
+        -- (SQL 주석이라도 XML 본문이다 — HTML 태그를 쓰면 파싱이 깨진다. 실측 2026-07-30)
+        SET member_name = #{maskedName}, nickname = NULL,
             email = NULL, email_hash = NULL, email_verified_yn = 'N',
             phone = NULL, phone_hash = NULL,
             birth_date = NULL, birth_year = NULL, gender = NULL,
@@ -158,7 +189,7 @@
 
     <update id="nullifyDormantPii">
         UPDATE tb_member_dormant
-        SET member_name = NULL, nickname = NULL,
+        SET member_name = #{maskedName}, nickname = NULL,
             email = NULL, email_hash = NULL,
             phone = NULL, phone_hash = NULL,
             birth_date = NULL, birth_year = NULL, gender = NULL,
@@ -199,8 +230,7 @@
         <result property="loginId" column="login_id"/>
         <result property="password" column="password"/>
         <result property="roleIds" column="role_ids"/>
-        <result property="memberName" column="member_name"
-                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="memberName" column="member_name"/>
         <result property="email" column="email"
                 typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
         <result property="emailHash" column="email_hash"/>

@@ -94,6 +94,10 @@
            th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/file')} ? 'ladm-active'">파일 관리</a>
 
         <p class="ladm-lnb-group text-label-xs">운영</p>
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/audit-log}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/audit-log')} ? 'ladm-active'">감사 로그</a>
+        <a class="ladm-lnb-link text-body-sm" th:href="@{/adm/error-log}"
+           th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/adm/error-log')} ? 'ladm-active'">에러 로그</a>
         <span class="ladm-lnb-link text-body-sm ladm-disabled">접속 로그 <em class="text-label-xs">예정</em></span>
         <span class="ladm-lnb-link text-body-sm ladm-disabled">공통 코드 <em class="text-label-xs">예정</em></span>
     </nav>

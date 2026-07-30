@@ -65,15 +65,16 @@
     </update>
 
     <!--
-      해제는 delete_yn='Y' 로 표시한다. uk_oauth_provider_user 가 delete_yn 을 포함하므로
-      해제된 행이 남아 있어도 같은 계정을 다시 연결할 수 있다 — 단, 해제 이력이 둘 이상
-      쌓이면 (provider, provider_user_id, 'Y') 가 겹쳐 두 번째 해제가 막힌다.
-      그래서 use_yn 만 내리고 delete_yn 은 그대로 둔다: 조회는 use_yn='Y' 로 거른다.
+      해제는 행을 <b>지운다</b>. 표시만 내리는 방식(use_yn='N')으로는 재연결이 막힌다 —
+      uk_oauth_provider_user 가 (provider, provider_user_id, delete_yn) 이므로 delete_yn='N'
+      인 행이 남아 있으면 같은 계정을 다시 연결할 때 INSERT 가 중복 키로 실패한다.
+      그 INSERT 는 가입 트랜잭션 안에 있어 가입 전체가 롤백된다(코드 리뷰 2026-07-30 지적).
+
+      연결이 언제 끊겼는지를 이력으로 남길 필요는 없다 — 탈퇴는 원장
+      (tb_member_withdraw)이 해시로 보관하고, 그 밖의 해제는 감사 로그가 담당한다.
     -->
-    <update id="deactivate">
-        UPDATE tb_member_oauth
-           SET use_yn = 'N'
-         WHERE member_oauth_id = #{memberOauthId}
-    </update>
+    <delete id="delete">
+        DELETE FROM tb_member_oauth WHERE member_oauth_id = #{memberOauthId}
+    </delete>
 
 </mapper>

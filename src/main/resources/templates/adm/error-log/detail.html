@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<!--
+  에러 로그 상세 — 스택트레이스를 읽는 유일한 화면.
+
+  스택은 반드시 th:text 로 넣는다(th:utext 금지). 예외 메시지에 사용자 입력이 섞여
+  들어올 수 있어, 이스케이프하지 않으면 에러 화면 자체가 XSS 경로가 된다.
+-->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>에러 로그 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('에러 로그 상세', null)}"></header>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg"><code th:text="${row.errorClass}">RECORD_FAILURE:PII_PURGE_LOG</code></h2>
+            <span class="grow"></span>
+            <a th:href="@{/adm/error-log(errorClass=${row.errorClass})}"
+               class="krds-btn krds-btn-tertiary krds-btn-sm">같은 분류 보기</a>
+            <a th:href="@{/adm/error-log}" class="krds-btn krds-btn-secondary krds-btn-sm">목록</a>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table">
+                <caption class="sr-only">에러 로그 항목</caption>
+                <tbody>
+                <tr>
+                    <th scope="row">발생 일시</th>
+                    <td th:text="${row.loggedAt != null ? #temporals.format(row.loggedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">메시지</th>
+                    <td th:text="${row.errorMessage} ?: '-'">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">요청</th>
+                    <td>
+                        <span th:if="${row.requestUri}"
+                              th:text="${row.httpMethod} + ' ' + ${row.requestUri}">GET /x</span>
+                        <span th:unless="${row.requestUri}" class="text-fg-subtle">요청 외(배치·스케줄러)</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">쿼리스트링</th>
+                    <!-- 민감 파라미터 값은 적재 시점에 *** 로 가려져 있다(ErrorLogger) -->
+                    <td><code th:text="${row.queryString} ?: '-'">-</code></td>
+                </tr>
+                <tr>
+                    <th scope="row">상태 코드</th>
+                    <td th:text="${row.statusCode} ?: '-'">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">사이트</th>
+                    <td th:text="${row.siteCode} ?: '전역·미해석'">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">행위자</th>
+                    <td>
+                        <span th:text="${row.actorLoginId} ?: '-'">-</span>
+                        <span class="krds-badge ladm-badge-off" th:text="${row.actorUserType} ?: 'UNKNOWN'">ANONYMOUS</span>
+                        <code class="text-fg-subtle" th:if="${row.actorUserId}" th:text="${row.actorUserId}">MBR_</code>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">클라이언트 IP</th>
+                    <td th:text="${row.clientIp} ?: '-'">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">추적 ID</th>
+                    <!-- log_access.trace_id · sql.log 의 [traceId] 와 같은 값이다 -->
+                    <td>
+                        <code th:text="${row.traceId} ?: '-'">-</code>
+                        <span class="text-body-sm text-fg-subtle" th:if="${row.traceId}">
+                            접속 로그·sql.log 를 이 값으로 맞춰 볼 수 있습니다
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">세션</th>
+                    <td class="text-fg-subtle" th:text="${row.sessionId} ?: '-'">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">User-Agent</th>
+                    <td class="text-fg-subtle" th:text="${row.userAgent} ?: '-'">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="ladm-panel" style="margin-top:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg">스택트레이스</h2>
+            <span class="grow"></span>
+            <span class="text-body-sm text-fg-subtle">32KB 를 넘으면 절단됩니다</span>
+        </div>
+        <div style="padding:0 16px 16px">
+            <!-- 색·모서리는 KRDS 토큰으로만 (raw hex 금지) — 배치만 인라인 style 로 둔다 -->
+            <pre class="text-body-sm bg-surface-subtle rounded-medium" th:if="${row.stackTrace}"
+                 th:text="${row.stackTrace}"
+                 style="overflow-x:auto;white-space:pre;margin:0;padding:12px">스택</pre>
+            <p class="text-body-sm text-fg-subtle" th:unless="${row.stackTrace}">
+                예외 객체 없이 기록된 항목입니다(분류 문자열만 남는 경우).
+            </p>
+        </div>
+    </section>
+</div>
+</body>
+</html>

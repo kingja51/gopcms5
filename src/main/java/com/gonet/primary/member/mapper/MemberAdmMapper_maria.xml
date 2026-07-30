@@ -21,8 +21,8 @@
         <result property="siteCode" column="site_code"/>
         <result property="loginId" column="login_id"/>
         <result property="nickname" column="nickname"/>
-        <result property="memberName" column="member_name"
-                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <!-- 이름은 평문 컬럼이다(검색 대상) — email·phone 과 달리 복호화가 없다 -->
+        <result property="memberName" column="member_name"/>
         <result property="email" column="email"
                 typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
         <result property="phone" column="phone"
@@ -63,9 +63,15 @@
         <if test="joinType != null and joinType != ''">
             AND m.join_type = #{joinType}
         </if>
+        <!--
+          이름이 부분일치 검색에 들어간다 — member_name 은 평문 컬럼이라 가능하다
+          (2026-07-30). email·phone 은 여전히 불가다: 암호문이라 LIKE 가 성립하지 않아
+          아래 emailHash·phoneHash 정확일치로만 찾는다. 이 비대칭이 정책의 결과다.
+        -->
         <if test="keyword != null">
-            AND (m.login_id LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
-              OR m.nickname LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
+            AND (m.login_id    LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR m.nickname    LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR m.member_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
         </if>
         <!--
           해시는 서비스가 만들어 넣는다 — 정규화 규칙(소문자·trim·숫자만)이 정책이라
@@ -152,8 +158,7 @@
         <id property="memberId" column="member_id"/>
         <result property="siteCode" column="site_code"/>
         <result property="loginId" column="login_id"/>
-        <result property="memberName" column="member_name"
-                typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
+        <result property="memberName" column="member_name"/>
         <result property="email" column="email"
                 typeHandler="com.gonet.common.crypto.PiiTypeHandler"/>
         <result property="dormantAt" column="dormant_at"/>
@@ -168,7 +173,8 @@
             AND d.site_id = #{siteId}
         </if>
         <if test="keyword != null">
-            AND d.login_id LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+            AND (d.login_id    LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+              OR d.member_name LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|')
         </if>
     </sql>
 
@@ -191,6 +197,11 @@
     <resultMap id="withdrawRowMap" type="com.gonet.primary.member.dto.MemberWithdrawRow">
         <id property="memberId" column="member_id"/>
         <result property="siteCode" column="site_code"/>
+        <!--
+          이미 마스킹된 값이라 PiiTypeHandler 를 붙이지 않는다(V11).
+          붙이면 평문을 복호화하려 들어 깨진다.
+        -->
+        <result property="memberName" column="member_name"/>
         <result property="withdrawAt" column="withdraw_at"/>
         <result property="withdrawReason" column="withdraw_reason"/>
         <result property="withdrawStatus" column="withdraw_status"/>
@@ -200,8 +211,9 @@
     </resultMap>
 
     <!--
-      원장에는 평문 식별자가 없다(login_id_hash·di_hash 뿐). 그래서 keyword 검색이
-      성립하지 않는다 — 화면에도 검색창을 두지 않는다.
+      원장에는 평문 식별자가 없다(login_id_hash·di_hash, 그리고 마스킹된 이름뿐).
+      그래서 keyword 검색이 성립하지 않는다 — 화면에도 검색창을 두지 않는다.
+      마스킹 이름으로 LIKE 를 걸면 '홍*동' 같은 값에 걸리는 셈이라 쓸모가 없다.
     -->
     <sql id="withdrawWhere">
         <where>
@@ -212,7 +224,7 @@
     </sql>
 
     <select id="findWithdrawPage" resultMap="withdrawRowMap">
-        SELECT w.member_id, w.site_code, w.withdraw_at, w.withdraw_reason,
+        SELECT w.member_id, w.site_code, w.member_name, w.withdraw_at, w.withdraw_reason,
                w.withdraw_status, w.retention_expire_at, w.legal_basis, w.di_hash
           FROM tb_member_withdraw w
         <include refid="withdrawWhere"/>

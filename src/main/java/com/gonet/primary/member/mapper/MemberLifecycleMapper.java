@@ -53,8 +53,26 @@ public interface MemberLifecycleMapper {
 
     /* ── 탈퇴 ──────────────────────────────────────────────────────────── */
 
-    /** 원장 적재 — 해시만 남긴다(재가입 제한·분쟁 대응의 유일한 근거). */
+    /**
+     * 원장에 남길 이름의 <b>원본</b>을 읽는다 — 복호화된 평문이다.
+     *
+     * <p>PII NULL 처리({@link #nullifyPii}) 전에만 값이 있다. 마스킹은 SQL 이 못 한다
+     * (저장값이 암호문 {@code {AG}…}) — 서비스가 {@code Mask.name()} 을 거쳐 넣는다.
+     *
+     * <p>이름 외 컬럼은 채우지 않는다(대상 DTO 를 재사용할 뿐이다).
+     */
+    MemberLifecycleTarget findNameSource(@Param("memberId") String memberId);
+
+    /** 휴면 테이블 쪽 원본 — 휴면 경유 탈퇴 경로에서 쓴다. */
+    MemberLifecycleTarget findDormantNameSource(@Param("memberId") String memberId);
+
+    /**
+     * 원장 적재 — 해시만 남긴다(재가입 제한·분쟁 대응의 유일한 근거).
+     *
+     * @param memberName <b>마스킹된</b> 이름. 평문을 넣으면 파기의 의미가 사라진다.
+     */
     int insertWithdrawLedger(@Param("memberId") String memberId,
+                             @Param("memberName") String memberName,
                              @Param("reason") String reason,
                              @Param("withdrawType") String withdrawType,
                              @Param("retentionExpireAt") LocalDateTime retentionExpireAt,
@@ -64,6 +82,7 @@ public interface MemberLifecycleMapper {
 
     /** 휴면 회원의 원장 적재 — 원본이 tb_member_dormant 에 있다. */
     int insertWithdrawLedgerFromDormant(@Param("memberId") String memberId,
+                                        @Param("memberName") String memberName,
                                         @Param("reason") String reason,
                                         @Param("withdrawType") String withdrawType,
                                         @Param("retentionExpireAt") LocalDateTime retentionExpireAt,
@@ -71,10 +90,20 @@ public interface MemberLifecycleMapper {
                                         @Param("actor") String actor,
                                         @Param("clientIp") String clientIp);
 
-    /** PII 전부 NULL — 되돌릴 수 없다. 원장 INSERT 이후에만 부른다. */
-    int nullifyPii(@Param("memberId") String memberId, @Param("actor") String actor);
+    /**
+     * PII 파기 — 되돌릴 수 없다. 원장 INSERT 이후에만 부른다.
+     *
+     * <p>이름만 예외다: NULL 이 아니라 <b>마스킹된 값</b>을 남긴다({@code member_name} 은
+     * V12 부터 NOT NULL). 나머지 PII 는 전부 NULL 이 된다.
+     *
+     * @param maskedName {@code Mask.name()} 을 거친 값. <b>평문을 넣으면 파기가 아니다.</b>
+     */
+    int nullifyPii(@Param("memberId") String memberId, @Param("actor") String actor,
+                   @Param("maskedName") String maskedName);
 
-    int nullifyDormantPii(@Param("memberId") String memberId);
+    /** 휴면 스냅샷의 PII 파기 — 이름은 같은 이유로 마스킹된 값을 남긴다. */
+    int nullifyDormantPii(@Param("memberId") String memberId,
+                          @Param("maskedName") String maskedName);
 
     /* ── 완전 삭제 ─────────────────────────────────────────────────────── */
 

@@ -53,11 +53,16 @@ public class MemberJoinServiceImpl extends AbstractCmsService implements MemberJ
     @Value("${gopcms.member.consent-version:1.0}")
     private String consentVersion;
 
-    /** 신규 회원의 기본 역할 — ROLE_MEMBER. 실명인증 전이라 ROLE_REAL 은 주지 않는다. */
+    /** 신규 회원의 기본 역할 — ROLE_MEMBER. */
     @Value("${gopcms.member.default-role-id:ROL_01985a10-0000-7000-8000-000000001004}")
     private String defaultRoleId;
 
-    /** 실명인증을 마친 회원에게 추가로 붙는 역할 — ROLE_REAL. */
+    /**
+     * 실명확인을 거친 회원에게 추가로 붙는 역할 — ROLE_REAL.
+     *
+     * <p>이 역할은 "실명확인을 거쳤다" 는 <b>사실 표시</b>다(2026-07-30 사용자 확정).
+     * 파일 업로드 같은 기능 권한의 기준으로 쓰지 않는다 — 그쪽은 ROLE_MEMBER 를 본다.
+     */
     @Value("${gopcms.member.real-role-id:ROL_01985a10-0000-7000-8000-000000001005}")
     private String realRoleId;
 
@@ -78,7 +83,8 @@ public class MemberJoinServiceImpl extends AbstractCmsService implements MemberJ
         member.setLoginId(form.getLoginId().trim());
         member.setPassword(passwordEncoder.encode(form.getPassword()));
         member.setPasswordChangedAt(LocalDateTime.now());
-        // 실명인증을 마쳐야 ROLE_REAL 이 붙는다 — 인증 없이 가입하면 ROLE_MEMBER 만
+        // 실명확인을 거쳤다는 표시 — CHILD 는 법정대리인이 확인했으므로 이 계정도 해당된다.
+        // 기능 권한의 기준이 아니다(FileAccessGuard 는 ROLE_MEMBER 를 본다).
         member.setRoleIds(wizard.isVerified()
                 ? defaultRoleId + "," + realRoleId : defaultRoleId);
 

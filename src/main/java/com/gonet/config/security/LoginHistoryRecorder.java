@@ -1,6 +1,7 @@
 package com.gonet.config.security;
 
 import com.gonet.common.web.ClientIpResolver;
+import com.gonet.logging.error.service.ErrorLogger;
 import com.gonet.primary.auth.dto.LoginHistory;
 import com.gonet.primary.auth.service.LoginHistoryService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +30,7 @@ public class LoginHistoryRecorder {
 
     private final LoginHistoryService loginHistoryService;
     private final ClientIpResolver clientIpResolver;
+    private final ErrorLogger errorLogger;
 
     public void success(String userType, String userId, String loginId, String siteId,
             String siteCode) {
@@ -58,10 +60,14 @@ public class LoginHistoryRecorder {
                     .userAgent(cut(request.getHeader("User-Agent"), 500))
                     .sessionId(session == null ? null : tail(session.getId(), 8));
         }
+        LoginHistory row = builder.build();
         try {
-            loginHistoryService.record(builder.build());
+            loginHistoryService.record(row);
         } catch (Exception e) {
             log.warn("로그인 이력 적재 실패 — 인증 흐름은 계속: {}", e.getMessage());
+            // 이력은 primary_db, 에러 로그는 logging_db — 한쪽이 죽어도 다른 쪽이 받는다
+            errorLogger.logRecordFailure("LOGIN_HISTORY",
+                    "loginId=%s result=%s".formatted(row.getLoginId(), row.getResult()), e);
         }
     }
 

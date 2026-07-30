@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  log_audit — 관리자 CUD 전수 감사 로그.
+
+  UPDATE·DELETE 문을 두지 않는다. 감사 기록을 고칠 수 있으면 감사가 아니다 —
+  오래된 기록의 정리는 보존기간 배치(LogRetentionWorker, 36개월)만 담당한다.
+
+  before_json / after_json 은 DDL 에 json_valid CHECK 이 걸려 있다. 빈 문자열('')을
+  넣으면 제약 위반으로 적재가 통째로 실패하므로, 값이 없으면 반드시 NULL 이어야 한다.
+-->
+<mapper namespace="com.gonet.logging.audit.mapper.AuditLogMapper">
+
+    <resultMap id="auditLogMap" type="com.gonet.logging.audit.dto.AuditLog">
+        <id property="logAuditId" column="log_audit_id"/>
+        <result property="actorUserId" column="actor_user_id"/>
+        <result property="actorUserType" column="actor_user_type"/>
+        <result property="actorLoginId" column="actor_login_id"/>
+        <result property="action" column="action"/>
+        <result property="targetEntity" column="target_entity"/>
+        <result property="targetId" column="target_id"/>
+        <result property="requestUri" column="request_uri"/>
+        <result property="httpMethod" column="http_method"/>
+        <result property="clientIp" column="client_ip"/>
+        <result property="userAgent" column="user_agent"/>
+        <result property="beforeJson" column="before_json"/>
+        <result property="afterJson" column="after_json"/>
+        <result property="result" column="result"/>
+        <result property="traceId" column="trace_id"/>
+        <result property="loggedAt" column="logged_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdIp" column="created_ip"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.gonet.logging.audit.dto.AuditLog">
+        INSERT INTO log_audit (
+            actor_user_id, actor_user_type, actor_login_id,
+            action, target_entity, target_id,
+            request_uri, http_method, client_ip, user_agent,
+            before_json, after_json, result, trace_id,
+            logged_at, created_by, created_ip
+        ) VALUES (
+            #{actorUserId}, #{actorUserType}, #{actorLoginId},
+            #{action}, #{targetEntity}, #{targetId},
+            #{requestUri}, #{httpMethod}, #{clientIp}, #{userAgent},
+            #{beforeJson}, #{afterJson}, #{result}, #{traceId},
+            NOW(), #{createdBy}, #{createdIp}
+        )
+    </insert>
+
+    <!--
+      목록은 before_json·after_json 을 싣지 않는다 — longtext 를 페이지마다 끌어오면
+      목록 조회가 통째로 느려진다. 스냅샷은 상세에서만 읽는다.
+    -->
+    <sql id="listWhere">
+        <where>
+            <if test="keyword != null">
+                (   action        LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+                 OR target_entity LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+                 OR target_id     LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|'
+                 OR request_uri   LIKE CONCAT('%', #{keywordLike}, '%') ESCAPE '|' )
+            </if>
+            <if test="action != null and action != ''">
+                AND action = #{action}
+            </if>
+            <if test="targetEntity != null and targetEntity != ''">
+                AND target_entity = #{targetEntity}
+            </if>
+            <if test="result != null and result != ''">
+                AND result = #{result}
+            </if>
+            <if test="actorLoginId != null and actorLoginId != ''">
+                AND actor_login_id = #{actorLoginId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="findPage" resultMap="auditLogMap">
+        SELECT log_audit_id, actor_user_id, actor_user_type, actor_login_id,
+               action, target_entity, target_id, request_uri, http_method,
+               client_ip, result, trace_id, logged_at
+          FROM log_audit
+        <include refid="listWhere"/>
+         ORDER BY logged_at DESC, log_audit_id DESC
+         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*) FROM log_audit
+        <include refid="listWhere"/>
+    </select>
+
+    <select id="findById" resultMap="auditLogMap">
+        SELECT * FROM log_audit
+         WHERE log_audit_id = #{logAuditId}
+         ORDER BY logged_at DESC
+         LIMIT 1
+    </select>
+
+</mapper>

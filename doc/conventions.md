@@ -348,6 +348,57 @@ public class BoardAdmController {
   예: 평문 100B → 약 176자. DDL 설계 시 평문 기준의 약 2배 + 40자 여유 확보.
 - 마스킹 출력(`MaskUtils`)·접근 기록(logging_db `log_privacy`)은 별도 계층 — 암호화와 병행.
 
+### 6.1 무엇을 암호화하고 무엇을 하지 않는가 (2026-07-30 확정)
+
+**개인정보인 것과 암호화 대상인 것은 다르다.** 「개인정보의 안전성 확보조치 기준」이
+저장 암호화를 **의무**로 정한 범위는 고유식별정보(주민등록번호·여권·운전면허·
+외국인등록번호)·비밀번호·생체인식정보다. 이름·이메일·전화번호는 개인정보이지만
+접근통제·전송구간 암호화 대상이고, 저장 암호화는 **선택**이다.
+
+| 컬럼 | 저장 | 이유 |
+|---|---|---|
+| `di` · `parent_di` | 암호화 + `*_hash` | 고유식별 성격 — 전 기관 공통 식별자 |
+| `email` · `phone` | 암호화 + `*_hash` | 선택이지만 유출 시 피해가 크다. 검색은 해시 정확일치 |
+| `birth_date` · `address` · `address_detail` | 암호화 | 검색 수요가 없다 |
+| **`member_name` · `parent_name`** | **평문** | **이름 검색이 실무 필수** — 아래 |
+| `tb_member_withdraw.member_name` | 평문(**마스킹된 값**) | 원장은 마스킹 상태로만 남는다(V11) |
+
+**이름을 평문으로 두는 이유.** 암호화하면 **검색이 불가능해진다**(랜덤 IV). 그리고 이
+프로젝트에는 그보다 구체적인 이유가 하나 더 있다:
+
+```
+UNIQUE KEY uk_member_identity (site_id, member_name, di_hash, parent_di_hash)
+```
+
+`member_name` 을 암호화하면 같은 이름이 매번 다른 암호문이 되므로 이 UNIQUE 가
+**중복을 하나도 잡지 못한다**. 평문으로 되돌리면 작동한다 — 실측(2026-07-30):
+네 컬럼을 같은 값으로 채운 2건째 INSERT 가 거부되고, 중복키 값에 평문 이름이 들어간다.
+
+```
+ERROR 1062: Duplicate entry 'SIT_…302-동일이름-DIH_SAM…' for key 'uk_member_identity'
+```
+
+V6 DDL 의 컬럼 주석은 처음부터 `'회원 이름 (평문)'` 이었고, `@Encrypt` 쪽이 어긋나 있었다.
+
+> **다만 이 UNIQUE 는 아직 성인 회원을 막지 못한다.** MariaDB 의 UNIQUE 는 NULL 을
+> 서로 다른 값으로 취급하므로, 인덱스 컬럼 중 하나라도 NULL 이면 충돌이 일어나지 않는다.
+> `parent_di_hash` 는 **14세 미만에만 채워지는 값**이라 성인 회원은 항상 NULL 이고,
+> 따라서 같은 `di_hash` 로 몇 번이든 가입된다(실측 확인).
+> 암호화 해제로 "죽어 있던 제약이 살아났지만, 살아난 범위는 아동 회원뿐" 이다.
+> 성인까지 막으려면 `(site_id, di_hash)` 별도 UNIQUE 또는 `parent_di_hash` NOT NULL
+> 기본값이 필요하다 — **스키마 결정 사항이라 임의로 바꾸지 않았다**(PLAN 결정 대기).
+
+> **암호화를 뺀다고 보호를 놓는 것은 아니다.** 이름에는 마스킹(`Mask.name()`)·
+> 개인정보 접근이력(`log_privacy_access`)·탈퇴 시 파기 의무가 그대로 적용된다.
+> 암호화는 보호 수단의 하나일 뿐이고, 검색 가능성과 맞바꿀 수 있는 항목이다.
+
+**되돌리려면 데이터 이행이 필요하다.** `{AG}` 암호문은 SQL 로 복호화할 수 없다.
+평문 전환 전에 쌓인 암호문이 있는지는 이 쿼리로 확인한다(0이어야 한다):
+
+```sql
+SELECT COUNT(*) FROM tb_member WHERE member_name LIKE '{AG}%' OR parent_name LIKE '{AG}%';
+```
+
 ## 7. URL 접근 규칙 등록 — 새 URL 을 만들 때 반드시 함께 하는 일
 
 인가는 `tb_role_url_access` 단일 원천이다(`DynamicAuthorizationManager`).
@@ -395,5 +446,7 @@ public class BoardAdmController {
 6. 서비스/매퍼는 도메인당 1벌 공유 — eGov 아키텍처 규칙(인터페이스 주입) 그대로.
 7. 컨텐츠 URL = `/{siteCode}/{index|sitemap|{slug}}` — 예약 slug 차단, siteCode 는 경로 유지.
 8. PII = `@Encrypt`(AES-256-GCM, `{AG}` 프리픽스, 마스터키 base64 32B fail-fast) — 검색은 해시 컬럼.
+   단 **이름(`member_name`·`parent_name`)은 평문** — 법정 암호화 대상이 아니고 검색·UNIQUE 가
+   필요하다(§6.1).
 9. 인가 = `tb_role_url_access` 단일 원천(priority ASC, 사이트 규칙 우선, **무매칭 DENY**) —
    새 URL 은 규칙 등록이 동반돼야 열린다(§7). 역할은 전개된 `role_ids` 교집합으로 판정.

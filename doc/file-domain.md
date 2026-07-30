@@ -29,7 +29,7 @@ gopcms5 파일 도메인(P8)의 기능·기술 매뉴얼이다. 업로드·다�
   브라우저(file-picker.js)
     └─ POST /api/v1/file/upload   (파일 1개당 1요청, 병렬)
          ├ ① entityType 화이트리스트
-         ├ ② 권한 (ROLE_REAL / 에디터는 ROLE_STAFF)
+         ├ ② 권한 (ROLE_MEMBER / 에디터는 ROLE_STAFF)
          ├ ③ 그룹 확보 — download_auth 는 서버가 정한다
          ├ ④ 개수 상한
          ├ ⑤ ▼ 다중 방어 파이프라인 ▼
@@ -117,7 +117,7 @@ PK 가 `(id, downloaded_at)` 복합인 것은 시간 파티셔닝 대비다(현�
 ### 2.1 진입점은 하나
 
 ```
-POST /api/v1/file/upload   첨부       — ROLE_REAL 이상
+POST /api/v1/file/upload   첨부       — ROLE_MEMBER 이상(로그인 회원)
 POST /api/v1/file/image    본문 이미지 — ROLE_STAFF 이상 + IMAGE 카테고리 고정
 ```
 
@@ -247,6 +247,29 @@ POST /api/v1/file/image    본문 이미지 — ROLE_STAFF 이상 + IMAGE 카테
 URL 규칙은 `/file/**` **PERMIT_ALL**(priority 75)이다. 파일별 권한은 URL 이 아니라
 `tb_file_group.download_auth` 가 정하기 때문이다.
 
+### 4.1b 업로드 권한 — `ROLE_MEMBER`
+
+로그인한 회원이면 올릴 수 있다. `ROLE_PRIVACY` 만 가진 계정은 계층이 끊겨 있어 통과하지
+못한다(의도된 결과).
+
+**`ROLE_REAL` 을 기준으로 쓰지 않는다**(2026-07-30 사용자 확정). 그 역할은 "실명확인을
+거쳤다" 는 **사실 표시**이고 기능 권한의 기준이 아니다.
+
+> **기준으로 삼을 수도 없었다.** `vw_user_login` 이 회원의 `role_codes` 를
+> `'ROLE_MEMBER'` **리터럴로 고정**하고 있다(V6 의 "보류: ROLE_REAL 부여 방식은 후속 결정"
+> 주석). `role_ids` 에는 ROLE_REAL 이 들어가지만 Security 권한 목록(`role_codes` 기반)에는
+> 절대 나타나지 않으므로, `hasRole("ROLE_REAL")` 이 회원에게 **항상 false** 였다.
+> 그 결과 **회원의 첨부 업로드가 전면 차단**돼 있었다 — 실측 확인:
+> 수정 전 403 `실명인증 회원 이상만 파일을 올릴 수 있습니다.` → 수정 후 200.
+> 코드 리뷰(2026-07-30)에서 드러난 결함이다.
+
+**두 축이 담는 값이 다르다** — 섞어 쓰지 말 것:
+
+| 축 | 근거 컬럼 | ROLE_REAL 포함? |
+|---|---|---|
+| Security 권한(`hasRole`) | `role_codes` | ❌ 회원은 `ROLE_MEMBER` 리터럴 |
+| URL 접근 규칙(`tb_role_url_access`) | `role_ids` | ✅ 전개 CSV 에 포함 |
+
 ### 4.2 `download_auth` 7단계
 
 `FileAccessGuard.enforceDownload()` — **권한 판정의 단일 진입점**.
@@ -308,6 +331,15 @@ Content-Security-Policy: default-src 'none'; img-src 'self' data:;
 파일을 못 받으면 손해가 더 크다. 그래서 별도 트랜잭션으로 떼어내고 예외를 스스로 삼킨다.
 
 권한 판정 실패도 `RESULT_BLOCKED` 로 기록한다(`FileDownUsrController.open()`).
+
+**삼킨 실패는 그대로 묻히지 않는다.** 적재가 깨지면 파일 로그에 더해
+`ErrorLogger.logRecordFailure("FILE_DOWNLOAD_LOG", …)` 로 `log_error` 에 남고
+관리자 화면(`/adm/error-log`)에서 보인다
+([member-domain.md §2.7](member-domain.md#27-삼킨-실패는-log_error-로-끌어올린다)).
+
+이 배선이 필요한 이유는 실측으로 확인됐다 — `'DENIED'` 를 넣었다가 CHECK 제약
+(`chk_logfiledl_result`)에 걸려 **기록이 통째로 사라진 적이 있다**(다운로드는 계속됐다).
+그때는 아무 화면에도 흔적이 없었다.
 
 ---
 

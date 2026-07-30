@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!--
+  에러 로그 목록 — 조용히 삼킨 실패를 사람이 보는 자리.
+
+  스택트레이스는 싣지 않는다(매퍼 findPage 가 컬럼을 고른다) — mediumtext 를
+  페이지마다 끌어오면 목록이 통째로 느려진다. 스택은 상세에서만 읽는다.
+-->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>에러 로그</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('에러 로그',
+            '미처리 예외와 <b>삼켜진 기록 실패</b>가 모입니다. 접근·개인정보취급·파기·로그인 이력 적재가 깨지면 본 업무는 계속 진행되고 그 사실이 여기 남습니다.')}"></header>
+
+    <div th:replace="~{adm/fragments/adm-ui :: flash}"></div>
+
+    <!--
+      요약을 목록보다 먼저 둔다. 삼킨 실패는 한 건이 아니라 반복으로 나타나므로
+      "무엇이 제일 많이 깨지는가" 가 개별 행보다 먼저 보여야 한다.
+    -->
+    <section class="ladm-panel" th:if="${!classCounts.isEmpty()}" style="margin-bottom:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg">최근 <span th:text="${summaryDays}">7</span>일 분류별 건수</h2>
+            <span class="grow"></span>
+            <a th:href="@{/adm/error-log}" class="krds-btn krds-btn-tertiary krds-btn-sm">필터 해제</a>
+        </div>
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">분류별 발생 건수 — 상위 20개</caption>
+                <thead>
+                <tr>
+                    <th scope="col">분류</th>
+                    <th scope="col" class="num">건수</th>
+                    <th scope="col">최근 발생</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${classCounts}">
+                    <td>
+                        <a th:href="@{/adm/error-log(errorClass=${c.errorClass})}" class="krds-link">
+                            <code th:text="${c.errorClass}">RECORD_FAILURE:PII_PURGE_LOG</code>
+                        </a>
+                    </td>
+                    <td class="num" th:text="${c.total}">3</td>
+                    <td class="text-fg-subtle"
+                        th:text="${c.lastAt != null ? #temporals.format(c.lastAt, 'yyyy-MM-dd HH:mm') : '-'}">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head ladm-listbar">
+            <form th:action="@{/adm/error-log}" method="get" class="ladm-search" role="search">
+                <label class="sr-only" for="keyword">검색어</label>
+                <input id="keyword" name="keyword" class="krds-input" th:value="${cond?.keyword}"
+                       placeholder="분류·메시지·URI 검색"/>
+                <!-- 분류 필터를 유지한 채 검색어만 좁힐 수 있게 함께 실어 보낸다 -->
+                <input type="hidden" name="errorClass" th:value="${cond?.errorClass}"/>
+                <button type="submit" class="krds-btn krds-btn-secondary">검색</button>
+            </form>
+            <span class="grow"></span>
+            <span class="text-body-sm text-fg-subtle" th:if="${cond?.errorClass}">
+                분류 <code th:text="${cond.errorClass}">RECORD_FAILURE</code> 로 필터 중
+            </span>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table krds-table-zebra">
+                <caption class="sr-only">에러 로그 — 최근 발생 순</caption>
+                <thead>
+                <tr>
+                    <th scope="col">발생 일시</th>
+                    <th scope="col">분류</th>
+                    <th scope="col">메시지</th>
+                    <th scope="col">요청</th>
+                    <th scope="col">행위자</th>
+                    <th scope="col" class="center">상태</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${page.content()}">
+                    <td>
+                        <a th:href="@{'/adm/error-log/' + ${r.logErrorId}}" class="krds-link"
+                           th:text="${r.loggedAt != null ? #temporals.format(r.loggedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">
+                            2026-07-30 12:00:00</a>
+                    </td>
+                    <td><code th:text="${r.errorClass}">RECORD_FAILURE:PII_PURGE_LOG</code></td>
+                    <td class="text-fg-subtle" th:text="${r.errorMessage} ?: '-'">-</td>
+                    <td class="text-fg-subtle">
+                        <span th:if="${r.requestUri}" th:text="${r.httpMethod} + ' ' + ${r.requestUri}">GET /x</span>
+                        <!-- 배치·스케줄러에서 남은 기록은 요청이 없다 — 빈칸 대신 그렇다고 적는다 -->
+                        <span th:unless="${r.requestUri}">요청 외(배치)</span>
+                    </td>
+                    <!-- 엘비스 연산자 연쇄(${a} ?: ${b} ?: '-')는 파싱되지 않는다 — 삼항으로 쓴다 -->
+                    <td class="text-fg-subtle"
+                        th:text="${r.actorLoginId != null ? r.actorLoginId : (r.actorUserType != null ? r.actorUserType : '-')}">ANONYMOUS</td>
+                    <td class="center" th:text="${r.statusCode} ?: '-'">-</td>
+                </tr>
+                <tr th:if="${page.content().isEmpty()}">
+                    <td colspan="6" class="ladm-empty">
+                        <p class="text-body-md text-fg-subtle">기록된 오류가 없습니다.</p>
+                        <p class="text-body-sm text-fg-subtle">비어 있는 것이 정상입니다.</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!--
+      공통 pager 프래그먼트는 keyword 만 유지한다 — 여기는 errorClass 도 함께 실어야
+      필터가 2페이지에서 풀리지 않는다. 그래서 직접 쓴다.
+    -->
+    <nav th:if="${page.totalPages() > 1}" class="krds-pagination" style="margin-top:20px"
+         aria-label="페이지 이동">
+        <a th:if="${page.hasPrev()}" class="krds-page"
+           th:href="@{/adm/error-log(page=${page.page() - 1}, keyword=${cond?.keyword}, errorClass=${cond?.errorClass})}">이전</a>
+        <a th:each="p : ${page.blockPages()}"
+           th:href="@{/adm/error-log(page=${p}, keyword=${cond?.keyword}, errorClass=${cond?.errorClass})}"
+           th:text="${p}" class="krds-page"
+           th:attr="aria-current=${p == page.page()} ? 'page' : null">1</a>
+        <a th:if="${page.hasNext()}" class="krds-page"
+           th:href="@{/adm/error-log(page=${page.page() + 1}, keyword=${cond?.keyword}, errorClass=${cond?.errorClass})}">다음</a>
+    </nav>
+</div>
+</body>
+</html>

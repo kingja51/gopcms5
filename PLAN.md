@@ -1173,6 +1173,191 @@ P10 하위 항목 <b>전부 완료</b>. 마지막 회차(잔여 4건)의 실측 
 > 증상과 같은 계열이다. 요청 간격을 두니 재현되지 않았다. 이번 변경분(레이트리밋·익명화·
 > 템플릿)과의 인과는 확인되지 않았다 — 배포 전 부하 조건에서 별도 확인이 필요하다.
 
+### P10 후속 — 코드 리뷰 반영 (2026-07-30)
+
+리뷰 지적 중 사용자가 처리 방향을 정한 것들.
+
+- [x] **1. 소셜 계정 재연결이 UNIQUE 에 막힌다** → 탈퇴 시 `tb_member_oauth` 를
+      `use_yn='N'` 이 아니라 **행째로 DELETE**. 탈퇴 사실은 원장이 해시로 보관한다
+- [x] **5. 파일 업로드 권한** → `ROLE_REAL` 은 "실명확인을 거쳤다" 는 **사실 표시**이며
+      권한 게이트가 아니다(사용자 확정). 업로드 최소 권한을 `ROLE_MEMBER` 로 내렸다.
+      `vw_user_login` 이 회원의 `role_codes` 를 `'ROLE_MEMBER'` 로 하드코딩하므로
+      `ROLE_REAL` 은 Security 권한에 애초에 나타날 수 없었다 — 회원 업로드가 전부 403
+- [x] **4. 파기 이력 실패가 탈퇴를 롤백시킨다** → 부가 기록 적재 실패는 **삼키고 계속**,
+      대신 `log_error` 에 남겨 관리자 화면에서 확인한다(아래)
+- [x] **logback 파일 로깅** — `gopcms.log` · `gopcms-error.log`(WARN+) · `sql.log`
+      (MyBatis `logPrefix("gopcms.sql.")` 로 분리). `GOPCMS_LOG_DIR` 미지정 시
+      `./data/gopcms/logs`. **운영(war)에서는 절대경로 지정 필수** — 상대경로는
+      Tomcat 작업 디렉터리 기준으로 풀린다
+- [ ] **3. 미처리** — `SocialLoginAuthenticator` 가 `lockedUntil`·`captchaRequiredYn` 를
+      건너뛴다(`MemberAuthenticationProvider` 는 검사한다). 잠긴 계정이 소셜 경로로
+      들어올 수 있다
+- [ ] **미처리** — 배치 재시도 시 `log_pii_purge` 중복 행
+
+#### 삼킨 실패를 드러내는 창구 — `log_error` + `/adm/error-log`
+
+- [x] `logging/error/` 수직 슬라이스 — DTO·Mapper(+XML)·Service·`ErrorLogger`
+- [x] `ErrorLogger` 2겹 방어: DB 적재 실패 시 파일 로그만(재귀 금지), `Throwable` 까지 차단
+- [x] 5개 채널 배선 — `PII_PURGE_LOG` · `PRIVACY_ACCESS_LOG` · `LOGIN_HISTORY` ·
+      `FILE_DOWNLOAD_LOG` · `ACCESS_LOG`(요청마다 불리는 자리라 **60초 스로틀**,
+      억제 건수는 다음 행에 함께 기록)
+- [x] 쿼리스트링 민감 파라미터 마스킹(`reason`·`state`·`encodedata`·`token` 등),
+      세션 ID 는 마지막 8자만
+- [x] `UnhandledErrorRecorder` — `HandlerExceptionResolver` 최우선 order, `null` 반환으로
+      **응답 흐름은 그대로**. 4xx(`ErrorResponse`)·인가 거부는 제외
+- [x] `/adm/error-log` 목록(분류별 집계 + 필터) · 상세(스택트레이스). 읽기 전용.
+      URL 규칙 추가 없음 — `/adm/**` ROLE_ADMIN(pri 20)이 덮는다
+- [x] LNB "운영" 그룹에 등록
+
+**완료 확인(2026-07-30, 8081 실측)**: `log_privacy_access` 를 RENAME 으로 치워
+적재를 실제로 깨뜨린 뒤 `/adm/member` 호출 → 회원 목록은 **200 정상 응답**,
+`log_error` 에 `RECORD_FAILURE:PRIVACY_ACCESS_LOG` 1건(스택 26,014자, `trace_id` 보유),
+목록·상세 화면 렌더 확인. 테이블 원복 후 검증 데이터 전량 정리.
+
+#### 탈퇴 원장에 마스킹 이름 (V11) — 2026-07-30
+
+- [x] `V11__member_withdraw_masked_name.sql` — `member_name varchar(150)`
+- [x] `Mask.name()` 결과를 원장 INSERT 파라미터로 전달(`findNameSource` /
+      `findDormantNameSource` 로 복호화된 원본을 **`nullifyPii` 앞에서** 읽는다)
+- [x] 암호화하지 않는다 — 이미 되돌릴 수 없는 값이고, `PiiTypeHandler` 를 붙이면 깨진다
+- [x] 원장 화면(`/adm/member/withdraw`)에 이름 열 추가
+
+> `INSERT … SELECT` 로 컬럼을 그대로 복사하면 **암호문이 원장에 박힌다** — 키가 있는
+> 쪽에서는 그것이 곧 평문이다. 그래서 앱이 마스킹해서 넣는다.
+
+**완료 확인(2026-07-30, 8081 실측)**: 이름 `김철수` 회원을 관리자 강제 탈퇴 →
+원장 `member_name='김*수'`, 원본 `tb_member.member_name`·`email` 은 NULL,
+`status=SUSPENDED`·`delete_yn='Y'`. 원장 화면에 `김*수` 표시. 검증 회원 전량 삭제.
+단위 테스트 105건 통과.
+
+#### 이름은 평문 저장으로 되돌림 — 2026-07-30 사용자 확정
+
+`member_name` · `parent_name` 의 `@Encrypt` + `PiiTypeHandler` 를 제거했다.
+
+- [x] 근거 — 이름은 개인정보지만 **저장 암호화 의무 대상이 아니다**(고유식별정보·비밀번호·
+      생체정보만 의무). 반대로 **이름 검색은 실무 필수**다
+- [x] V6 DDL 의 컬럼 주석은 처음부터 `'회원 이름 (평문)'` 이었다 — 코드가 어긋나 있었다
+- [x] 제거 지점 5곳 — `MemberMapper`(insert + resultMap) · `MemberAdmMapper`(admRow·dormantRow) ·
+      `MemberLifecycleMapper`(targetMap·dormantMemberMap) · `AuthMapper`(display_name resultMap)
+- [x] `MemberDto` 의 `@Encrypt` 제거 + 판단 근거를 javadoc 에 기록
+- [x] **이름 부분일치 검색 활성화** — 회원 목록·휴면 현황의 `keyword` 에 `member_name` 추가
+- [x] 마이그레이션 없음 — DDL 변경이 아니라 **해석**만 바뀐다(컬럼 타입·주석 그대로)
+
+> 마스킹·접근이력·파기 의무는 그대로다. 암호화를 뺀 것이 보호를 놓은 것은 아니다.
+
+**부수 효과 — 죽어 있던 제약이 (부분적으로) 살아났다.** `uk_member_identity` 는
+`member_name` 을 포함하는데, 암호화 시절에는 난수 IV 때문에 같은 이름이 매번 다른
+암호문이 되어 **중복을 하나도 잡지 못했다.** 평문 전환 후 실측:
+
+```
+ERROR 1062: Duplicate entry 'SIT_…302-동일이름-DIH_SAM…' for key 'uk_member_identity'
+```
+
+단 **성인 회원은 여전히 통과한다** — `parent_di_hash` NULL 때문이다(결정 대기 표에 등재).
+
+**완료 확인(2026-07-30, 8081 실측)**: `GOPCMS_NICE_ENABLED=false` 로 가입 마법사를
+끝까지 통과시켜 회원 생성 → `member_name='박서연'`·`nickname='서연이'` **평문**,
+`email`·`phone`·`birth_date` 는 `{AG}` 암호문 유지. 관리자 목록에서 `서연` 부분일치 검색
+1건 적출, `홍길동` 전체 일치로 시드 회원 적출, 표시는 마스킹(`박*연`), 응답 전체에
+`{AG}` 노출 0건. 회원 로그인(`display_name` 경로) 정상. 검증 회원 전량 삭제.
+단위 테스트 105건 통과.
+
+> **실측 못 한 것**: 마스킹 해제(`?reason=`). `admin` 계정에 `ROLE_PRIVACY` 가 없어
+> 정책대로 거부됐다(`log_privacy_access` 에 `DECRYPT / DENIED / ROLE_PRIVACY 없음` 적재
+> 확인 — 거부 경로는 정상 동작). 해제 후 평문 표시는 권한 보유 계정으로 재검증 필요.
+
+#### `member_name` NOT NULL + 탈퇴 시 마스킹 (V12) — 2026-07-30 사용자 확정
+
+- [x] `V12__member_name_not_null.sql` — 기존 NULL(탈퇴 파기 행)을 **원장의 마스킹 이름으로
+      되메우고**(V11 이후 탈퇴), 되메울 값이 없으면 `'-'`. 그 다음 NOT NULL 적용.
+      순서를 바꾸면 기존 NULL 때문에 ALTER 가 실패한다
+- [x] 파기 시 이름은 NULL 이 아니라 **마스킹 값**(홍*동) — `nullifyPii`·`nullifyDormantPii`
+      가 파라미터로 받는다. 원장·tb_member·tb_member_dormant **세 값이 동일**(한 번 계산해 돌려씀)
+- [x] `parent_name`·`tb_member_dormant.member_name` 은 NOT NULL 을 걸지 않았다 —
+      법정대리인은 14세 미만에만 있고, 스냅샷은 원본이 아니다
+- [x] 마이그레이션 없이 되는 부분: 가입 경로는 이미 이름을 필수 검증하고 있었고
+      `tb_member` INSERT 지점도 1곳뿐이다(사회 로그인은 회원을 만들지 않는다)
+
+**🔴 실측으로 찾은 결함 — 휴면 스냅샷 PII 가 파기되지 않았다.**
+`insertWithdrawLedger` 의 조회에 `delete_yn` 필터가 없고, 휴면 전환이 복사 + soft-delete 라
+휴면 회원도 `tb_member` 행을 갖고 있다 → 원장이 **언제나** `tb_member` 에서 적재되고
+`nullifyDormantPii` 는 사실상 실행되지 않았다. 그래서 휴면 만료 자동 탈퇴가
+**휴면 스냅샷의 이름·이메일·전화·주소를 통째로 남겨** 두고 있었다(로그에 `탈퇴 처리(휴면
+경유)` 가 아니라 `탈퇴 처리` 만 찍히는 것이 단서). 분기 구조를 없애고 **두 테이블을 항상
+파기**하도록 고쳤다. `log_pii_purge.table_list` 도 실제 손댄 테이블만 적는다.
+
+**완료 확인(2026-07-30, 8081 실측)** — 두 경로를 각각:
+
+| | tb_member | tb_member_dormant | 원장 | table_list |
+|---|---|---|---|---|
+| A 활성 강제탈퇴 | `이*성` · 나머지 NULL | (없음) | `이*성` | `tb_member,tb_member_oauth` |
+| B 휴면 만료 배치 | `최*면` · 나머지 NULL | **`최*면` · 나머지 NULL** | `최*면` | `tb_member,tb_member_dormant,tb_member_oauth` |
+
+수정 전 B 의 스냅샷은 `최휴면`·암호문 이메일·전화가 그대로 남았다. 단위 테스트 105건 통과,
+검증 회원 전량 삭제.
+
+> **함정 기록**: 매퍼 XML 의 `--` SQL 주석도 **XML 본문**이다. 주석 안에 `<b>` 를 썼다가
+> `Element type "b" must be declared` 로 SqlSessionFactory 생성이 실패해 기동이 깨졌다.
+> HTML 태그는 `<!-- -->` XML 주석 안에서만 쓸 것.
+
+#### 감사 로그 `log_audit` 적재 — 2026-07-30 사용자 요청 (기존 "미도입" 결정 번복)
+
+`log_audit` 은 V1 부터 테이블이 있고 보존기간 배치(36개월)도 대상에 넣고 있었지만
+**적재 코드가 없어 0건**이었다. 이 세션에서 반복 확인한 "스키마만 있는 기능" 중 하나다.
+
+- [x] `logging/audit/` 수직 슬라이스 — DTO·Mapper(+XML)·Service·`AuditTrailRecorder`
+- [x] `AuditTrailInterceptor`(`HandlerInterceptor`) + `WebMvcConfig` —
+      `/adm/**` 비-GET 전수, `/adm/login`·`/adm/logout` 제외
+- [x] URL 에서 기계적으로 해석 — `target_entity`(중첩 자원까지: `BOARD_ARTICLE_COMMENT`) ·
+      `action`(`CREATE`/`UPDATE`/`DELETE`/`BATCH_NOTICE`…) · `target_id`
+- [x] 결과 판정 — 예외 · `flashError` · **쓰기 요청 2xx**(= 폼 재표시 = 검증 실패)
+- [x] 적재 실패는 삼키고 `log_error` 의 `RECORD_FAILURE:AUDIT_LOG` 로 올린다
+- [x] `/adm/audit-log` 목록(결과·행위·대상·검색어 필터) · 상세. 읽기 전용, LNB "운영" 등록
+- [x] 마이그레이션 없음 — 테이블·인덱스·보존기간이 이미 있다
+
+> **왜 도메인별 호출이 아닌가.** 테이블 주석이 "관리자 CUD 전수" 다. 서비스마다 호출을
+> 심으면 새 화면에서 한 줄 빠뜨릴 때 그 화면만 조용히 감사에서 빠진다. `/adm/**` 패턴
+> 하나면 새 화면이 등록 없이 자동으로 걸린다 — 전수를 규율이 아니라 구조로 보장한다.
+
+**완료 확인(2026-07-30, 8081 실측)** — 관리자 세션으로 변경 요청을 돌려 기록 대조:
+
+| 요청 | action | target_entity | target_id | result |
+|---|---|---|---|---|
+| `POST /adm/board/save` (신규) | `CREATE` | `BOARD` | — | SUCCESS |
+| 같은 URL (bbsCode 중복) | `CREATE` | `BOARD` | — | **FAIL** |
+| 같은 URL (id 있음) | `UPDATE` | `BOARD` | `BBM_…` | SUCCESS |
+| `POST /adm/board/{id}/article/save` | `SAVE` | `BOARD_ARTICLE` | `BBA_…` | SUCCESS |
+| `POST /adm/board/category/save` | `CREATE` | `BOARD_CATEGORY` | — | SUCCESS |
+| `POST /adm/member/{id}/status` | `STATUS` | `MEMBER` | `MBR_…` | SUCCESS |
+| `POST /adm/member/batch/notice` | `BATCH_NOTICE` | `MEMBER` | — | SUCCESS |
+| `POST /adm/password` (틀린 비번) | `UPDATE` | `PASSWORD` | — | **FAIL** |
+| `POST /adm/board/delete` (글 있음) | `DELETE` | `BOARD` | `BBM_…` | **FAIL** |
+| `GET /adm/index` | — 기록 없음 | | | |
+
+목록·상세·필터 4종 200, `log_error` 0건. 검증 데이터 전량 정리, 단위 테스트 105건 통과.
+
+**🔴 실측으로 잡은 결함 3건** (모두 이번 구현 중 발생·수정):
+
+1. **`siteId` 를 대상으로 오인** — "알려진 ID 파라미터 목록" 을 순서대로 훑는 방식이
+   원인. 게시판 신규 등록은 `bbsMasterId` 가 비어 `siteId` 가 잡혀
+   *사이트를 고친 것처럼* 기록되고 `CREATE` 도 `UPDATE` 가 됐다.
+   → 엔티티별 대상 파라미터 매핑으로 교체(`siteId`·`fileGroupId` 는 상위 참조라 제외)
+2. **검증 실패가 SUCCESS 로 기록** — 폼 재표시(200)의 오류는 Model 에 있고 플래시 맵에
+   없어 잡히지 않았다. → "쓰기 요청 + 2xx = FAIL" 규칙 추가
+3. **`Map.ofEntries`/`Set.of` 의 null 키 NPE** — `/adm/password` 는 두 번째 마디가
+   행위 단어라 필터에 전부 걸러져 `entity=null` 이 되고 `Map.get(null)` 이 NPE 를 냈다.
+   → 전부 걸러지면 두 번째 마디를 엔티티로 쓰고, 조회 전 null 을 방어
+
+> 3번은 **`log_error` 배선이 스스로를 증명한 사례**다. NPE 로 감사 적재가 실패했지만
+> 관리자 업무는 그대로 진행됐고, 실패가 `RECORD_FAILURE:AUDIT_LOG` 로 드러나 원인을
+> 바로 찾았다. 파일 로그만 있었다면 0건인 채로 넘어갔을 것이다.
+
+> **함정 기록**: `@Builder` 만 붙인 DTO 는 Lombok 이 기본 생성자를 없애 MyBatis 가
+> **생성자 자동 매핑**으로 빠진다. 컬럼을 골라 읽는 목록 쿼리(13개)와 생성자 인자(18개)가
+> 어긋나 500 이 났다 — 상세는 `SELECT *` 라 우연히 통과하고 목록만 깨졌다.
+> 조회에 쓰이는 DTO 에는 `@NoArgsConstructor` + `@AllArgsConstructor` 를 함께 붙일 것.
+> (형제 DTO `AccessLog` 는 적재 전용이라 이 함정을 밟지 않았다.)
+
 ### P10 이식 시 교정
 | 원전 | gopcms5 | 이유 |
 |---|---|---|
@@ -1183,7 +1368,7 @@ P10 하위 항목 <b>전부 완료</b>. 마지막 회차(잔여 4건)의 실측 
 | 쿠키 `PCMS_SID` | **`GOPCMS_SID`** | SecurityConfig 상수 |
 | 휴면 5년·탈퇴 5년 보관 | **휴면 1년 → 탈퇴, 탈퇴 1년 → 완전삭제** | 사용자 확정 |
 | 복원 = 3요소(이름·이메일·비번) | **실명인증 또는 이메일 OTP** | 사용자 확정 |
-| `AuditLogger` 5경로 | **미도입** | 6컬럼 감사 + 접속·보안 로그로 충분(기결정) |
+| `AuditLogger` 5경로 | ~~미도입~~ → **도입**(2026-07-30) | `log_audit` 은 스키마만 있고 0건이었다. 사용자 요청으로 적재 — 단 원전의 도메인별 5경로 호출이 아니라 `/adm/**` 인터셉터 1곳(아래) |
 | `group_ids` | 컬럼 없음 | 등급 개념 미도입 |
 | SSO 미구현 | `tb_member_oauth` **존재** | 확장 지점이 이미 열려 있다 |
 
@@ -1201,6 +1386,7 @@ eGov 호환성 확인 신청.
 
 | 항목 | 내용 | 기한 |
 |---|---|---|
+| **`uk_member_identity` 가 성인 중복가입을 못 막는다** | `UNIQUE (site_id, member_name, di_hash, parent_di_hash)` — MariaDB UNIQUE 는 NULL 을 서로 다른 값으로 취급한다. `parent_di_hash` 는 **14세 미만에만** 채워지므로 성인 회원은 항상 NULL → 같은 `di_hash` 로 몇 번이든 가입된다(2026-07-30 실측). 이름 평문화로 제약이 살아난 범위는 **아동 회원뿐**. 성인까지 막으려면 `(site_id, di_hash)` 별도 UNIQUE 추가 또는 `parent_di_hash` NOT NULL 기본값(`''`) — **스키마 결정 사항이라 임의 변경하지 않았다** | 결정 필요 |
 | ~~UUIDv7 구현~~ | ✅ 확정: 선행 프로젝트 `UuidV7Generator` 이식 + `Uid` enum 래퍼 | P1 완료 |
 | ~~감사컬럼 처리~~ | ✅ 확정: MyBatis `AuditInterceptor` (3개 SqlSessionFactory 공통) | P1 완료 |
 | .env 주입 | IntelliJ Run Config 수동 입력 vs EnvFile 플러그인 | P0 |

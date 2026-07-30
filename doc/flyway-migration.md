@@ -106,6 +106,8 @@ Flyway loggingFlyway   = …("classpath:db/migration/logging/"   + vendor)…
 | `primary/mariadb/V7__login_history.sql` | tb_login_history(LGH, insert-only) + 기존 계정 비밀번호 만료일 소급 |
 | `primary/mariadb/V8__login_captcha_expired.sql` | 이력 결과코드 FAIL_EXPIRED 추가 + vw_user_login 에 captcha_required_yn 노출 |
 | `primary/mariadb/V9__cms_extension_tables.sql` | CMS 확장 21테이블 — 파일(FGR·FIL) · 게시판(BBM·BCT·BBA·BBC·LIK·RPT) · 배너/팝업 · 일정(SCM·SCH) · 설문(SVM·SVY·SVQ·SVO·SVR·SVA) · 직원(EMP) · 공휴일·메일템플릿 |
+| `primary/mariadb/V11__member_withdraw_masked_name.sql` | tb_member_withdraw.member_name — **마스킹된** 이름(홍*동). 앱이 `Mask.name()` 을 거쳐 넣는다(암호화 대상 아님) |
+| `primary/mariadb/V12__member_name_not_null.sql` | tb_member.member_name NOT NULL — 기존 NULL(탈퇴 파기 행)은 원장의 마스킹 이름으로 되메우고, 없으면 `'-'`. 파기 시에는 NULL 대신 마스킹 값을 쓴다 |
 | `logging/mariadb/V2__log_stat_extension.sql` | 로그 5종(error·file_download·privacy_access·pii_purge·security) + 통계 5종(stat_*) |
 | `logging/mariadb/V1__log_access_audit.sql` | log_access · log_audit(bigint AUTO_INCREMENT 예외, (id, logged_at) 복합 PK) + shedlock |
 | `secondary/mariadb/` | README 만 (테이블 확정 시 V1 부터) |

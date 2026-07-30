@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<!--
+  감사 로그 상세.
+
+  before_json·after_json 은 반드시 th:text 로 넣는다(th:utext 금지) — 값에 사용자 입력이
+  섞여 들어올 수 있어, 이스케이프하지 않으면 감사 화면 자체가 XSS 경로가 된다.
+-->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-adm/layout}">
+<head>
+    <title>감사 로그 상세</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <header th:replace="~{adm/fragments/adm-ui :: pageHead('감사 로그 상세', null)}"></header>
+
+    <section class="ladm-panel">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg">
+                <code th:text="${row.action}">CREATE</code>
+                <span class="text-fg-subtle" th:text="${row.targetEntity} ?: ''">BOARD</span>
+            </h2>
+            <span class="krds-badge"
+                  th:classappend="${row.result == 'SUCCESS'} ? 'ladm-badge-on' : 'ladm-badge-off'"
+                  th:text="${row.result}">SUCCESS</span>
+            <span class="grow"></span>
+            <a th:href="@{/adm/audit-log(targetEntity=${row.targetEntity})}"
+               class="krds-btn krds-btn-tertiary krds-btn-sm">같은 대상 보기</a>
+            <a th:href="@{/adm/audit-log}" class="krds-btn krds-btn-secondary krds-btn-sm">목록</a>
+        </div>
+
+        <div class="ladm-tablewrap">
+            <table class="krds-table">
+                <caption class="sr-only">감사 로그 항목</caption>
+                <tbody>
+                <tr>
+                    <th scope="row">발생 일시</th>
+                    <td th:text="${row.loggedAt != null
+                                  ? #temporals.format(row.loggedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">행위자</th>
+                    <td>
+                        <span th:text="${row.actorLoginId} ?: '-'">admin</span>
+                        <span class="krds-badge ladm-badge-off"
+                              th:text="${row.actorUserType} ?: 'UNKNOWN'">ADMIN</span>
+                        <code class="text-fg-subtle" th:if="${row.actorUserId}"
+                              th:text="${row.actorUserId}">ADM_</code>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">대상</th>
+                    <td>
+                        <span th:text="${row.targetEntity} ?: '-'">BOARD</span>
+                        <code th:if="${row.targetId}" th:text="${row.targetId}">BBM_…</code>
+                        <span th:unless="${row.targetId}" class="text-fg-subtle">
+                            신규 등록 — 저장 시점에 채번되어 요청에는 없었습니다</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">요청</th>
+                    <td th:text="${row.httpMethod} + ' ' + ${row.requestUri}">POST /adm/board/save</td>
+                </tr>
+                <tr>
+                    <th scope="row">클라이언트 IP</th>
+                    <td th:text="${row.clientIp} ?: '-'">-</td>
+                </tr>
+                <tr>
+                    <th scope="row">추적 ID</th>
+                    <td>
+                        <code th:text="${row.traceId} ?: '-'">-</code>
+                        <span class="text-body-sm text-fg-subtle" th:if="${row.traceId}">
+                            접속 로그·에러 로그·sql.log 를 이 값으로 맞춰 볼 수 있습니다</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">User-Agent</th>
+                    <td class="text-fg-subtle text-body-xs" th:text="${row.userAgent} ?: '-'">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="ladm-panel" style="margin-top:16px">
+        <div class="ladm-panel-head">
+            <h2 class="text-label-lg">변경 전 · 후 스냅샷</h2>
+        </div>
+        <div style="padding:0 16px 16px">
+            <div th:if="${row.beforeJson != null or row.afterJson != null}">
+                <p class="text-label-sm">변경 전</p>
+                <pre class="text-body-sm bg-surface-subtle rounded-medium"
+                     th:text="${row.beforeJson} ?: '-'"
+                     style="overflow-x:auto;white-space:pre;margin:0 0 12px;padding:12px">-</pre>
+                <p class="text-label-sm">변경 후</p>
+                <pre class="text-body-sm bg-surface-subtle rounded-medium"
+                     th:text="${row.afterJson} ?: '-'"
+                     style="overflow-x:auto;white-space:pre;margin:0;padding:12px">-</pre>
+            </div>
+            <!--
+              현재 구현은 값 스냅샷을 담지 않는다. 인터셉터는 요청이 끝난 뒤에 돌아
+              "전" 상태를 볼 수 없고, 도메인 서비스가 넘겨 주게 만들면 "전수 기록" 을
+              보장하던 단일 창구가 다시 도메인별 호출로 흩어진다.
+            -->
+            <p class="text-body-sm text-fg-subtle"
+               th:if="${row.beforeJson == null and row.afterJson == null}">
+                값 스냅샷은 기록하지 않습니다. 이 로그는 <b>누가·무엇을·언제·결과</b>까지
+                보장하며, 변경된 값 자체는 대상 데이터의 감사컬럼(updated_by/at)과
+                컨텐츠 이력(tb_content_history)에서 확인합니다.
+            </p>
+        </div>
+    </section>
+</div>
+</body>
+</html>
