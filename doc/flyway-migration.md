@@ -32,10 +32,19 @@ R__{설명}.sql              반복 실행(뷰·프로시저 재정의 등) — 
 | 버전 대역 | 용도 |
 |---|---|
 | `V1` ~ `V899` | 스키마 + 기준(불변) 시드 — 운영 포함 전 환경 공통 |
-| `V900` ~ | **개발 시드 예약 대역** — `db/devdata/` 폴더, dev/local 프로파일만 포함 |
+| `V900` ~ `V949` | **개발 시드 예약 대역** — `db/devdata/` 폴더, dev/local 프로파일만 포함 |
+| `V950` ~ `V999` | **운영 기준 데이터 승격 대역** — `db/migration/` 폴더, 전 환경 공통 |
 
 - 기준 시드(레이아웃 7종·기본 템플릿·테마처럼 시스템이 전제하는 행)는 V 마이그레이션으로
   포함한다(V2). 데모·테스트 데이터는 devdata(V900+)로 격리.
+- **승격 대역(V950+)이 필요한 이유**: Flyway 는 `db/migration` 과 `db/devdata` 를 **한
+  이력으로 병합**해 버전 순으로 적용한다. devdata 에 먼저 넣었던 기준 데이터를 나중에
+  운영으로 승격할 때 낮은 번호(V13 등)를 쓰면, **새로 만든 dev DB** 에서 승격 파일이
+  devdata 원본보다 먼저 돌아 원본의 INSERT 가 PK 충돌로 실패한다(원본은 적용 완료라 수정
+  불가). devdata 대역 **뒤**에 두면 신규 운영·기존 dev·신규 dev 세 경우가 모두 성립한다.
+- 승격 파일은 **전 구문 `ON DUPLICATE KEY UPDATE <감사컬럼> = <감사컬럼>`** (없으면 넣고,
+  있으면 손대지 않음)으로 쓴다. PK 는 devdata 와 같은 고정 리터럴을 재사용한다. UPDATE 로
+  덮어쓰면 관리 화면에서 운영자가 고쳐 둔 값을 배포가 되돌린다.
 - 시드 ID 는 고정 리터럴(전 환경 동일). UUIDv7 형식 규격을 지키되 수기 예약값
   (`…-7000-8000-…` + 뒤 12자리 일련)으로 앱 채번과 구분한다.
 
@@ -108,6 +117,7 @@ Flyway loggingFlyway   = …("classpath:db/migration/logging/"   + vendor)…
 | `primary/mariadb/V9__cms_extension_tables.sql` | CMS 확장 21테이블 — 파일(FGR·FIL) · 게시판(BBM·BCT·BBA·BBC·LIK·RPT) · 배너/팝업 · 일정(SCM·SCH) · 설문(SVM·SVY·SVQ·SVO·SVR·SVA) · 직원(EMP) · 공휴일·메일템플릿 |
 | `primary/mariadb/V11__member_withdraw_masked_name.sql` | tb_member_withdraw.member_name — **마스킹된** 이름(홍*동). 앱이 `Mask.name()` 을 거쳐 넣는다(암호화 대상 아님) |
 | `primary/mariadb/V12__member_name_not_null.sql` | tb_member.member_name NOT NULL — 기존 NULL(탈퇴 파기 행)은 원장의 마스킹 이름으로 되메우고, 없으면 `'-'`. 파기 시에는 NULL 대신 마스킹 값을 쓴다 |
+| `primary/mariadb/V950__baseline_rbac_url_access.sql` | **운영 승격** — 역할 6종 + closure 16행 + URL 접근 규칙 38건. devdata(V906·V907·V909·V911~V920)에만 있어 운영 배포 시 규칙 0건이던 것을 이관. 전 구문 no-op 업서트라 dev 에서는 아무 일도 하지 않는다. 관리자 계정·데모 사이트 규칙은 제외 |
 | `logging/mariadb/V2__log_stat_extension.sql` | 로그 5종(error·file_download·privacy_access·pii_purge·security) + 통계 5종(stat_*) |
 | `logging/mariadb/V1__log_access_audit.sql` | log_access · log_audit(bigint AUTO_INCREMENT 예외, (id, logged_at) 복합 PK) + shedlock |
 | `secondary/mariadb/` | README 만 (테이블 확정 시 V1 부터) |

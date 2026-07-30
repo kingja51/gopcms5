@@ -123,7 +123,8 @@ public class BoardArticleAdmController {
     public String deleteComment(@PathVariable String bbsMasterId,
             @RequestParam String articleId, @RequestParam String commentId,
             RedirectAttributes redirect) {
-        boardCommentService.delete(commentId);
+        // articleId 는 스코프 인자다 — 서비스가 "이 글의 댓글인지" 를 이것으로 확인한다
+        boardCommentService.delete(commentId, articleId);
         redirect.addFlashAttribute("flashOk", "댓글을 삭제했습니다.");
         return redirectForm(bbsMasterId, articleId);
     }

@@ -109,4 +109,54 @@ class UrlNamespacesTest {
             assertThat(UrlNamespaces.RESERVED).containsAll(UrlNamespaces.PROGRAM);
         }
     }
+
+    /**
+     * 표기 검증 — 신뢰할 수 없는 입력(요청 파라미터)을 URL 로 되돌려 보내기 전의 관문.
+     *
+     * <p>로그인 실패 리다이렉트가 {@code /login?error&siteCode=…} 를 조립하는데, 그 값이
+     * 요청 파라미터다. 검증 없이 이어 붙이면 쿼리를 갈라 뒤에 임의 파라미터를 얹을 수 있다.
+     * 정규식은 V1 의 {@code chk_site_code_pattern} 과 같아야 한다.
+     */
+    @Nested
+    @DisplayName("사이트코드 표기 — DB CHECK 와 같은 규칙")
+    class SiteCodeFormat {
+
+        @Test
+        void 소문자_숫자_하이픈_2자_이상만_통과한다() {
+            assertThat(UrlNamespaces.isValidSiteCode("ai")).isTrue();
+            assertThat(UrlNamespaces.isValidSiteCode("nursingcollege")).isTrue();
+            assertThat(UrlNamespaces.isValidSiteCode("site-01")).isTrue();
+        }
+
+        @Test
+        void 쿼리를_가르는_문자는_거른다() {
+            // 이것이 통과하면 /login?error&siteCode=ai&role=admin 처럼 뒤를 이어 붙일 수 있다
+            assertThat(UrlNamespaces.isValidSiteCode("ai&role=admin")).isFalse();
+            assertThat(UrlNamespaces.isValidSiteCode("ai#frag")).isFalse();
+            assertThat(UrlNamespaces.isValidSiteCode("ai ")).isFalse();
+            assertThat(UrlNamespaces.isValidSiteCode("ai/../adm")).isFalse();
+            assertThat(UrlNamespaces.isValidSiteCode("ai\nSet-Cookie: x")).isFalse();
+        }
+
+        @Test
+        void 대문자_밑줄_한글은_사이트코드가_아니다() {
+            assertThat(UrlNamespaces.isValidSiteCode("AI")).isFalse();
+            assertThat(UrlNamespaces.isValidSiteCode("ai_01")).isFalse();
+            assertThat(UrlNamespaces.isValidSiteCode("사이트")).isFalse();
+        }
+
+        @Test
+        void 길이_경계와_시작문자() {
+            assertThat(UrlNamespaces.isValidSiteCode("a")).isFalse();          // 최소 2자
+            assertThat(UrlNamespaces.isValidSiteCode("-ai")).isFalse();        // 하이픈 시작 불가
+            assertThat(UrlNamespaces.isValidSiteCode("a".repeat(30))).isTrue();
+            assertThat(UrlNamespaces.isValidSiteCode("a".repeat(31))).isFalse();
+        }
+
+        @Test
+        void 빈값과_null_은_통과하지_않는다() {
+            assertThat(UrlNamespaces.isValidSiteCode(null)).isFalse();
+            assertThat(UrlNamespaces.isValidSiteCode("")).isFalse();
+        }
+    }
 }

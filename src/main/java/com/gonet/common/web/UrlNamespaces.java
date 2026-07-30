@@ -2,6 +2,7 @@ package com.gonet.common.web;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * URL 첫 세그먼트의 <b>단일 원천</b> — 사이트 해석·컨텐츠 slug 예약·사이트코드 예약이 모두 여기를 본다.
@@ -61,7 +62,26 @@ public final class UrlNamespaces {
         RESERVED = Set.copyOf(reserved);
     }
 
+    /**
+     * site_code 표기 규칙 — V1 의 {@code chk_site_code_pattern} 과 <b>같은 정규식</b>이다.
+     *
+     * <p>DB 가 이미 막고 있는데 앱에도 두는 이유: 요청 파라미터로 들어온 siteCode 는 DB 를
+     * 거치지 않고 리다이렉트 URL·로그로 곧장 흘러간다. 그때 형식을 한 번 통과시켜야
+     * 엉뚱한 문자가 URL 조립에 섞이지 않는다.
+     */
+    private static final Pattern SITE_CODE = Pattern.compile("[a-z0-9][a-z0-9-]{1,29}");
+
     private UrlNamespaces() {
+    }
+
+    /**
+     * site_code 로 쓸 수 있는 <b>표기</b>인가 — 실재 여부·예약어는 묻지 않는다
+     * ({@link #isReserved} · SiteService 담당).
+     *
+     * <p>신뢰할 수 없는 입력(요청 파라미터)을 URL 로 되돌려 보내기 전의 관문이다.
+     */
+    public static boolean isValidSiteCode(String value) {
+        return value != null && SITE_CODE.matcher(value).matches();
     }
 
     public static boolean isSkip(String firstSegment) {

@@ -90,13 +90,7 @@ public class BoardUsrController {
         BbsMasterAdmDto master = requireMaster(bbsCode);
         boardArticleService.requireRead(master);
 
-        BbsArticleAdmDto article = boardArticleService.get(articleId);
-        if (article == null || !"PUBLISHED".equals(article.getStatus())
-                || !belongsTo(master, article)) {
-            throw new NoResourceFoundException(
-                    org.springframework.http.HttpMethod.valueOf(request.getMethod()),
-                    request.getRequestURI());
-        }
+        BbsArticleAdmDto article = requireArticle(master, articleId, request);
         // 합본은 원 게시판의 읽기 권한을 그대로 물려받는다 — 통합이 ALL 이라고 해서
         // 회원 전용 게시판의 글이 공개되면 통합 게시판이 우회 통로가 된다
         BbsMasterAdmDto origin = master;
@@ -192,11 +186,16 @@ public class BoardUsrController {
     @PostMapping(ARTICLE_ID + "/comment")
     public String writeComment(@PathVariable String siteCode, @PathVariable String bbsCode,
             @PathVariable String articleId, @ModelAttribute BbsCommentDto comment,
-            RedirectAttributes redirect) {
+            RedirectAttributes redirect, HttpServletRequest request)
+            throws Exception {
         BbsMasterAdmDto master = requireMaster(bbsCode);
+        boardArticleService.requireRead(master);
         if (!"Y".equals(master.getCommentYn())) {
             throw new AccessDeniedException("댓글을 받지 않는 게시판입니다.");
         }
+        // 경로의 articleId 를 그대로 쓰면 이 게시판 URL 로 다른 사이트 글에 댓글을 붙일 수 있다
+        requireArticle(master, articleId, request);
+
         comment.setArticleId(articleId);
         try {
             boardCommentService.write(comment);
@@ -209,8 +208,14 @@ public class BoardUsrController {
     @PostMapping(ARTICLE_ID + "/comment/delete")
     public String deleteComment(@PathVariable String siteCode, @PathVariable String bbsCode,
             @PathVariable String articleId, @RequestParam String commentId,
-            RedirectAttributes redirect) {
-        boardCommentService.delete(commentId);
+            RedirectAttributes redirect, HttpServletRequest request) throws Exception {
+        // 글까지 거슬러 올라가야 사이트를 알 수 있다 — 댓글에는 site_id 가 없다
+        BbsMasterAdmDto master = requireMaster(bbsCode);
+        boardArticleService.requireRead(master);
+        requireArticle(master, articleId, request);
+
+        // 댓글이 이 글의 것인지·지울 권한이 있는지는 서비스가 판정한다
+        boardCommentService.delete(commentId, articleId);
         redirect.addFlashAttribute("flashOk", "댓글을 삭제했습니다.");
         return "redirect:" + base(siteCode, bbsCode) + "/" + articleId;
     }
@@ -233,6 +238,29 @@ public class BoardUsrController {
             throw new IllegalArgumentException("게시판을 찾을 수 없습니다.");
         }
         return master;
+    }
+
+    /**
+     * 글 해석 — 이 게시판 URL 로 다룰 수 있는 글만 돌려준다.
+     *
+     * <p>{@code master} 는 이미 현재 사이트 안에서 해석된 것이므로({@link #requireMaster}),
+     * 여기를 통과하면 <b>글까지 현재 사이트 소속임이 확정</b>된다. 상세뿐 아니라 댓글 작성·
+     * 삭제도 이 관문을 지나야 한다 — 지나지 않으면 자기 사이트 게시판 주소로 남의 사이트 글을
+     * 건드릴 수 있다.
+     *
+     * <p>없는 글과 다른 게시판의 글을 <b>같은 404 로</b> 돌려준다. 구분해 주면 ID 를 훑어
+     * 글의 존재 여부를 알아낼 수 있다.
+     */
+    private BbsArticleAdmDto requireArticle(BbsMasterAdmDto master, String articleId,
+            HttpServletRequest request) throws NoResourceFoundException {
+        BbsArticleAdmDto article = boardArticleService.get(articleId);
+        if (article == null || !"PUBLISHED".equals(article.getStatus())
+                || !belongsTo(master, article)) {
+            throw new NoResourceFoundException(
+                    org.springframework.http.HttpMethod.valueOf(request.getMethod()),
+                    request.getRequestURI());
+        }
+        return article;
     }
 
     /** 이 URL 로 열 수 있는 글인지 — 일반 게시판은 자기 글만, 합본은 대상 게시판의 글까지. */

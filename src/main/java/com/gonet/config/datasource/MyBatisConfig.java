@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -36,6 +37,17 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  *       두 벌을 동시에 읽으면 같은 namespace 가 중복 등록돼 기동이 깨진다</li>
  *   <li>같은 벤더 안의 소소한 분기는 파일을 더 만들지 말고 databaseId 로 처리</li>
  * </ul>
+ *
+ * <h3>기동 시 두 가지를 강제한다</h3>
+ * <ol>
+ *   <li><b>벤더 일관성</b> — 매퍼 선택은 전역 프로퍼티 하나인데 DataSource 는 3개다. 셋 중
+ *       하나만 다른 벤더를 보고 있으면 그 DB 에는 <b>남의 벤더 SQL</b> 이 실린다. Flyway 는
+ *       DataSource 별 URL 로 폴더를 고르므로(FlywayConfig), 마이그레이션과 매퍼가 서로 다른
+ *       벤더를 보는 상태도 가능하다. 그래서 각 DataSource 의 실제 URL 과 대조한다</li>
+ *   <li><b>매퍼 XML 0건 차단</b> — 벤더 오타나 리소스 필터 누락이면 XML 을 한 장도 못 찾는데,
+ *       {@code SqlSessionFactory} 는 그래도 만들어진다. 기동은 성공하고 첫 질의에서
+ *       "statement not found" 로 터진다 — 그 사이가 조용한 장애 구간이다</li>
+ * </ol>
  */
 @Configuration
 @EnableTransactionManagement
@@ -55,7 +67,7 @@ public class MyBatisConfig {
     @Primary
     public SqlSessionFactory primarySqlSessionFactory(
             @Qualifier("primaryDataSource") DataSource dataSource) throws Exception {
-        return buildFactory(dataSource, mapperPattern("primary"));
+        return buildFactory(dataSource, "primary");
     }
 
     @Bean(PRIMARY_TX)
@@ -76,7 +88,7 @@ public class MyBatisConfig {
     @Bean
     public SqlSessionFactory secondarySqlSessionFactory(
             @Qualifier("secondaryDataSource") DataSource dataSource) throws Exception {
-        return buildFactory(dataSource, mapperPattern("secondary"));
+        return buildFactory(dataSource, "secondary");
     }
 
     @Bean(SECONDARY_TX)
@@ -95,7 +107,7 @@ public class MyBatisConfig {
     @Bean
     public SqlSessionFactory loggingSqlSessionFactory(
             @Qualifier("loggingDataSource") DataSource dataSource) throws Exception {
-        return buildFactory(dataSource, mapperPattern("logging"));
+        return buildFactory(dataSource, "logging");
     }
 
     @Bean(LOGGING_TX)
@@ -116,7 +128,8 @@ public class MyBatisConfig {
      * 동일 namespace 중복으로 기동이 실패한다. 전환은 이 프로퍼티 하나로 끝난다.
      */
     private String mapperPattern(String db) {
-        return "classpath*:com/gonet/%s/**/mapper/*_%s.xml".formatted(db, vendor);
+        return "classpath*:com/gonet/%s/**/mapper/*_%s.xml"
+                .formatted(db, DbVendor.ofMapperSuffix(vendor).mapperSuffix());
     }
 
     private static MapperConfigurer mapperConfigurer(String basePackage, String factoryBeanName) {
@@ -126,12 +139,47 @@ public class MyBatisConfig {
         return configurer;
     }
 
-    private SqlSessionFactory buildFactory(DataSource dataSource, String mapperPattern)
-            throws Exception {
+    /**
+     * 설정 벤더와 실제 접속 벤더가 같은지 — 다르면 기동을 세운다.
+     *
+     * <p>DB 3개가 서로 다른 벤더를 봐도 접속 자체는 성공한다. 매퍼는 전역 프로퍼티 한 벌만
+     * 읽으므로 어긋난 DB 에는 남의 벤더 문법 SQL 이 실리고, 그 사실은 <b>그 DB 를 처음 쓰는
+     * 질의</b>에서야 드러난다. 벤더를 섞어 쓸 일이 생기면 프로퍼티를 DataSource 별로 쪼개야
+     * 하며, 그때 이 검사도 함께 고쳐야 한다.
+     */
+    private void requireVendorMatch(DataSource dataSource, String db) {
+        DbVendor configured = DbVendor.ofMapperSuffix(vendor);
+        DbVendor actual = DbVendor.ofDataSource(dataSource);
+        if (configured != actual) {
+            throw new IllegalStateException("""
+                    %s_db 벤더 불일치 — 기동 중단.
+                      설정(gopcms.datasource.vendor) = %s  → 매퍼 %s 한 벌을 읽는다
+                      실제 접속(gopcms.datasource.%s.url) = %s
+                    3개 DB 는 같은 벤더여야 한다(매퍼 선택이 전역 프로퍼티 하나이기 때문)."""
+                    .formatted(db, configured.mapperSuffix(), configured.mapperSuffix(),
+                            db, actual.mapperSuffix()));
+        }
+    }
+
+    private SqlSessionFactory buildFactory(DataSource dataSource, String db) throws Exception {
+        requireVendorMatch(dataSource, db);
+
+        String mapperPattern = mapperPattern(db);
+        Resource[] mappers = new PathMatchingResourcePatternResolver().getResources(mapperPattern);
+        // secondary 는 아직 매퍼가 없다(테이블 미확정) — 0건이 정상인 유일한 DB 다.
+        // primary/logging 이 0건이면 벤더 오타이거나 pom 의 xml 리소스 필터가 빠진 것이다.
+        if (mappers.length == 0 && !"secondary".equals(db)) {
+            throw new IllegalStateException("""
+                    %s_db 매퍼 XML 을 한 장도 찾지 못했다 — 기동 중단.
+                      패턴: %s
+                    벤더 접미어 오타이거나(gopcms.datasource.vendor), pom 의 src/main/java
+                    xml 리소스 필터가 빠진 것이다. 이대로 뜨면 첫 질의에서 statement not found
+                    로 터진다.""".formatted(db, mapperPattern));
+        }
+
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
         factoryBean.setDataSource(dataSource);
-        factoryBean.setMapperLocations(
-                new PathMatchingResourcePatternResolver().getResources(mapperPattern));
+        factoryBean.setMapperLocations(mappers);
 
         org.apache.ibatis.session.Configuration configuration =
                 new org.apache.ibatis.session.Configuration();

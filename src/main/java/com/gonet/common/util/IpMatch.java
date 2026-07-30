@@ -35,6 +35,25 @@ public final class IpMatch {
         };
     }
 
+    /**
+     * CSV 1토큰 매칭 — {@code ip_type} 컬럼이 없는 곳(tb_role_url_access.allowed_ips)용.
+     *
+     * <p>표기로 종류를 가른다: {@code 10.0.0.1}(SINGLE) · {@code 10.0.0.0/8}(CIDR) ·
+     * {@code 10.0.0.1-10.0.0.9}(RANGE). IPv6 는 {@code -} 를 쓰지 않으므로 하이픈으로 갈라도
+     * 주소가 잘리지 않는다.
+     */
+    public static boolean matchesToken(String token, String clientIp) {
+        if (token == null || clientIp == null) {
+            return false;
+        }
+        String trimmed = token.trim();
+        int dash = trimmed.indexOf('-');
+        if (dash > 0) {
+            return inRange(trimmed.substring(0, dash), trimmed.substring(dash + 1), clientIp);
+        }
+        return matchesPattern(trimmed, clientIp);
+    }
+
     /** 단일 주소 또는 CIDR 표기({@code 10.0.0.0/8}) 매칭. */
     public static boolean matchesPattern(String pattern, String clientIp) {
         if (pattern == null || pattern.isBlank() || clientIp == null) {

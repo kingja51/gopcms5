@@ -12,12 +12,20 @@ public interface BoardCommentService {
     /** 작성. depth 는 상위 댓글에서 계산하며 2를 넘기지 않는다. */
     void write(BbsCommentDto comment);
 
-    /** 삭제(soft) — 자식 대댓글도 함께 정리하고 댓글 수를 재계산한다. */
-    void delete(String commentId);
+    /**
+     * 삭제(soft) — 자식 대댓글도 함께 정리하고 댓글 수를 재계산한다.
+     *
+     * <p>{@code articleId} 는 선택이 아니라 <b>스코프</b>다. 댓글 ID 하나만 받으면 남의 글,
+     * 나아가 다른 사이트의 댓글까지 지울 수 있어서 파라미터로 강제한다.
+     */
+    void delete(String commentId, String articleId);
 
-    /** 모더레이션 — 숨김/복원. 본문은 지우지 않는다(근거 보존). */
+    /** 모더레이션 — 숨김/복원. 본문은 지우지 않는다(근거 보존). 담당자 이상만. */
     void moderate(String commentId, String status);
 
     /** 비밀댓글 열람 가능 여부 — 작성자·글쓴이·담당자. */
     boolean canRead(BbsCommentDto comment, String articleWriterUserId);
+
+    /** 삭제 권한 — 담당자 이상이거나 본인이 쓴 댓글. */
+    boolean canManage(BbsCommentDto comment);
 }

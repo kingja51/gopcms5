@@ -1,6 +1,5 @@
 package com.gonet.config.datasource;
 
-import com.zaxxer.hikari.HikariDataSource;
 import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
@@ -45,7 +44,7 @@ public class FlywayConfig {
     }
 
     private Flyway build(DataSource dataSource, String db, boolean includeDevdata) {
-        String vendor = vendorOf(dataSource);
+        String vendor = DbVendor.ofDataSource(dataSource).migrationFolder();
         List<String> locations = new ArrayList<>();
         locations.add("classpath:db/migration/%s/%s".formatted(db, vendor));
         if (includeDevdata) {
@@ -66,17 +65,5 @@ public class FlywayConfig {
                 // (P5 실측: V900 적용 후 V4 추가 시 "out of order" 로 기동 실패)
                 .outOfOrder(includeDevdata)
                 .load();
-    }
-
-    /** JDBC URL 로 벤더 폴더 결정 — Boot {vendor} 플레이스홀더의 수동 대응. */
-    private String vendorOf(DataSource dataSource) {
-        String url = dataSource instanceof HikariDataSource hikari ? hikari.getJdbcUrl() : "";
-        if (url.startsWith("jdbc:mariadb:")) {
-            return "mariadb";
-        }
-        if (url.startsWith("jdbc:postgresql:")) {
-            return "postgresql";
-        }
-        throw new IllegalStateException("지원하지 않는 JDBC URL (mariadb/postgresql 만): " + url);
     }
 }

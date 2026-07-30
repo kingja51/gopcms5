@@ -1,6 +1,7 @@
 package com.gonet.config.security;
 
 import com.gonet.common.web.LoginPrincipal;
+import com.gonet.common.web.UrlNamespaces;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -119,10 +120,14 @@ public class SecurityConfig {
                             response.sendRedirect(target);
                         })
                         .failureHandler((request, response, exception) -> {
-                            // 실패 시 siteCode 유지 — 같은 사이트 로그인 폼으로 복귀
+                            // 실패 시 siteCode 유지 — 같은 사이트 로그인 폼으로 복귀.
+                            // 값은 요청 파라미터라 그대로 이어 붙이지 않는다: 형식을 통과한
+                            // 것만 쓰고(UrlNamespaces = site_code 규칙 단일 원천), 아니면
+                            // 통째로 버린다. 검증 없이 붙이면 &·# 로 쿼리를 갈라 뒤에 임의
+                            // 파라미터를 얹거나 로그를 오염시킬 수 있다.
                             String siteCode = request.getParameter("siteCode");
-                            String suffix = siteCode == null || siteCode.isBlank()
-                                    ? "" : "&siteCode=" + siteCode;
+                            String suffix = UrlNamespaces.isValidSiteCode(siteCode)
+                                    ? "&siteCode=" + siteCode : "";
                             new SimpleUrlAuthenticationFailureHandler("/login?error" + suffix)
                                     .onAuthenticationFailure(request, response, exception);
                         }))
