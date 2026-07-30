@@ -1,0 +1,172 @@
+### ─────────────────────────────────────────────────────────────────────────
+###  GoPCMS — 컨텐츠 (사용자 화면 + 관리자)
+###
+###  URL 계약 (conventions §5): /{siteCode}/{slug}  ← 사이트코드가 <b>첫</b> 세그먼트
+###    · /{siteCode}/index    랜딩 (고정 라우트 우선)
+###    · /{siteCode}/sitemap  사이트맵
+###    · /{siteCode}/{slug}   컨텐츠 캐치올
+###  경로 정규식: siteCode=[a-z0-9-]{1,30} · slug=[a-z0-9-]{1,200}
+###    → 대문자·특수문자가 섞이면 <b>매핑 자체가 걸리지 않아 404</b> 다.
+###  인가: /** PERMIT_ALL(pri 900) — front 컨텐츠는 공개.
+###
+###  관리자: 전제 — 01-auth.http 의 1~3 실행. 필요 권한 ROLE_ADMIN(/adm/** pri 20).
+###
+###  ── 실행 순서 ─────────────────────────────────────────────────────────
+###   front 조회는 순서 무관. 관리자 CRUD 는 목록 GET → 폼 GET → 저장 POST 순.
+### ─────────────────────────────────────────────────────────────────────────
+
+### ─── 사용자 화면 (무인증) ─────────────────────────────────────────────────
+
+### 컨텐츠 상세 — GET /{siteCode}/{slug}
+GET {{baseUrl}}/{{siteCode}}/{{sampleContentSlug}}
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+    client.test("HTML 응답", function () {
+        const ct = response.headers.valueOf("Content-Type") || "";
+        client.assert(ct.includes("text/html"), "HTML 이 아니다: " + ct);
+    });
+%}
+
+### 컨텐츠 상세 (다른 사이트) — GET /{siteCodeAlt}/greeting
+GET {{baseUrl}}/{{siteCodeAlt}}/greeting
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+%}
+
+### 없는 slug — GET /{siteCode}/no-such-page  (404 계약)
+GET {{baseUrl}}/{{siteCode}}/no-such-page
+Accept: text/html
+
+> {%
+    client.test("404", function () {
+        client.assert(response.status === 404,
+            "예상 status=404, 실제=" + response.status);
+    });
+%}
+
+### 예약 slug — GET /{siteCode}/adm  (예약어는 컨텐츠로 열리지 않는다)
+GET {{baseUrl}}/{{siteCode}}/adm
+Accept: text/html
+
+> {%
+    client.test("404", function () {
+        client.assert(response.status === 404,
+            "예상 status=404, 실제=" + response.status);
+    });
+%}
+
+### slug 패턴 위반(대문자) — GET /{siteCode}/About
+### 매핑 정규식 [a-z0-9-] 을 벗어나 캐치올이 걸리지 않는다.
+GET {{baseUrl}}/{{siteCode}}/About
+Accept: text/html
+
+> {%
+    client.test("404", function () {
+        client.assert(response.status === 404,
+            "예상 status=404, 실제=" + response.status);
+    });
+%}
+
+### ─── 관리자 (/adm/content) ────────────────────────────────────────────────
+
+### 컨텐츠 목록 — GET /adm/content?siteId={siteId}
+### @RequestParam siteId(선택) + 검색 조건
+GET {{baseUrl}}/adm/content?siteId={{sampleSiteId}}
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200,
+            "예상 status=200, 실제=" + response.status + " — 302 면 관리자 세션 없음");
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 컨텐츠 등록 폼 — GET /adm/content/form?siteId={siteId}
+GET {{baseUrl}}/adm/content/form?siteId={{sampleSiteId}}
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 컨텐츠 수정 폼 — GET /adm/content/form?contentId={contentId}
+GET {{baseUrl}}/adm/content/form?contentId={{sampleContentId}}&siteId={{sampleSiteId}}
+Accept: text/html
+
+> {%
+    client.test("폼 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 컨텐츠 저장 — POST /adm/content/save
+### @ModelAttribute("content") ContentAdmDto (폼 전송)
+### 검증(ContentServiceImpl.validate):
+###   siteId 필수 · title 필수
+###   slug   소문자·숫자·하이픈 1~200자, 예약어 불가, 사이트 내 유일
+###   status='PUBLISHED' 이고 publishedAt 이 비면 서버가 현재시각을 채운다
+### 날짜 형식: LocalDateTime — 폼은 datetime-local(yyyy-MM-dd'T'HH:mm)로 보낸다
+POST {{baseUrl}}/adm/content/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+siteId={{sampleSiteId}}&title=HTTP%20Client%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%ED%8E%98%EC%9D%B4%EC%A7%80&slug=http-client-test&body=%3Cp%3E%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EB%B3%B8%EB%AC%B8%3C%2Fp%3E&summary=%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EC%9A%94%EC%95%BD&status=PUBLISHED
+
+> {%
+    client.test("저장 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        client.log("폼 재표시 — 중복 slug 등 검증 메시지를 응답에서 확인할 것");
+    }
+%}
+
+### 저장된 컨텐츠 확인 — GET /{siteCode}/http-client-test
+GET {{baseUrl}}/{{siteCode}}/http-client-test
+Accept: text/html
+
+> {%
+    client.test("등록한 페이지가 열린다", function () {
+        client.assert([200, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 404) {
+        client.log("404 — 위 저장이 실패했거나 status 가 PUBLISHED 가 아니다");
+    }
+%}
+
+### 컨텐츠 삭제 — POST /adm/content/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+# TODO 확인 필요 — 위에서 만든 http-client-test 의 contentId 를 넣어야 실제로 지워진다.
+#                  HTML 리다이렉트 응답이라 ID 를 스크립트로 뽑을 수 없다.
+POST {{baseUrl}}/adm/content/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+contentId={{missingId}}&siteId={{sampleSiteId}}
+
+> {%
+    client.test("삭제 요청 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}

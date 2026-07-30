@@ -1,0 +1,351 @@
+### ─────────────────────────────────────────────────────────────────────────
+###  GoPCMS — 게시판 · 게시글 (사용자 화면 + 반응 API)
+###
+###  URL 계약: /bbs/{siteCode}/{bbsCode}   ← 사이트코드가 <b>두 번째</b> 세그먼트
+###            (UrlNamespaces.PROGRAM = {bbs, prg}. 컨텐츠는 첫 번째 세그먼트다)
+###  인가: /bbs/** PERMIT_ALL(pri 200) — URL 은 열려 있고 <b>읽기·쓰기 권한은
+###        tb_bbs_master.read_auth / write_auth 가 서비스 계층에서 판정</b>한다.
+###  반응 API: /api/v1/board/like · /api/v1/board/report 는 AUTHENTICATED(pri 72·73).
+###           익명 불가 — 중복 방지·남용 추적이 안 되기 때문이다.
+###
+###  ⚠ 선행 조건 2가지
+###     ① 게시판이 있어야 한다 — dev 시드에 게시판이 없다.
+###        04-board-admin.http 의 1~4 를 먼저 실행해 {{sampleBbsCode}} 게시판을 만든다.
+###     ② 글쓰기·댓글·좋아요·신고는 로그인이 필요하다.
+###        01-auth.http 로 관리자 또는 회원 세션을 확보한다.
+###
+###  ── 실행 순서 (CRUD 시나리오) ──────────────────────────────────────────
+###   1. 게시판 목록 화면
+###   2. 글쓰기 폼        → articleId 선발급 + CSRF 확보
+###   3. 게시글 등록      → sampleArticleId 저장
+###   4. 게시글 상세 조회
+###   5. 게시글 수정
+###   6. 댓글 등록
+###   7. 좋아요 토글 (API)
+###   8. 신고 접수 (API)
+###   9. 댓글 삭제
+###  10. 게시글 삭제      ← 파괴적
+### ─────────────────────────────────────────────────────────────────────────
+
+### 1. 게시판 목록 화면 — GET /bbs/{siteCode}/{bbsCode}
+### 검색 조건(BbsArticleSearch): categoryId · searchType · keyword · noticeYn · page · size
+### status 는 서버가 PUBLISHED 로 고정한다 — 숨김·신고보류는 사용자에게 보이지 않는다.
+GET {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}
+Accept: text/html
+
+> {%
+    client.test("목록 화면 응답", function () {
+        client.assert([200, 302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status
+            + " — 400 이면 게시판이 없다(04-board-admin.http 를 먼저 실행)");
+    });
+    if (response.status === 200) {
+        const ct = response.headers.valueOf("Content-Type") || "";
+        client.test("HTML 응답", function () {
+            client.assert(ct.includes("text/html"), "HTML 이 아니다: " + ct);
+        });
+    }
+%}
+
+### 2. 게시판 목록 — 검색어 + 페이징
+GET {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}?keyword=%ED%85%8C%EC%8A%A4%ED%8A%B8&page=1&size=10
+Accept: text/html
+
+> {%
+    client.test("검색 응답", function () {
+        client.assert([200, 302, 400].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 3. 글쓰기 폼 — GET /bbs/{siteCode}/{bbsCode}/write
+### 서비스 판정: requireRead(master) → canWrite(master)
+###   · 비로그인 → canWrite=false → AccessDeniedException (403)
+###   · 로그인 + writeAuth=MEMBER → 통과
+### 이 화면이 열릴 때 articleId(BBA_…)가 <b>미리 발급</b>된다 —
+### 첨부 picker 가 저장 전에 그 ID 로 파일을 올리기 때문이다.
+GET {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/write
+Accept: text/html
+
+> {%
+    client.test("폼 응답", function () {
+        client.assert([200, 302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 403) {
+        client.log("403 — 로그인하지 않았거나 쓰기 권한이 없다(01-auth.http 실행 필요)");
+    }
+    const body = String(response.body);
+    const a = body.match(/BBA_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
+    if (a) {
+        client.global.set("preIssuedArticleId", a[0]);
+        client.log("선발급 articleId = " + a[0]);
+    }
+    const c = body.match(/name="_csrf"\s+value="([^"]+)"/);
+    if (c) { client.global.set("csrf", c[1]); }
+%}
+
+### 4. 게시글 등록 — POST /bbs/{siteCode}/{bbsCode}/save
+### @ModelAttribute("article") BbsArticleAdmDto (폼 전송 — JSON API 아님)
+### 검증: title 필수 · content 필수 · noticeYn=Y 는 ROLE_STAFF 이상 · YOUTUBE 는 linkUrl 필수
+### 서버가 덮어쓰는 필드(폼 값을 믿지 않는다):
+###   bbsMasterId · writerUserId · writerUserType · clientIp · status(PUBLISHED)
+### 성공: 302 → /bbs/{siteCode}/{bbsCode}/{articleId}
+### 검증 실패: 302 → /write?articleId=… + flashError (PK 를 넘겨 첨부를 유지한다)
+POST {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+
+articleId={{preIssuedArticleId}}&title=IntelliJ%20HTTP%20Client%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EA%B2%8C%EC%8B%9C%EA%B8%80&content=%3Cp%3E%EA%B2%8C%EC%8B%9C%EA%B8%80%20%EB%93%B1%EB%A1%9D%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EB%82%B4%EC%9A%A9%EC%9E%85%EB%8B%88%EB%8B%A4.%3C%2Fp%3E&secretYn=N&noticeYn=N
+
+> {%
+    client.test("등록 처리", function () {
+        client.assert([302, 400, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const loc = response.headers.valueOf("Location") || "";
+    if (loc.includes("/write")) {
+        client.log("⚠ 검증 실패로 폼으로 되돌아갔다 — Location=" + loc);
+    } else if (response.status === 302) {
+        const m = loc.match(/BBA_[0-9a-f-]{36}/);
+        if (m) {
+            client.global.set("sampleArticleId", m[0]);
+            client.log("sampleArticleId = " + m[0]);
+        }
+        client.test("상세로 리다이렉트", function () {
+            client.assert(loc.includes("/bbs/"), "예상 밖 Location=" + loc);
+        });
+    }
+%}
+
+### 5. 게시글 상세 조회 — GET /bbs/{siteCode}/{bbsCode}/{articleId}
+### 경로 제약: {articleId:BBA_[0-9a-f-]{36}} — 형식이 다르면 매핑 자체가 안 걸린다
+### (그래서 /write 같은 고정 경로와 섞이지 않는다)
+### 조회수는 ArticleViewCounter.countOnce 로 쿠키·세션 기반 1회만 증가한다.
+GET {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/{{sampleArticleId}}
+Accept: text/html
+
+> {%
+    client.test("상세 응답", function () {
+        client.assert([200, 302, 400, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrf", m[1]); }
+%}
+
+### 6. 게시글 수정 폼 — GET /bbs/{siteCode}/{bbsCode}/write?articleId={articleId}
+### 서비스 판정: canManage(article, master) — 본인 글이거나 ROLE_STAFF 이상
+GET {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/write?articleId={{sampleArticleId}}
+Accept: text/html
+
+> {%
+    client.test("수정 폼 응답", function () {
+        client.assert([200, 302, 400, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrf", m[1]); }
+%}
+
+### 7. 게시글 수정 — POST /bbs/{siteCode}/{bbsCode}/save (기존 articleId)
+### 같은 엔드포인트다. 신규/수정 판정은 <b>PK 유무가 아니라 DB 조회</b>로 한다
+### (resolveNew) — 폼이 PK 를 미리 달고 오기 때문이다.
+POST {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+
+articleId={{sampleArticleId}}&title=%5B%EC%88%98%EC%A0%95%5D%20IntelliJ%20HTTP%20Client%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EA%B2%8C%EC%8B%9C%EA%B8%80&content=%3Cp%3E%EC%88%98%EC%A0%95%EB%90%9C%20%EB%B3%B8%EB%AC%B8%EC%9E%85%EB%8B%88%EB%8B%A4.%3C%2Fp%3E&secretYn=N&noticeYn=N
+
+> {%
+    client.test("수정 처리", function () {
+        client.assert([302, 400, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 8. 댓글 등록 — POST /bbs/{siteCode}/{bbsCode}/{articleId}/comment
+### @ModelAttribute BbsCommentDto — 필드: content · parentCommentId · secretYn
+### 게시판 정책: master.commentYn='Y' 여야 한다(아니면 403)
+POST {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/{{sampleArticleId}}/comment
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+
+content=IntelliJ%20HTTP%20Client%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EB%8C%93%EA%B8%80%EC%9E%85%EB%8B%88%EB%8B%A4.&secretYn=N
+
+> {%
+    client.test("댓글 등록 처리", function () {
+        client.assert([302, 400, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 403) {
+        client.log("403 — commentYn='N' 게시판이거나 비로그인");
+    }
+%}
+
+### 9. 상세 재조회 — 댓글 확인 + commentId 확보
+GET {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/{{sampleArticleId}}
+Accept: text/html
+
+> {%
+    client.test("상세 응답", function () {
+        client.assert([200, 302, 400, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const body = String(response.body);
+    const m = body.match(/BBC_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
+    if (m) {
+        client.global.set("sampleCommentId", m[0]);
+        client.log("sampleCommentId = " + m[0]);
+    }
+    const c = body.match(/name="_csrf"\s+value="([^"]+)"/);
+    if (c) { client.global.set("csrf", c[1]); }
+%}
+
+### ─── 반응 API (JSON) ──────────────────────────────────────────────────────
+### 공통 응답 래퍼가 <b>없다</b> — 컨트롤러가 만든 플랫 Map 을 그대로 돌려준다.
+### 좋아요 응답: {"liked": true, "count": 1}
+### 신고 응답  : {"accepted": true, "message": "..."}
+
+### 10. 좋아요 토글 — POST /api/v1/board/like
+### 인가: AUTHENTICATED (pri 72). 익명 불가.
+### @RequestParam targetType · targetId · sourceUrl(선택)
+### targetType 허용값(ReactionTarget): ARTICLE | COMMENT | CONTENT
+POST {{baseUrl}}/api/v1/board/like
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+targetType=ARTICLE&targetId={{sampleArticleId}}&sourceUrl=%2Fbbs%2F{{siteCode}}%2F{{sampleBbsCode}}
+
+> {%
+    client.test("응답 상태", function () {
+        client.assert([200, 302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        client.test("JSON 응답", function () {
+            const ct = response.headers.valueOf("Content-Type") || "";
+            client.assert(ct.includes("application/json"), "JSON 이 아니다: " + ct);
+        });
+        client.test("liked·count 필드", function () {
+            client.assert(response.body.liked !== undefined, "liked 가 없다");
+            client.assert(response.body.count !== undefined, "count 가 없다");
+        });
+        client.log("liked=" + response.body.liked + " count=" + response.body.count);
+    }
+%}
+
+### 11. 좋아요 재토글 (해제 확인) — POST /api/v1/board/like
+POST {{baseUrl}}/api/v1/board/like
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+targetType=ARTICLE&targetId={{sampleArticleId}}
+
+> {%
+    client.test("응답 상태", function () {
+        client.assert([200, 302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 12. 댓글 좋아요 — POST /api/v1/board/like (targetType=COMMENT)
+POST {{baseUrl}}/api/v1/board/like
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+targetType=COMMENT&targetId={{sampleCommentId}}
+
+> {%
+    client.test("응답 상태", function () {
+        client.assert([200, 302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 13. 신고 접수 — POST /api/v1/board/report
+### 인가: AUTHENTICATED (pri 73)
+### @RequestParam targetType · targetId · reasonCode · reasonText(선택) · sourceUrl(선택)
+### reasonCode 허용값(ReportReason): SPAM|OFFENSIVE|ILLEGAL|COPYRIGHT|PRIVACY|OTHER
+### 중복 신고는 IllegalStateException → 409
+POST {{baseUrl}}/api/v1/board/report
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+targetType=ARTICLE&targetId={{sampleArticleId}}&reasonCode=SPAM&reasonText=HTTP%20Client%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EC%8B%A0%EA%B3%A0
+
+> {%
+    client.test("응답 상태", function () {
+        // 200 정상 / 409 중복 신고 / 400 잘못된 값 / 401·403 미인증·권한
+        client.assert([200, 302, 400, 401, 403, 409].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        client.test("accepted 필드", function () {
+            client.assert(response.body.accepted === true,
+                "accepted 가 true 가 아니다: " + JSON.stringify(response.body));
+        });
+    }
+    if (response.status === 409) {
+        client.log("409 — 이미 신고한 대상(중복 방지 동작 확인)");
+    }
+%}
+
+### 14. 중복 신고 (409 확인) — POST /api/v1/board/report
+POST {{baseUrl}}/api/v1/board/report
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+targetType=ARTICLE&targetId={{sampleArticleId}}&reasonCode=SPAM
+
+> {%
+    client.test("중복은 409", function () {
+        client.assert([409, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status + " — 200 이면 중복 방지가 없다");
+    });
+%}
+
+### ─── 정리 (파괴적) ────────────────────────────────────────────────────────
+
+### 15. 댓글 삭제 — POST /bbs/{siteCode}/{bbsCode}/{articleId}/comment/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+POST {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/{{sampleArticleId}}/comment/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+
+commentId={{sampleCommentId}}
+
+> {%
+    client.test("삭제 처리", function () {
+        client.assert([302, 400, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 16. 게시글 삭제 — POST /bbs/{siteCode}/{bbsCode}/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+### 서비스 판정: canManage(article, master) — 본인 글 또는 ROLE_STAFF 이상
+### soft delete 다(delete_yn='Y') — 행이 사라지지는 않는다.
+POST {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+
+articleId={{sampleArticleId}}
+
+> {%
+    client.test("삭제 처리", function () {
+        client.assert([302, 400, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ─── 참고: HTMX 요청 테스트를 만들지 않은 이유 ─────────────────────────────
+### 현재 코드에는 HX-Request 를 분기하는 컨트롤러도, hx-get/hx-post 속성을 쓰는
+### 템플릿도 없다(htmx.min.js 는 self-host 로 서빙만 되고 있다).
+### 조각 응답 계약이 생기면 그때 별도 요청으로 추가한다.
+### # TODO 확인 필요 — htmx 조각 엔드포인트 도입 시 이 절에 테스트 추가

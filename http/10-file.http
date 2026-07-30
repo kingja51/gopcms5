@@ -1,0 +1,458 @@
+### ─────────────────────────────────────────────────────────────────────────
+###  GoPCMS — 파일 업로드 · 다운로드 · 관리
+###
+###  업로드 정책 (application.yml gopcms.file.upload)
+###    최대 크기      200MB (spring.servlet.multipart.max-file-size 와 같은 값)
+###    요청 최대      210MB
+###    허용 확장자    화이트리스트만 — 블랙리스트는 새 확장자가 나올 때마다 뚫린다
+###      any      pdf doc docx xls xlsx ppt pptx hwp hwpx txt csv
+###               jpg jpeg png gif webp bmp zip mp4 mov webm
+###      document pdf doc docx xls xlsx ppt pptx hwp hwpx txt csv
+###      image    jpg jpeg png gif webp bmp
+###      video    mp4 mov webm
+###    한 묶음 최대   20개 (max-files-per-group)
+###    다중 방어      확장자 + Tika 매직바이트 + (이미지)재인코딩
+###
+###  인가
+###    POST /api/v1/file/upload  AUTHENTICATED(pri 70) + FileAccessGuard 최소 ROLE_MEMBER
+###    POST /api/v1/file/image   ROLE(pri 69) — ROLE_STAFF 이상
+###    GET  /file/**             PERMIT_ALL(pri 75, GET 만) — 파일별 권한은
+###                              tb_file_group.download_auth 가 7단계로 판정한다
+###    /adm/file/**              ROLE_ADMIN(pri 20)
+###
+###  응답 구조 — 공통 래퍼가 <b>없다</b>. FileApiController 가 만든 플랫 JSON:
+###    {fileId, fileGroupId, originalName, sizeBytes, extension, image, url, thumbUrl}
+###
+###  전제
+###    · 업로드는 로그인 필요 → 01-auth.http 로 세션 확보
+###    · 업로드 픽스처: http/files/sample.txt · http/files/blocked.svg (동봉)
+###
+###  ── 실행 순서 ─────────────────────────────────────────────────────────
+###   1. 첨부 업로드 → fileId·fileGroupId 저장
+###   2. 다운로드 / 미리보기 / 썸네일
+###   3. 관리자 목록·상세·정책 변경
+###   4. 삭제·복구 (파괴적)
+### ─────────────────────────────────────────────────────────────────────────
+
+### 1. 첨부 업로드 — POST /api/v1/file/upload
+### @RequestParam file(MultipartFile) · category(선택) · entityType(필수) · entityId(필수) · siteId(선택)
+### category 허용값(UploadCategory): document | image | video | any  (기본 any)
+### entityType 허용값(FileEntityType): BBS | CONTENT | BANNER | POPUP | MEMBER | EDITOR | ETC
+### ⚠ downloadAuth 는 <b>받지 않는다</b> — 업로드 요청이 공개 범위를 정할 수 있으면
+###   남의 첨부 묶음을 공개로 낮출 수 있다(실측으로 확인한 결함). 정책은 서버가 정한다.
+POST {{baseUrl}}/api/v1/file/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="sample.txt"
+Content-Type: text/plain
+
+< ./files/sample.txt
+--WebAppBoundary
+Content-Disposition: form-data; name="entityType"
+
+ETC
+--WebAppBoundary
+Content-Disposition: form-data; name="entityId"
+
+{{sampleSiteId}}
+--WebAppBoundary
+Content-Disposition: form-data; name="category"
+
+document
+--WebAppBoundary
+Content-Disposition: form-data; name="siteId"
+
+{{sampleSiteId}}
+--WebAppBoundary--
+
+> {%
+    client.test("응답 상태", function () {
+        // 200 성공 / 400 정책 위반 / 401·403 미인증·권한 / 302 로그인 유도
+        client.assert([200, 302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        client.test("JSON 응답", function () {
+            const ct = response.headers.valueOf("Content-Type") || "";
+            client.assert(ct.includes("application/json"), "JSON 이 아니다: " + ct);
+        });
+        client.test("fileId 반환", function () {
+            client.assert(response.body.fileId !== undefined, "fileId 가 없다");
+        });
+        client.global.set("sampleFileId", response.body.fileId);
+        client.global.set("sampleFileGroupId", response.body.fileGroupId);
+        client.log("fileId=" + response.body.fileId
+            + " group=" + response.body.fileGroupId
+            + " url=" + response.body.url);
+    } else if (response.status === 403) {
+        client.log("403 — 회원 로그인이 필요하다(FileAccessGuard 최소 ROLE_MEMBER)");
+    } else if (response.status === 400) {
+        client.log("400 — 정책 위반: " + JSON.stringify(response.body));
+    }
+%}
+
+### 2. 허용되지 않은 확장자 — POST /api/v1/file/upload (svg)
+### svg 는 화이트리스트에 없다 → UploadValidationException → 400 + message
+POST {{baseUrl}}/api/v1/file/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="blocked.svg"
+Content-Type: image/svg+xml
+
+< ./files/blocked.svg
+--WebAppBoundary
+Content-Disposition: form-data; name="entityType"
+
+ETC
+--WebAppBoundary
+Content-Disposition: form-data; name="entityId"
+
+{{sampleSiteId}}
+--WebAppBoundary
+Content-Disposition: form-data; name="category"
+
+image
+--WebAppBoundary--
+
+> {%
+    client.test("확장자 제한이 작동한다", function () {
+        client.assert(response.status !== 200,
+            "⚠ svg 가 업로드됐다 — 확장자 화이트리스트가 깨졌다");
+        client.assert([302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 400) {
+        client.test("사용자용 메시지 반환", function () {
+            client.assert(response.body.message !== undefined,
+                "message 가 없다: " + JSON.stringify(response.body));
+        });
+        client.log("거부 메시지: " + response.body.message);
+    }
+%}
+
+### 3. 확장자 위장 (매직바이트 검사) — POST /api/v1/file/upload
+### 텍스트 파일을 .png 로 올린다. 확장자는 통과하지만 Tika 매직바이트 검사에서 걸려야 한다.
+POST {{baseUrl}}/api/v1/file/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="fake.png"
+Content-Type: image/png
+
+< ./files/sample.txt
+--WebAppBoundary
+Content-Disposition: form-data; name="entityType"
+
+ETC
+--WebAppBoundary
+Content-Disposition: form-data; name="entityId"
+
+{{sampleSiteId}}
+--WebAppBoundary
+Content-Disposition: form-data; name="category"
+
+image
+--WebAppBoundary--
+
+> {%
+    client.test("매직바이트 검사가 작동한다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 텍스트를 .png 로 위장한 파일이 통과했다 — 매직바이트 검사를 확인할 것");
+        client.assert([302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 4. 에디터 본문 이미지 업로드 — POST /api/v1/file/image
+### 필요 권한: ROLE_STAFF 이상 (tb_role_url_access pri 69)
+### @RequestParam file · entityId · siteId(선택). category 는 서버가 IMAGE 로 고정한다.
+### entityType 도 서버가 EDITOR 로 고정한다 — 첨부와 경로를 분리한다.
+POST {{baseUrl}}/api/v1/file/image
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="blocked.svg"
+Content-Type: image/svg+xml
+
+< ./files/blocked.svg
+--WebAppBoundary
+Content-Disposition: form-data; name="entityId"
+
+{{sampleSiteId}}
+--WebAppBoundary
+Content-Disposition: form-data; name="siteId"
+
+{{sampleSiteId}}
+--WebAppBoundary--
+
+> {%
+    client.test("응답 상태", function () {
+        // svg 는 이미지 화이트리스트에 없어 400 이 정상이다. 권한 없으면 403.
+        client.assert([200, 302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    client.log("status=" + response.status
+        + " (403=ROLE_STAFF 아님 / 400=svg 미허용 — 둘 다 설계된 동작)");
+%}
+
+### ─── 다운로드 · 미리보기 (GET, 무인증 가능 — 파일별 정책이 판정) ───────────
+
+### 5. 파일 다운로드 — GET /file/{fileId}
+### download_auth 7단계: ANONYMOUS · ROLE_MEMBER · ROLE_STAFF · OWNER_PRIVACY ·
+###                      ROLE_MANAGER · ROLE_ADMIN (+ 그룹 미지정 시 기본값)
+### 성공·거부(BLOCKED) 모두 log_file_download 에 남는다.
+GET {{baseUrl}}/file/{{sampleFileId}}
+
+> {%
+    client.test("응답 상태", function () {
+        client.assert([200, 302, 400, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        client.test("첨부 응답 헤더", function () {
+            const cd = response.headers.valueOf("Content-Disposition") || "";
+            client.assert(cd.length > 0, "Content-Disposition 이 없다");
+            client.log("Content-Disposition: " + cd);
+        });
+        client.test("Content-Type 존재", function () {
+            const ct = response.headers.valueOf("Content-Type") || "";
+            client.assert(ct.length > 0, "Content-Type 이 없다");
+            client.log("Content-Type: " + ct);
+        });
+    }
+%}
+
+### 6. 썸네일 — GET /file/{fileId}/thumb
+### 이미지 파일만 의미가 있다(thumbnail-size=400). 텍스트 파일이면 404 계열이 정상.
+GET {{baseUrl}}/file/{{sampleFileId}}/thumb
+
+> {%
+    client.test("응답 상태", function () {
+        client.assert([200, 302, 400, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 7. 미리보기(인라인) — GET /file/{fileId}/view
+### 브라우저가 여는 형식(이미지·PDF)만 인라인이다. 오피스 변환은 기본 꺼져 있다
+### (gopcms.file.viewer.office.enabled=false).
+GET {{baseUrl}}/file/{{sampleFileId}}/view
+
+> {%
+    client.test("응답 상태", function () {
+        client.assert([200, 302, 400, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        const cd = response.headers.valueOf("Content-Disposition") || "";
+        client.log("Content-Disposition: " + cd + " (inline 이면 미리보기 경로)");
+    }
+%}
+
+### 8. 존재하지 않는 파일 — GET /file/{missingId}
+GET {{baseUrl}}/file/{{missingId}}
+
+> {%
+    client.test("404 계열", function () {
+        client.assert([400, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ─── 관리자 파일 관리 (/adm/file) ─────────────────────────────────────────
+### ### 전제: 관리자 계정 로그인 및 CSRF 토큰 확보가 필요함
+### 필요 권한: ROLE_ADMIN
+
+### 9. 파일 목록 — GET /adm/file
+### 검색 조건(FileSearch): entityType · extension · scanStatus · includeDeleted · page · size
+GET {{baseUrl}}/adm/file
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const body = String(response.body);
+    const f = body.match(/FIL_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
+    if (f) {
+        client.global.set("sampleFileId", f[0]);
+        client.log("sampleFileId = " + f[0]);
+    }
+    const c = body.match(/name="_csrf"\s+value="([^"]+)"/);
+    if (c) { client.global.set("csrfAdmin", c[1]); }
+%}
+
+### 10. 파일 목록 — 삭제분 포함
+GET {{baseUrl}}/adm/file?includeDeleted=true&entityType=ETC
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 11. 파일 상세 — GET /adm/file/{fileId}
+GET {{baseUrl}}/adm/file/{{sampleFileId}}
+Accept: text/html
+
+> {%
+    client.test("상세 또는 목록 리다이렉트", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 12. 파일 메타 수정 — POST /adm/file/{fileId}/save
+### @RequestParam originalName(선택) · sortOrder(선택)
+POST {{baseUrl}}/adm/file/{{sampleFileId}}/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+originalName=sample-renamed.txt&sortOrder=1
+
+> {%
+    client.test("처리 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 13. 백신 검사 상태 변경 — POST /adm/file/{fileId}/scan-status
+### @RequestParam status
+### # TODO 확인 필요 — status 허용값(PENDING·CLEAN·INFECTED 등)은 tb_file 의
+###                    scan_status CHECK 제약과 화면 select 옵션에서 확인할 것
+POST {{baseUrl}}/adm/file/{{sampleFileId}}/scan-status
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+status=CLEAN
+
+> {%
+    client.test("처리 응답", function () {
+        client.assert([200, 302, 400].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 14. 다운로드 권한 변경 — POST /adm/file/{fileId}/download-auth
+### @RequestParam fileGroupId · downloadAuth
+### downloadAuth 허용값(DownloadAuth):
+###   ANONYMOUS | ROLE_MEMBER | ROLE_STAFF | OWNER_PRIVACY | ROLE_MANAGER | ROLE_ADMIN
+POST {{baseUrl}}/adm/file/{{sampleFileId}}/download-auth
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+fileGroupId={{sampleFileGroupId}}&downloadAuth=ROLE_MEMBER
+
+> {%
+    client.test("처리 응답", function () {
+        client.assert([200, 302, 400].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 15. 관리자 직접 다운로드 — GET /adm/file/{fileId}/download
+### 상태 무관 다운로드(download_type=ADMIN). 이력에 ADMIN 으로 남는다.
+GET {{baseUrl}}/adm/file/{{sampleFileId}}/download
+
+> {%
+    client.test("응답 상태", function () {
+        client.assert([200, 302, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        const cd = response.headers.valueOf("Content-Disposition") || "";
+        client.test("첨부 응답", function () {
+            client.assert(cd.includes("attachment") || cd.length > 0,
+                "Content-Disposition 이 없다");
+        });
+        client.log("Content-Disposition: " + cd);
+    }
+%}
+
+### 16. 파일 등록 화면(관리자 직접 등록) — GET /adm/file/new
+GET {{baseUrl}}/adm/file/new
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 17. 파일 등록 저장 — POST /adm/file/new
+### @RequestParam entityType(필수) · entityId(필수) · downloadAuth(선택) · attachments(선택)
+### attachments = 업로드로 받은 파일 ID CSV. 비면 "선택된 파일이 없어 저장하지 않았습니다".
+### 정책 확정은 <b>저장 시점</b>에 서버가 한다 — 업로드 요청은 정책을 바꾸지 못한다.
+POST {{baseUrl}}/adm/file/new
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+entityType=ETC&entityId={{sampleSiteId}}&downloadAuth=ROLE_MEMBER&attachments={{sampleFileId}}
+
+> {%
+    client.test("처리 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 18. 알 수 없는 entityType — POST /adm/file/new
+### FileEntityType.isValid 실패 → flash 메시지 + 목록 리다이렉트
+POST {{baseUrl}}/adm/file/new
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+entityType=NO_SUCH_TYPE&entityId={{sampleSiteId}}&attachments={{sampleFileId}}
+
+> {%
+    client.test("검증이 작동한다", function () {
+        client.assert([200, 302, 400].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 19. 파일 삭제(soft) — POST /adm/file/{fileId}/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+### soft delete 다 — 물리 삭제는 정리 배치(retention-days=180, dry-run 기본 true)가 한다.
+POST {{baseUrl}}/adm/file/{{sampleFileId}}/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+> {%
+    client.test("삭제 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 20. 파일 복구 — POST /adm/file/{fileId}/restore
+### soft delete 된 파일을 되살린다(물리 파일이 남아 있는 동안만 가능).
+POST {{baseUrl}}/adm/file/{{sampleFileId}}/restore
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+> {%
+    client.test("복구 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}

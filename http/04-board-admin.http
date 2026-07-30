@@ -1,0 +1,329 @@
+### ─────────────────────────────────────────────────────────────────────────
+###  GoPCMS — 게시판 관리 (관리자)
+###
+###  ### 전제: 관리자 계정 로그인 및 CSRF 토큰 확보가 필요함
+###           → 01-auth.http 의 1~3 을 먼저 실행한다.
+###  필요 권한: 전 요청 ROLE_ADMIN (tb_role_url_access /adm/** pri 20)
+###
+###  ⚠ 중요 — dev 시드에는 게시판이 <b>하나도 없다</b>(tb_bbs_master 비어 있음).
+###     그래서 이 파일의 "1. 게시판 생성" 을 먼저 실행해야 03-board.http(사용자 화면)가
+###     동작한다. 생성되는 게시판: siteCode={{siteCode}} / bbsCode={{sampleBbsCode}}
+###
+###  ── 실행 순서 ─────────────────────────────────────────────────────────
+###   1. 게시판 목록 GET      (CSRF 확보)
+###   2. 게시판 등록 폼 GET
+###   3. 게시판 생성 POST     ← 03-board.http 의 선행 조건. bbsMasterId 자동 저장
+###   4. 목록 재조회          (3번이 실패해도 여기서 ID 를 잡는다)
+###   5~7. 카테고리
+###   8~13. 게시글 · 댓글
+###   14~16. 신고 관리
+###   17. 게시판 삭제 — 파괴적, 마지막에
+###
+###  bbsMasterId 는 스크립트가 자동으로 잡는다 — 저장 응답의 Location
+###  (/adm/board/form?bbsMasterId=BBM_…) 또는 목록 HTML 에서 추출한다(실측 확인).
+### ─────────────────────────────────────────────────────────────────────────
+
+### 1. 게시판 목록 — GET /adm/board
+### @RequestMapping("/adm/board") + @GetMapping
+### 검색 조건(BbsMasterSearch): siteId · bbsType · page · size · keyword
+GET {{baseUrl}}/adm/board?siteId={{sampleSiteId}}
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200,
+            "예상 status=200, 실제=" + response.status + " — 302 면 관리자 세션 없음");
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    client.test("CSRF 토큰 확보", function () {
+        client.assert(m !== null, "_csrf 를 찾지 못했다");
+    });
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 2. 게시판 등록 폼 — GET /adm/board/form
+GET {{baseUrl}}/adm/board/form
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 3. 게시판 생성 — POST /adm/board/save   ★ 03-board.http 의 선행 조건
+### @ModelAttribute("board") BbsMasterAdmDto (폼 전송)
+### 검증(BoardMasterServiceImpl.validate) — 필수/허용값:
+###   siteId       필수
+###   bbsCode      필수, 소문자 시작 2~50자 [a-z0-9_-], 사이트 내 유일
+###   bbsName      필수
+###   bbsType      NOTICE|BODO|FREE|FAQ|QNA|GALLERY|FILE|YOUTUBE
+###   readAuth     ALL|MEMBER|ADMIN
+###   writeAuth    MEMBER|ADMIN
+###   downloadAuth ANONYMOUS|ROLE_MEMBER|ROLE_STAFF|OWNER_PRIVACY|ROLE_MANAGER|ROLE_ADMIN
+### 아래 값은 사용자 화면 테스트가 가능하도록 읽기 ALL · 쓰기 MEMBER 로 만든다.
+POST {{baseUrl}}/adm/board/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+siteId={{sampleSiteId}}&bbsCode={{sampleBbsCode}}&bbsName=HTTP%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EA%B3%B5%EC%A7%80&bbsType=NOTICE&readAuth=ALL&writeAuth=MEMBER&downloadAuth=ROLE_MEMBER&commentYn=Y&fileYn=Y&htmlYn=Y&anonymousYn=N&noticeTopYn=Y&captchaYn=N&useYn=Y&description=IntelliJ%20HTTP%20Client%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EC%9A%A9
+
+> {%
+    client.test("저장 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    // 실측(2026-07-30): 저장 성공 시 Location 에 bbsMasterId 가 실려 온다
+    //   302 → /adm/board/form?bbsMasterId=BBM_…
+    const loc = response.headers.valueOf("Location") || "";
+    const m = loc.match(/BBM_[0-9a-f-]{36}/);
+    if (m) {
+        client.global.set("sampleBbsMasterId", m[0]);
+        client.log("sampleBbsMasterId = " + m[0] + " (Location 에서 추출)");
+    } else if (response.status === 200) {
+        const already = String(response.body).includes("이미 쓰이고 있는 게시판 코드");
+        client.log(already
+            ? "이미 생성돼 있다 — 다음 요청(4번)이 목록에서 ID 를 잡는다"
+            : "폼이 재표시됐다 — 응답의 오류 메시지를 확인할 것");
+    }
+%}
+
+### 4. 게시판 목록 재조회 — bbsMasterId 확인용
+### 응답 HTML 에서 BBM_ 로 시작하는 ID 를 찾아 환경변수 sampleBbsMasterId 에 넣는다.
+GET {{baseUrl}}/adm/board?siteId={{sampleSiteId}}
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+    // 화면에 노출된 bbsMasterId 를 자동으로 잡아 둔다(폼 hidden·링크 파라미터 형태)
+    const body = String(response.body);
+    const m = body.match(/BBM_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
+    if (m) {
+        client.global.set("sampleBbsMasterId", m[0]);
+        client.log("sampleBbsMasterId = " + m[0]);
+    } else {
+        client.log("⚠ bbsMasterId 를 찾지 못했다 — 목록 화면을 열어 수기로 환경변수에 넣을 것");
+    }
+    const c = body.match(/name="_csrf"\s+value="([^"]+)"/);
+    if (c) { client.global.set("csrfAdmin", c[1]); }
+%}
+
+### 5. 게시판 수정 폼 — GET /adm/board/form?bbsMasterId={bbsMasterId}
+GET {{baseUrl}}/adm/board/form?bbsMasterId={{sampleBbsMasterId}}
+Accept: text/html
+
+> {%
+    client.test("폼 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### ─── 카테고리 ─────────────────────────────────────────────────────────────
+
+### 6. 카테고리 등록 — POST /adm/board/category/save
+### @ModelAttribute BbsCategoryAdmDto
+### 필드: categoryId·bbsMasterId·categoryCode·categoryName·sortOrder·useYn
+POST {{baseUrl}}/adm/board/category/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+bbsMasterId={{sampleBbsMasterId}}&categoryCode=general&categoryName=%EC%9D%BC%EB%B0%98&sortOrder=1&useYn=Y
+
+> {%
+    client.test("저장 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 7. 카테고리 삭제 — POST /adm/board/category/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+# TODO 확인 필요 — categoryId 를 실제 값으로 바꿔야 한다(화면에서 확인).
+POST {{baseUrl}}/adm/board/category/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+categoryId={{missingId}}&bbsMasterId={{sampleBbsMasterId}}
+
+> {%
+    client.test("삭제 요청 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ─── 게시글 (관리자) ──────────────────────────────────────────────────────
+### @RequestMapping("/adm/board/{bbsMasterId}/article")
+### ⚠ 사용자 경로와 <b>같은 서비스 메서드</b>(BoardArticleService#save)를 부른다.
+###   달라지는 것은 인가 체인·사이트 해석·뷰 해석뿐이다.
+
+### 8. 게시글 목록 — GET /adm/board/{bbsMasterId}/article
+GET {{baseUrl}}/adm/board/{{sampleBbsMasterId}}/article
+Accept: text/html
+
+> {%
+    client.test("목록 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 9. 게시글 등록 폼 — GET /adm/board/{bbsMasterId}/article/form
+### 이 화면이 열릴 때 articleId(BBA_…)가 미리 발급된다 — 첨부 picker 가 저장 전에 쓴다.
+GET {{baseUrl}}/adm/board/{{sampleBbsMasterId}}/article/form
+Accept: text/html
+
+> {%
+    client.test("폼 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const body = String(response.body);
+    const a = body.match(/BBA_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
+    if (a) {
+        client.global.set("preIssuedArticleId", a[0]);
+        client.log("선발급 articleId = " + a[0]);
+    }
+    const c = body.match(/name="_csrf"\s+value="([^"]+)"/);
+    if (c) { client.global.set("csrfAdmin", c[1]); }
+%}
+
+### 10. 게시글 저장(관리자) — POST /adm/board/{bbsMasterId}/article/save
+### @ModelAttribute BbsArticleAdmDto
+### 검증(BoardArticleServiceImpl.validate):
+###   title    필수
+###   content  필수
+###   noticeYn=Y 는 ROLE_STAFF 이상만 (관리자는 통과)
+###   YOUTUBE 게시판이면 linkUrl 필수
+### 서버가 덮어쓰는 필드: bbsMasterId · writerUserId · writerUserType · clientIp · status
+### attachments = 파일 ID CSV (10-file.http 로 업로드한 뒤 채운다)
+POST {{baseUrl}}/adm/board/{{sampleBbsMasterId}}/article/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+articleId={{preIssuedArticleId}}&title=%EA%B4%80%EB%A6%AC%EC%9E%90%20%EB%93%B1%EB%A1%9D%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EA%B2%8C%EC%8B%9C%EA%B8%80&content=%3Cp%3EIntelliJ%20HTTP%20Client%20%EB%93%B1%EB%A1%9D%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EB%B3%B8%EB%AC%B8%EC%9E%85%EB%8B%88%EB%8B%A4.%3C%2Fp%3E&noticeYn=Y&secretYn=N
+
+> {%
+    client.test("저장 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 302) {
+        client.global.set("sampleArticleId", client.global.get("preIssuedArticleId"));
+        client.log("sampleArticleId = " + client.global.get("preIssuedArticleId"));
+    }
+%}
+
+### 11. 댓글 상태 변경(숨김 처리) — POST /adm/board/{bbsMasterId}/article/comment/moderate
+# TODO 확인 필요 — commentId 는 03-board.http 에서 댓글을 만든 뒤 채운다.
+#                  status 허용값은 tb_bbs_comment 의 CHECK 제약을 따른다.
+POST {{baseUrl}}/adm/board/{{sampleBbsMasterId}}/article/comment/moderate
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+commentId={{sampleCommentId}}&articleId={{sampleArticleId}}&status=HIDDEN
+
+> {%
+    client.test("처리 응답", function () {
+        client.assert([200, 302, 400].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 12. 댓글 삭제(관리자) — POST /adm/board/{bbsMasterId}/article/comment/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+POST {{baseUrl}}/adm/board/{{sampleBbsMasterId}}/article/comment/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+commentId={{sampleCommentId}}&articleId={{sampleArticleId}}
+
+> {%
+    client.test("삭제 요청 처리", function () {
+        client.assert([200, 302, 400].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 13. 게시글 삭제(관리자) — POST /adm/board/{bbsMasterId}/article/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+POST {{baseUrl}}/adm/board/{{sampleBbsMasterId}}/article/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+articleId={{sampleArticleId}}
+
+> {%
+    client.test("삭제 요청 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ─── 신고 관리 (/adm/board-report) ────────────────────────────────────────
+
+### 14. 신고 목록 — GET /adm/board-report
+### 검색 조건(BbsReportSearch): status(기본 PENDING) · targetType · reasonCode · page · size
+GET {{baseUrl}}/adm/board-report
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 15. 신고 목록 (대상 유형 필터) — GET /adm/board-report?targetType=ARTICLE
+### targetType 허용값: ARTICLE | COMMENT | CONTENT (ReactionTarget)
+### reasonCode 허용값: SPAM | OFFENSIVE | ILLEGAL | COPYRIGHT | PRIVACY | OTHER
+GET {{baseUrl}}/adm/board-report?targetType=ARTICLE&reasonCode=SPAM
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+%}
+
+### 16. 신고 처리 — POST /adm/board-report/review
+# TODO 확인 필요 — reportId 는 03-board.http 에서 신고를 접수한 뒤 목록 화면에서 확인한다.
+#                  처리 파라미터(action/status)의 허용값은 화면 폼을 참조할 것.
+POST {{baseUrl}}/adm/board-report/review
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+reportId={{sampleReportId}}
+
+> {%
+    client.test("처리 응답", function () {
+        client.assert([200, 302, 400].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 17. 게시판 삭제 — POST /adm/board/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+# 주의: 이 게시판을 지우면 03-board.http 가 전부 실패한다 — 마지막에 실행할 것
+POST {{baseUrl}}/adm/board/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+bbsMasterId={{sampleBbsMasterId}}
+
+> {%
+    client.test("삭제 요청 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}

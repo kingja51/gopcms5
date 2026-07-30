@@ -1,0 +1,2 @@
+GoPCMS IntelliJ HTTP Client upload sample.
+This file is plain text and used for /api/v1/file/upload tests.

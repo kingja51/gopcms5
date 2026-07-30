@@ -3,6 +3,12 @@
 ### 환경: http-client.env.json — local(8080, IntelliJ 인스턴스) / smoke(8081)
 ### 사용: 파일 상단에서 환경 선택 후 개별/전체 실행. 기대값은 각 요청 주석 참조.
 ### 전제: local 프로파일 시드(V900~V905). Security 는 P6 전 — 전 요청 무인증.
+###
+### ── 2026-07-30 갱신 ─────────────────────────────────────────────────────────
+### 이 파일은 <b>P5 시절의 front 회귀 세트</b>로 그대로 보존한다({{host}} 변수 사용).
+### 기능별 세트는 00-health ~ 99-error-case 로 새로 나뉘었고 {{baseUrl}} 을 쓴다 —
+### 두 변수는 http-client.env.json 에 같은 값으로 함께 정의돼 있어 양쪽이 동작한다.
+### 파일 말미의 "인가 계약" 절은 P6 이후 실제 규칙과 대조해 주석을 갱신했다.
 ### ============================================================================
 
 ### 헬스 체크 — 200 {"status":"UP"}
@@ -168,10 +174,18 @@ GET {{host}}/adm/index
 ### 302 → /login?siteCode=ai — 회원 전용 영역, 사이트를 유지한 로그인 유도
 GET {{host}}/ai/member/mypage
 
+# TODO 확인 필요 — /api/v1/ping 매핑은 <b>현재 코드에 존재하지 않는다</b>
+#   (2026-07-30 전수 조사: @RestController 는 FileApiController · BoardLikeApiController ·
+#    BoardReportApiController 3개뿐이고 ping 매핑이 없다).
+#   다만 <b>기대값 401 은 정확하다</b> — 실측 확인(2026-07-30):
+#   SiteAwareAuthenticationEntryPoint 가 /api/ 로 시작하는 경로만 sendError(401) 하고
+#   나머지는 /login 으로 리다이렉트한다. 매핑이 없어도 인가가 먼저 걸려 401 이다.
+#   즉 이 요청은 "API 네임스페이스 기본 DENY(pri 80) + JSON 계약" 회귀 테스트로 유효하다.
+#   같은 계약의 대체 테스트: 99-error-case.http A5 (/api/v1/no-such-endpoint)
 ### 401 — API 네임스페이스는 기본 DENY + JSON 계약(로그인 HTML 로 보내지 않음)
 GET {{host}}/api/v1/ping
 
-### 302 → /login — health 외 액추에이터 차단
+### 302 → /login — health 외 액추에이터 차단 (DB 규칙 /actuator/** DENY pri 90)
 GET {{host}}/actuator/env
 
 ### ─── 보안 헤더 · 세션 (P6-3) ─────────────────────────────────────────────

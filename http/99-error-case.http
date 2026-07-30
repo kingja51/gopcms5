@@ -1,0 +1,538 @@
+### ─────────────────────────────────────────────────────────────────────────
+###  GoPCMS — 오류 · 보안 정책 회귀 테스트
+###
+###  이 파일은 "실패해야 하는 요청" 을 모은다. 200 이 나오면 정책이 깨진 것이다.
+###  각 테스트는 <b>실제 코드에서 확인된 정책</b>만 다룬다 —
+###  구현되지 않은 정책(rate limit 헤더, JSON 오류 스키마 등)은 만들지 않았다.
+###
+###  ⚠ 실행 순서 주의
+###     A절(미인증)은 <b>로그아웃 상태</b>에서, C절(권한)은 <b>회원 로그인 상태</b>에서
+###     의미가 있다. IntelliJ 는 쿠키를 파일 간에 공유하므로 순서를 지켜 실행한다:
+###       ① 이 파일 A절 (세션 없음)
+###       ② 01-auth.http 7~8 (회원 로그인) → 이 파일 C절
+###       ③ 01-auth.http 1~3 (관리자 로그인) → 이 파일 D절
+###     쿠키를 비우려면 IntelliJ 의 .idea/httpRequests/http-client.cookies 를 지운다.
+### ─────────────────────────────────────────────────────────────────────────
+
+### ═══ A. 미인증 접근 ════════════════════════════════════════════════════════
+### 미인증 응답은 <b>경로에 따라 갈린다</b> — SiteAwareAuthenticationEntryPoint:
+###   · /api/** 로 시작 → sendError(<b>401</b>) — JSON 클라이언트에 로그인 HTML 을
+###     응답 본문으로 주지 않겠다는 계약(conventions §4)
+###   · 그 외 화면      → <b>302</b> /login (사이트 유지)
+### CSRF 실패는 그보다 앞서 <b>403</b> 이다 — 미인증 POST 는 401 이 아니라 403 이 된다.
+### (실측 2026-07-30)
+
+### A1. 관리자 영역 — GET /adm/index  (미인증)
+GET {{baseUrl}}/adm/index
+Accept: text/html
+
+> {%
+    client.test("관리자 영역이 열려 있지 않다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 미인증 상태에서 /adm/index 가 200 을 반환했다");
+        client.assert([302, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const loc = response.headers.valueOf("Location") || "";
+    client.log("Location=" + loc + " (/adm/login 이면 정상)");
+%}
+
+### A2. 회원 전용 영역 — GET /{siteCode}/member/mypage  (미인증)
+### 사이트를 유지한 로그인 유도가 정상이다 → /login?siteCode={siteCode}
+GET {{baseUrl}}/{{siteCode}}/member/mypage
+Accept: text/html
+
+> {%
+    client.test("회원 영역이 열려 있지 않다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 미인증 상태에서 마이페이지가 200 을 반환했다");
+        client.assert([302, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const loc = response.headers.valueOf("Location") || "";
+    client.test("사이트를 유지한 로그인 유도", function () {
+        client.assert(loc.includes("/login"), "로그인으로 유도하지 않았다: " + loc);
+    });
+    client.log("Location=" + loc);
+%}
+
+### A3. 좋아요 API — POST /api/v1/board/like  (미인증)
+### 인가: AUTHENTICATED(pri 72). 익명 불가 — 중복 방지가 안 되기 때문이다.
+POST {{baseUrl}}/api/v1/board/like
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+targetType=ARTICLE&targetId={{missingId}}
+
+> {%
+    client.test("익명 좋아요가 거부된다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 미인증 상태에서 좋아요가 처리됐다");
+        client.assert([302, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### A4. 첨부 업로드 — POST /api/v1/file/upload  (미인증)
+POST {{baseUrl}}/api/v1/file/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="sample.txt"
+Content-Type: text/plain
+
+< ./files/sample.txt
+--WebAppBoundary
+Content-Disposition: form-data; name="entityType"
+
+ETC
+--WebAppBoundary
+Content-Disposition: form-data; name="entityId"
+
+{{sampleSiteId}}
+--WebAppBoundary--
+
+> {%
+    client.test("익명 업로드가 거부된다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 미인증 상태에서 업로드가 성공했다");
+        client.assert([302, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### A5. 규칙 없는 API 경로 — GET /api/v1/no-such-endpoint
+### /api/** 는 기본 DENY(pri 80). 엔드포인트별 규칙을 먼저 등록해야 열린다.
+### 실측(2026-07-30): <b>401</b> — 로그인 HTML 로 보내지 않는다.
+GET {{baseUrl}}/api/v1/no-such-endpoint
+Accept: application/json
+
+> {%
+    client.test("규칙 없는 API 는 차단된다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 규칙 없는 API 경로가 200 을 반환했다 — 무매칭 DENY 가 깨졌다");
+        client.assert([401, 403].includes(response.status),
+            "예상 status=401(JSON 계약), 실제=" + response.status);
+    });
+    client.test("로그인 HTML 로 리다이렉트하지 않는다", function () {
+        const loc = response.headers.valueOf("Location") || "";
+        client.assert(!loc.includes("/login"),
+            "⚠ API 경로가 로그인 화면으로 유도됐다 — JSON 계약이 깨졌다: " + loc);
+    });
+%}
+
+### ═══ B. CSRF ═══════════════════════════════════════════════════════════════
+### 이 프로젝트의 CSRF 는 <b>세션 저장 방식</b>이다(HttpSessionCsrfTokenRepository).
+### XSRF-TOKEN 쿠키는 내려오지 않는다 — 토큰은 HTML 폼의 _csrf 에서 뽑는다.
+
+### B1. CSRF 토큰 없이 POST — POST /adm/url-access/evict
+POST {{baseUrl}}/adm/url-access/evict
+Content-Type: application/x-www-form-urlencoded
+
+> {%
+    client.test("토큰 없는 POST 는 거부된다", function () {
+        client.assert([302, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status
+            + " — 200 이면 CSRF 보호가 없다");
+    });
+%}
+
+### B2. 잘못된 CSRF 토큰 — POST /adm/url-access/evict
+POST {{baseUrl}}/adm/url-access/evict
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: obviously-not-a-valid-token
+
+> {%
+    client.test("위조 토큰이 거부된다", function () {
+        client.assert([302, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### B3. XSRF-TOKEN 쿠키가 내려오지 않는지 확인 — GET /adm/login
+### 이 프로젝트는 쿠키 방식이 아니다. 쿠키가 보이면 설정이 바뀐 것이므로
+### 모든 .http 파일의 토큰 확보 방식을 함께 고쳐야 한다.
+GET {{baseUrl}}/adm/login
+Accept: text/html
+
+> {%
+    const cookies = response.headers.valuesOf("Set-Cookie") || [];
+    const xsrf = cookies.find(c => String(c).startsWith("XSRF-TOKEN="));
+    client.test("CSRF 는 세션 저장 방식이다", function () {
+        client.assert(xsrf === undefined,
+            "⚠ XSRF-TOKEN 쿠키가 내려온다 — CookieCsrfTokenRepository 로 바뀌었다면 "
+            + "모든 http 파일의 토큰 확보 스크립트를 쿠키 방식으로 고쳐야 한다");
+    });
+    client.test("세션 쿠키명은 GOPCMS_SID", function () {
+        const sid = cookies.find(c => String(c).startsWith("GOPCMS_SID="));
+        client.log(sid ? "Set-Cookie: GOPCMS_SID 확인" : "이미 세션이 있어 재발급되지 않았다");
+    });
+%}
+
+### B4. CSRF 면제 경로가 유지되는지 — POST /member/identity/nice/success
+### NICE 콜백은 외부 도메인이 POST 하므로 토큰이 있을 수 없다.
+### 403 이 나오면 실제 본인인증이 조용히 깨진다.
+POST {{baseUrl}}/member/identity/nice/success
+Content-Type: application/x-www-form-urlencoded
+
+EncodeData=INVALID_FOR_TEST
+
+> {%
+    client.test("면제 경로는 403 이 아니다", function () {
+        client.assert(response.status !== 403,
+            "⚠ CSRF 면제가 빠졌다 — 실제 NICE 콜백도 막힌다");
+    });
+    client.test("그렇다고 위조 데이터가 통하지도 않는다", function () {
+        client.assert([200, 302, 400].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ═══ C. 식별자 · 입력 검증 ═════════════════════════════════════════════════
+### PK 형식은 UUID 가 아니다 — <b>대문자 접두어 3자 + '_' + UUIDv7</b>(varchar 40).
+###   예: SIT_01985a10-… · BBA_01985a10-… · MBR_01985a10-…
+
+### C1. 존재하지 않는 게시글 — GET /bbs/{siteCode}/{bbsCode}/{missingId}
+GET {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/{{missingId}}
+Accept: text/html
+
+> {%
+    client.test("없는 글은 404 계열", function () {
+        client.assert([400, 404].includes(response.status),
+            "예상 밖 status=" + response.status
+            + " — 400 은 게시판 자체가 없는 경우다");
+    });
+%}
+
+### C2. 식별자 형식 오류 — GET /bbs/{siteCode}/{bbsCode}/not-a-valid-id
+### 경로 제약 {articleId:BBA_[0-9a-f-]{36}} 을 벗어나 <b>매핑이 걸리지 않는다</b>.
+GET {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/{{malformedId}}
+Accept: text/html
+
+> {%
+    client.test("형식 오류는 매핑 단계에서 걸린다", function () {
+        client.assert([400, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### C3. 회원 상세 식별자 형식 오류 — GET /adm/member/not-a-valid-id
+### 경로 제약 {memberId:MBR_.+} 를 벗어난다.
+GET {{baseUrl}}/adm/member/{{malformedId}}
+Accept: text/html
+
+> {%
+    client.test("형식 오류는 매핑 단계에서 걸린다", function () {
+        client.assert([302, 400, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### C4. 에러 로그 상세 식별자 형식 오류 — GET /adm/error-log/abc
+### 경로 제약 {logErrorId:\d+} — log_error 는 bigint 다.
+GET {{baseUrl}}/adm/error-log/abc
+Accept: text/html
+
+> {%
+    client.test("형식 오류는 매핑 단계에서 걸린다", function () {
+        client.assert([302, 400, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### C5. 잘못된 enum — POST /api/v1/board/like (targetType)
+### ReactionTarget 허용값: ARTICLE | COMMENT | CONTENT
+### 서비스가 IllegalArgumentException → @ExceptionHandler → 400 + {"message": …}
+POST {{baseUrl}}/api/v1/board/like
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+targetType=NO_SUCH_TYPE&targetId={{missingId}}
+
+> {%
+    client.test("잘못된 enum 은 400", function () {
+        client.assert([302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status + " — 200 이면 값 검증이 없다");
+    });
+    if (response.status === 400) {
+        client.test("message 필드 반환", function () {
+            client.assert(response.body.message !== undefined,
+                "message 가 없다: " + JSON.stringify(response.body));
+        });
+    }
+%}
+
+### C6. 잘못된 신고 사유 — POST /api/v1/board/report (reasonCode)
+### ReportReason 허용값: SPAM|OFFENSIVE|ILLEGAL|COPYRIGHT|PRIVACY|OTHER
+POST {{baseUrl}}/api/v1/board/report
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+targetType=ARTICLE&targetId={{missingId}}&reasonCode=NO_SUCH_REASON
+
+> {%
+    client.test("잘못된 사유는 400", function () {
+        client.assert([302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### C7. 필수 파라미터 누락 — POST /api/v1/board/like (targetId 없음)
+### @RequestParam 필수값 누락 → Spring 이 400 (ProblemDetail 활성)
+POST {{baseUrl}}/api/v1/board/like
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+targetType=ARTICLE
+
+> {%
+    client.test("필수값 누락은 400", function () {
+        client.assert([302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### C8. 필수 파라미터 누락 — POST /api/v1/file/upload (entityType 없음)
+POST {{baseUrl}}/api/v1/file/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="sample.txt"
+Content-Type: text/plain
+
+< ./files/sample.txt
+--WebAppBoundary--
+
+> {%
+    client.test("필수값 누락은 400 계열", function () {
+        client.assert(response.status !== 200,
+            "⚠ entityType 없이 업로드가 성공했다");
+        client.assert([302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### C9. 지원하지 않는 Content-Type — POST /api/v1/board/like (JSON)
+### 컨트롤러가 @RequestParam 만 받는다 → JSON 본문은 파라미터로 해석되지 않는다.
+POST {{baseUrl}}/api/v1/board/like
+Content-Type: application/json
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+{
+  "targetType": "ARTICLE",
+  "targetId": "{{missingId}}"
+}
+
+> {%
+    client.test("JSON 본문은 처리되지 않는다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 200 이면 파라미터 바인딩이 예상과 다르다");
+        client.assert([302, 400, 401, 403, 415].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### C10. 예약 slug 로 컨텐츠 접근 — GET /{siteCode}/sitemap 은 고정 라우트
+### 예약어(adm·api·bbs·login 등)는 컨텐츠 slug 로 등록·조회되지 않는다.
+GET {{baseUrl}}/{{siteCode}}/login
+Accept: text/html
+
+> {%
+    client.test("예약어는 컨텐츠로 열리지 않는다", function () {
+        client.assert(response.status === 404,
+            "예상 status=404, 실제=" + response.status);
+    });
+%}
+
+### C11. 페이징 범위 밖 값 — GET /adm/member?page=-1&size=99999
+### PageRequest 는 예외 대신 <b>조용히 보정</b>한다(page>=1, size<=100).
+### 관리자가 URL 을 직접 만지다 500 을 보는 것보다 1페이지를 보는 편이 낫다.
+GET {{baseUrl}}/adm/member?page=-1&size=99999
+Accept: text/html
+
+> {%
+    client.test("잘못된 페이징은 보정된다(500 이 아니다)", function () {
+        client.assert(response.status !== 500,
+            "⚠ 페이징 값으로 500 이 났다 — PageRequest 보정이 깨졌다");
+        client.assert([200, 302, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ═══ D. 권한 · 사이트 경계 ══════════════════════════════════════════════════
+### ⚠ D1~D2 는 <b>회원 로그인 상태</b>에서 실행해야 의미가 있다.
+###    01-auth.http 7~8 로 회원 세션을 만든 뒤 실행할 것.
+
+### D1. 일반 회원이 관리자 화면 호출 — GET /adm/member
+### 필요 권한: ROLE_ADMIN. 회원(ROLE_MEMBER)은 계층상 상위가 아니므로 거부된다.
+GET {{baseUrl}}/adm/member
+Accept: text/html
+
+> {%
+    client.test("회원은 관리자 화면에 들어갈 수 없다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 회원 세션으로 /adm/member 가 200 을 반환했다");
+        client.assert([302, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### D2. 일반 회원이 에디터 이미지 업로드 — POST /api/v1/file/image
+### 필요 권한: ROLE_STAFF 이상(pri 69). 회원은 거부된다.
+POST {{baseUrl}}/api/v1/file/image
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+X-CSRF-TOKEN: {{csrf}}
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="sample.txt"
+Content-Type: text/plain
+
+< ./files/sample.txt
+--WebAppBoundary
+Content-Disposition: form-data; name="entityId"
+
+{{sampleSiteId}}
+--WebAppBoundary--
+
+> {%
+    client.test("회원은 에디터 이미지를 올릴 수 없다", function () {
+        client.assert(response.status !== 200,
+            "⚠ ROLE_STAFF 없이 이미지 업로드가 성공했다");
+        client.assert([302, 400, 401, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### D3. ROLE_PRIVACY 없이 회원 CSV 내려받기 — GET /adm/member/export
+### 필요 권한: ROLE_PRIVACY(pri 15). ROLE_ADMIN 이 <b>자동 상속하지 않는다</b> —
+### 우선순위가 /adm/**(pri 20)보다 앞이라 별도 규칙이 먼저 판정한다.
+### ⚠ 관리자 로그인 상태에서 실행해야 이 정책을 확인할 수 있다.
+GET {{baseUrl}}/adm/member/export
+Accept: text/csv
+
+> {%
+    client.test("ROLE_PRIVACY 게이트", function () {
+        client.assert([200, 302, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        client.log("200 — 이 계정에 ROLE_PRIVACY 가 부여돼 있다");
+    } else {
+        client.log("차단됨 — 시드 admin 은 ROLE_PRIVACY 가 없어 이것이 정상이다");
+    }
+%}
+
+### D4. 다른 사이트의 게시판 접근 — GET /bbs/{siteCodeAlt}/{sampleBbsCode}
+### 게시판은 <b>사이트 스코프</b>로 조회된다(requireMaster 가 SiteContext 의 siteId 로 찾는다).
+### 경로의 siteCode 를 다시 믿지 않는 이유가 이것이다 — 어긋나면 다른 사이트 게시판이 열린다.
+### {{sampleBbsCode}} 는 {{siteCode}} 에만 있으므로 여기서는 찾지 못해야 한다.
+GET {{baseUrl}}/bbs/{{siteCodeAlt}}/{{sampleBbsCode}}
+Accept: text/html
+
+> {%
+    client.test("사이트 경계를 넘지 못한다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 다른 사이트의 게시판이 열렸다 — 사이트 스코프가 깨졌다");
+        client.assert([400, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### D5. 다른 사이트의 컨텐츠 slug 접근 — GET /{siteCodeMain}/{sampleContentSlug}
+### 컨텐츠도 사이트 스코프다. main 사이트에는 ai 의 slug 가 없다.
+GET {{baseUrl}}/{{siteCodeMain}}/{{sampleContentSlug}}
+Accept: text/html
+
+> {%
+    client.test("사이트 경계를 넘지 못한다", function () {
+        client.assert(response.status === 404,
+            "예상 status=404, 실제=" + response.status
+            + " — 200 이면 다른 사이트 컨텐츠가 노출됐다");
+    });
+%}
+
+### D6. 통합(합본) 게시판에 글쓰기 — POST /bbs/{siteCode}/{bbsCode}/save
+### 서비스가 막는다: master.isAggregator() → AccessDeniedException.
+### 화면에서 버튼만 감추면 URL 직접 호출로 뚫린다(원전이 실제로 열려 있던 구멍).
+### # TODO 확인 필요 — 합본 게시판(grouped_board_ids 가 채워진 게시판)을 만든 뒤
+###                    그 bbsCode 로 바꿔 실행해야 이 정책을 실측할 수 있다.
+POST {{baseUrl}}/bbs/{{siteCode}}/{{sampleBbsCode}}/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+
+title=%ED%95%A9%EB%B3%B8%20%EA%B8%88%EC%A7%80%20%ED%85%8C%EC%8A%A4%ED%8A%B8&content=%ED%85%8C%EC%8A%A4%ED%8A%B8
+
+> {%
+    client.test("응답 상태", function () {
+        client.assert([302, 400, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ═══ E. 노출 정책 ══════════════════════════════════════════════════════════
+
+### E1. 민감 액추에이터 — GET /actuator/env
+GET {{baseUrl}}/actuator/env
+Accept: application/json
+
+> {%
+    client.test("차단된다", function () {
+        client.assert(response.status !== 200,
+            "⚠ /actuator/env 가 열려 있다");
+    });
+%}
+
+### E2. 민감 액추에이터 — GET /actuator/configprops
+GET {{baseUrl}}/actuator/configprops
+Accept: application/json
+
+> {%
+    client.test("차단된다", function () {
+        client.assert(response.status !== 200,
+            "⚠ /actuator/configprops 가 열려 있다");
+    });
+%}
+
+### E3. 미등록 사이트코드 — GET /nosite/index
+### 기본 사이트로 위장 응답하지 않는다(canonical 원칙).
+GET {{baseUrl}}/nosite/index
+Accept: text/html
+
+> {%
+    client.test("404", function () {
+        client.assert(response.status === 404,
+            "예상 status=404, 실제=" + response.status);
+    });
+%}
+
+### E4. 사용 중지 게시판 — 존재 여부를 알려 주지 않는다
+### requireMaster 는 use_yn='N' 도 "없는 것" 으로 처리한다.
+GET {{baseUrl}}/bbs/{{siteCode}}/no-such-board
+Accept: text/html
+
+> {%
+    client.test("게시판 존재 여부를 노출하지 않는다", function () {
+        client.assert([400, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ─── 만들지 않은 테스트 (실제 정책이 없어서) ───────────────────────────────
+### · 파일 크기 제한 위반 — 200MB 초과 파일을 저장소에 두지 않는다(리포지터리 오염).
+###   확인이 필요하면 로컬에서 큰 파일을 만들어 1번 요청의 픽스처를 바꿔 실행한다.
+### · 문자열 최대 길이 초과 — DTO 에 @Size 등 Bean Validation 이 <b>없다</b>.
+###   길이 제한은 DB 컬럼 길이와 서비스의 명시적 검사로만 존재하므로,
+###   "validation 실패 400" 계약이 성립하지 않는다.
+###   # TODO 확인 필요 — Bean Validation 도입 시 이 절에 테스트 추가
+### · 중복 등록 409 — 중복은 대체로 <b>화면 폼 재표시 + 오류 메시지</b>로 처리된다.
+###   JSON 409 를 쓰는 곳은 신고 중복(BoardReportApiController)뿐이며
+###   03-board.http 14 번에 있다.
+### · JWT / API 키 / OAuth2 리소스 서버 — 이 프로젝트에 없다(세션 formLogin).

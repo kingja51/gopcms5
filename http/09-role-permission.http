@@ -1,0 +1,224 @@
+### ─────────────────────────────────────────────────────────────────────────
+###  GoPCMS — 역할 · URL 접근 규칙 (인가의 단일 원천)
+###
+###  ### 전제: 관리자 계정 로그인 및 CSRF 토큰 확보가 필요함
+###           → 01-auth.http 의 1~3 을 먼저 실행한다.
+###  필요 권한: 전 요청 ROLE_ADMIN (tb_role_url_access /adm/** pri 20)
+###
+###  ⚠ 이 화면은 <b>인가 자체를 바꾼다</b>. 잘못 저장하면 관리자 화면까지 닫힌다.
+###     · 최후 규칙(/** PERMIT_ALL pri 900)을 지우면 전 사이트가 닫힌다
+###     · /adm/login(pri 10)을 지우면 로그인 폼에 들어갈 수 없다
+###     · 정적 자원 규칙(/css/** 등)을 지우면 화면이 통째로 무너진다
+###     테스트는 <b>조회 중심</b>으로 두고, 저장은 신규 규칙 추가만 한다.
+###
+###  평가 규칙: priority ASC → 사이트 규칙 우선 → 긴 패턴 우선. 첫 매칭이 결정.
+###            어디에도 걸리지 않으면 <b>DENY</b> + WARN 로그.
+###  역할 계층: ROLE_ADMIN > ROLE_MANAGER > ROLE_STAFF > ROLE_MEMBER > ROLE_REAL
+###            (SecurityConfig.roleHierarchy — required_roles 는 role_id CSV 로 판정)
+###
+###  ── 실행 순서 ─────────────────────────────────────────────────────────
+###   1. 역할 목록 → 2. 역할 폼 → 3. 역할 저장 → 4. closure 재전개
+###   5. URL 규칙 목록 → 6. 규칙 폼 → 7. 규칙 저장 → 8. 캐시 비우기
+### ─────────────────────────────────────────────────────────────────────────
+
+### ─── 역할 관리 (/adm/role) ────────────────────────────────────────────────
+
+### 1. 역할 목록 — GET /adm/role
+GET {{baseUrl}}/adm/role
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200,
+            "예상 status=200, 실제=" + response.status + " — 302 면 관리자 세션 없음");
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    client.test("CSRF 토큰 확보", function () {
+        client.assert(m !== null, "_csrf 를 찾지 못했다");
+    });
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 2. 역할 등록 폼 — GET /adm/role/form
+GET {{baseUrl}}/adm/role/form
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 3. 역할 수정 폼 — GET /adm/role/form?roleId={roleId}
+GET {{baseUrl}}/adm/role/form?roleId={{roleIdStaff}}
+Accept: text/html
+
+> {%
+    client.test("폼 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 4. 역할 저장 — POST /adm/role/save
+### @ModelAttribute("role") RoleAdmDto
+### 필드: roleId·siteId·parentRoleId·roleCode·roleName·description·sortOrder·useYn
+### ⚠ 기존 역할 5종(ADMIN·MANAGER·STAFF·MEMBER·REAL)과 ROLE_PRIVACY 는 건드리지 말 것 —
+###   계층이 바뀌면 인가 판정이 조용히 어긋난다.
+### 아래는 <b>말단 신규 역할</b>을 추가한다(부모 = ROLE_MEMBER).
+POST {{baseUrl}}/adm/role/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+roleCode=ROLE_HTTPTEST&roleName=HTTP%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EC%97%AD%ED%95%A0&parentRoleId={{roleIdMember}}&description=IntelliJ%20HTTP%20Client%20%EC%83%9D%EC%84%B1&sortOrder=99&useYn=Y
+
+> {%
+    client.test("저장 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    if (response.status === 200) {
+        client.log("폼 재표시 — 중복 코드 등 검증 메시지를 확인할 것");
+    }
+%}
+
+### 5. 역할 계층 재전개 — POST /adm/role/rebuild
+### closure 테이블과 사용자 role_ids / role_codes 스냅샷을 재계산한다.
+### 콘솔로 역할을 직접 고쳤을 때 반드시 실행해야 인가가 맞는다.
+POST {{baseUrl}}/adm/role/rebuild
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+> {%
+    client.test("재전개 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 6. 역할 삭제 — POST /adm/role/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+# 주의: 사용 중인 역할을 지우면 인가가 닫힌다. 위에서 만든 ROLE_HTTPTEST 만 지울 것
+# TODO 확인 필요 — ROLE_HTTPTEST 의 roleId 를 목록 화면에서 확인해 넣는다
+POST {{baseUrl}}/adm/role/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+roleId={{missingId}}
+
+> {%
+    client.test("삭제 요청 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ─── URL 접근 규칙 관리 (/adm/url-access) ─────────────────────────────────
+
+### 7. 규칙 목록 — GET /adm/url-access
+### 표에 보이는 순서가 곧 실제 평가 순서다.
+GET {{baseUrl}}/adm/url-access
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 8. 규칙 검색 — GET /adm/url-access?keyword=…
+GET {{baseUrl}}/adm/url-access?keyword=member&page=1&size=20
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+%}
+
+### 9. 규칙 등록 폼 — GET /adm/url-access/form
+GET {{baseUrl}}/adm/url-access/form
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert(response.status === 200, "예상 status=200, 실제=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) { client.global.set("csrfAdmin", m[1]); }
+%}
+
+### 10. 규칙 저장 — POST /adm/url-access/save
+### @ModelAttribute("rule") UrlAccessRule
+### 필드: urlAccessId·siteId·urlPattern·httpMethod·accessType·requiredRoles·
+###       requiredAuths·allowedUserTypes·priority·description·requireCsrfYn·
+###       require2faYn·useYn
+### 허용값 (UrlAccessServiceImpl 상수 + DDL CHECK):
+###   httpMethod ALL|GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS
+###   accessType PERMIT_ALL|AUTHENTICATED|ANONYMOUS|ROLE|AUTH|IP_ONLY|DENY
+###   requiredRoles = <b>role_id CSV</b> (role_code 가 아니다)
+###   allowedUserTypes = MEMBER | ADMIN (비우면 유형 무관)
+### 저장하면 서비스가 캐시를 비운다 → 다음 요청부터 반영.
+### 아래는 안전한 신규 규칙(존재하지 않는 경로 + 낮은 우선순위)을 추가한다.
+POST {{baseUrl}}/adm/url-access/save
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+urlPattern=%2Fhttptest%2F**&httpMethod=ALL&accessType=DENY&priority=850&requireCsrfYn=Y&require2faYn=N&useYn=Y&description=IntelliJ%20HTTP%20Client%20%ED%85%8C%EC%8A%A4%ED%8A%B8%20%EA%B7%9C%EC%B9%99
+
+> {%
+    client.test("저장 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 11. 추가한 규칙이 실제로 먹는지 — GET /httptest/anything
+### 위에서 DENY 규칙을 넣었으므로 미인증 상태에서 로그인 유도(302) 또는 403 이 나온다.
+GET {{baseUrl}}/httptest/anything
+Accept: text/html
+
+> {%
+    client.test("DENY 규칙이 적용된다", function () {
+        client.assert(response.status !== 200,
+            "⚠ 200 이면 DENY 규칙이 적용되지 않았다(캐시 비우기를 실행해 볼 것)");
+        client.assert([302, 401, 403, 404].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 12. 규칙 캐시 비우기 — POST /adm/url-access/evict
+### DB 를 직접 고쳤을 때 즉시 반영시키는 탈출구.
+POST {{baseUrl}}/adm/url-access/evict
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+> {%
+    client.test("캐시 비우기 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 13. 규칙 삭제 — POST /adm/url-access/delete
+# 주의: 실제 데이터가 삭제될 수 있으므로 로컬 또는 테스트 환경에서만 실행
+# 주의: 최후 규칙(/** pri 900)·/adm/login(pri 10)·정적 자원 규칙을 지우면 서비스가 닫힌다
+# TODO 확인 필요 — 위에서 만든 /httptest/** 규칙의 urlAccessId 를 목록에서 확인해 넣는다
+POST {{baseUrl}}/adm/url-access/delete
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+urlAccessId={{missingId}}
+
+> {%
+    client.test("삭제 요청 처리", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}

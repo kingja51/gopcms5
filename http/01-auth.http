@@ -1,0 +1,230 @@
+### ─────────────────────────────────────────────────────────────────────────
+###  GoPCMS — 인증 · CSRF 토큰 확보
+###
+###  ⚠ 이 프로젝트의 CSRF 는 <b>쿠키 방식이 아니다</b>.
+###     SecurityConfig 에 CookieCsrfTokenRepository 설정이 없으므로 Spring Security
+###     기본값인 HttpSessionCsrfTokenRepository 가 쓰인다 → XSRF-TOKEN 쿠키는
+###     내려오지 않는다. 토큰은 <b>HTML 폼의 _csrf hidden 값</b>에서 뽑아
+###     X-CSRF-TOKEN 헤더(또는 _csrf 파라미터)로 되돌려 보낸다.
+###     CSRF 예외는 NICE 콜백 2경로뿐이다:
+###       /member/identity/nice/success · /member/identity/nice/fail
+###
+###  로그인 방식: formLogin 2벌 (JWT·OAuth2 로그인 아님. 소셜은 별도 연결 경로)
+###    · 관리자 : POST /adm/login          (SecurityFilterChain @Order(1) /adm/**)
+###    · 회원   : POST /login?siteCode=…   (SecurityFilterChain @Order(2) default)
+###  세션 쿠키: GOPCMS_SID (HttpOnly · SameSite=Lax) — IntelliJ 가 자동 보관한다.
+###
+###  ── 실행 순서 (위에서 아래로) ──────────────────────────────────────────
+###   1. 관리자 로그인 폼 GET      → csrfAdmin 저장
+###   2. 관리자 로그인 POST        → 세션 확보
+###   3. 관리자 세션 확인          → /adm/index 200
+###   (회원 테스트가 필요하면 6~8 을 실행. 같은 쿠키 저장소를 공유하므로
+###    관리자 세션이 회원 로그인으로 교체된다 — 관리자 파일을 먼저 끝낼 것)
+###
+###  전제: dev 시드(V906) — 관리자 admin, 회원 user1(ai 사이트).
+###        비밀번호는 http-client.private.env.json 에 넣는다(example 참조).
+###        관리자 로그인 폼은 tb_admin_allow_ip 에 요청 IP 가 있어야 노출된다
+###        (시드: 127.0.0.1 · ::1). 미등록 IP 는 폼 대신 "/" 로 302.
+### ─────────────────────────────────────────────────────────────────────────
+
+### 1. 관리자 로그인 폼 — GET /adm/login  (CSRF 토큰 확보)
+GET {{baseUrl}}/adm/login
+Accept: text/html
+
+> {%
+    client.test("로그인 폼 노출", function () {
+        client.assert(response.status === 200,
+            "예상 status=200, 실제=" + response.status
+            + " — 302 라면 요청 IP 가 tb_admin_allow_ip 에 없다");
+    });
+
+    // HttpSessionCsrfTokenRepository → 폼 hidden 에서 뽑는다.
+    // Spring Security 6 은 XorCsrfTokenRequestAttributeHandler 로 렌더마다 값이
+    // 달라지지만(BREACH 대응) 그대로 되돌려 보내면 유효하다.
+    const html = String(response.body);
+    const m = html.match(/name="_csrf"\s+value="([^"]+)"/);
+    client.test("CSRF 토큰 추출", function () {
+        client.assert(m !== null, "_csrf hidden 을 찾지 못했다");
+    });
+    if (m) {
+        client.global.set("csrfAdmin", m[1]);
+        client.global.set("csrf", m[1]);
+    }
+%}
+
+### 2. 관리자 로그인 — POST /adm/login
+### formLogin: loginProcessingUrl=/adm/login, defaultSuccessUrl=/adm/index(always)
+### 성공 302 → /adm/index · 실패 302 → /adm/login?error
+POST {{baseUrl}}/adm/login
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+username={{adminLoginId}}&password={{adminPassword}}
+
+> {%
+    client.test("302 리다이렉트", function () {
+        client.assert(response.status === 302,
+            "예상 status=302, 실제=" + response.status
+            + " — 403 이면 CSRF 토큰 문제, 200 이면 폼이 다시 그려진 것");
+    });
+    const loc = response.headers.valueOf("Location") || "";
+    client.test("로그인 성공(에러 리다이렉트가 아님)", function () {
+        client.assert(!loc.includes("error"),
+            "로그인 실패 — Location=" + loc
+            + " (private env 의 adminPassword 를 확인하고, 잠금 여부도 확인)");
+    });
+    client.global.set("adminLoggedIn", loc.includes("/adm/index") ? "Y" : "N");
+%}
+
+### 3. 관리자 세션 확인 — GET /adm/index
+### 필요 권한: ROLE_ADMIN (tb_role_url_access /adm/** pri 20)
+GET {{baseUrl}}/adm/index
+Accept: text/html
+
+> {%
+    client.test("관리자 대시보드 진입", function () {
+        client.assert(response.status === 200,
+            "예상 status=200, 실제=" + response.status
+            + " — 302 면 세션이 없거나 ROLE_ADMIN 이 아니다");
+    });
+    // 이후 관리자 파일들이 쓸 CSRF 토큰을 갱신해 둔다
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) {
+        client.global.set("csrfAdmin", m[1]);
+        client.global.set("csrf", m[1]);
+    }
+%}
+
+### 4. 관리자 CSRF 토큰 재발급 전용 — GET /adm/url-access
+### 관리자 화면 중 폼이 확실히 있는 페이지. 토큰이 만료·소진된 느낌이면 이것만 재실행한다.
+GET {{baseUrl}}/adm/url-access
+Accept: text/html
+
+> {%
+    client.test("200 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    if (m) {
+        client.global.set("csrfAdmin", m[1]);
+        client.global.set("csrf", m[1]);
+    }
+%}
+
+### 5. 관리자 비밀번호 변경 화면 — GET /adm/password
+### 필요 권한: ROLE_ADMIN
+GET {{baseUrl}}/adm/password
+Accept: text/html
+
+> {%
+    client.test("화면 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### 6. 관리자 2FA 등록 화면 — GET /adm/2fa/setup
+### 필요 권한: ROLE_ADMIN. dev 시드 그룹은 two_factor_required='N' 이라 강제되지 않는다.
+GET {{baseUrl}}/adm/2fa/setup
+Accept: text/html
+
+> {%
+    client.test("화면 응답", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
+
+### ─── 회원 로그인 (관리자 세션을 대체한다 — 순서 주의) ─────────────────────
+
+### 7. 회원 로그인 폼 — GET /login?siteCode={siteCode}
+### 사이트는 쿼리 파라미터로 전달된다(SiteResolveFilter 해석 2순위).
+GET {{baseUrl}}/login?siteCode={{siteCode}}
+Accept: text/html
+
+> {%
+    client.test("로그인 폼 200", function () {
+        client.assert(response.status === 200,
+            "예상 status=200, 실제=" + response.status);
+    });
+    const m = String(response.body).match(/name="_csrf"\s+value="([^"]+)"/);
+    client.test("CSRF 토큰 추출", function () {
+        client.assert(m !== null, "_csrf hidden 을 찾지 못했다");
+    });
+    if (m) {
+        client.global.set("csrfUser", m[1]);
+        client.global.set("csrf", m[1]);
+    }
+%}
+
+### 8. 회원 로그인 — POST /login?siteCode={siteCode}
+### 성공 시 successHandler 가 /{siteCode}/index 로 302.
+### 실패 시 /login?error&siteCode=… (사이트 유지)
+POST {{baseUrl}}/login?siteCode={{siteCode}}
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfUser}}
+
+username={{userLoginId}}&password={{userPassword}}
+
+> {%
+    client.test("302 리다이렉트", function () {
+        client.assert(response.status === 302,
+            "예상 status=302, 실제=" + response.status);
+    });
+    const loc = response.headers.valueOf("Location") || "";
+    client.test("로그인 성공", function () {
+        client.assert(!loc.includes("error"),
+            "로그인 실패 — Location=" + loc);
+    });
+    client.log("회원 로그인 Location=" + loc);
+%}
+
+### 9. 회원 세션 확인 — GET /{siteCode}/member/mypage
+### 인가: /*/member/mypage AUTHENTICATED(pri 52) → 통과 후 step-up 재인증 화면으로 302
+### 즉 200 이 아니라 /mypage/verify 로의 302 가 정상 동작이다.
+GET {{baseUrl}}/{{siteCode}}/member/mypage
+Accept: text/html
+
+> {%
+    client.test("로그인 상태 확인", function () {
+        client.assert([200, 302].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+    const loc = response.headers.valueOf("Location") || "";
+    client.test("로그인 화면으로 튕기지 않았다", function () {
+        client.assert(!loc.includes("/login"),
+            "세션이 없다 — Location=" + loc);
+    });
+    client.log("mypage Location=" + loc + " (verify 로 가면 step-up 정상)");
+%}
+
+### ─── 로그아웃 ─────────────────────────────────────────────────────────────
+
+### 10. 회원 로그아웃 — POST /logout
+### CSRF 필요. logoutSuccessUrl=/ · GOPCMS_SID 쿠키 삭제
+POST {{baseUrl}}/logout
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrf}}
+
+> {%
+    client.test("302 리다이렉트", function () {
+        client.assert(response.status === 302,
+            "예상 status=302, 실제=" + response.status
+            + " — 403 이면 CSRF 토큰이 현재 세션 것이 아니다");
+    });
+%}
+
+### 11. 관리자 로그아웃 — POST /adm/logout
+### 인가: AUTHENTICATED + ADMIN(pri 11). logoutSuccessUrl=/adm/login?logout
+### ⚠ 실행하면 관리자 세션이 끊긴다 — 관리자 파일 테스트를 모두 마친 뒤 실행할 것
+POST {{baseUrl}}/adm/logout
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{csrfAdmin}}
+
+> {%
+    client.test("302 리다이렉트", function () {
+        client.assert([302, 403].includes(response.status),
+            "예상 밖 status=" + response.status);
+    });
+%}
